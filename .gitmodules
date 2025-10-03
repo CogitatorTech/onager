@@ -1,0 +1,11 @@
+[submodule "external/duckdb"]
+	path = external/duckdb
+	url = https://github.com/duckdb/duckdb
+	branch = main
+[submodule "external/extension-ci-tools"]
+	path = external/extension-ci-tools
+	url = https://github.com/duckdb/extension-ci-tools
+	branch = main
+[submodule "external/graphina"]
+	path = external/graphina
+	url = https://github.com/habedi/graphina

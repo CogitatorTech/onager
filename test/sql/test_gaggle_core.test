@@ -1,0 +1,56 @@
+# group: [gaggle]
+
+# Test suite for Gaggle extension core functionality
+# Tests basic Kaggle dataset integration features
+
+statement ok
+pragma enable_verification
+
+# Load the Gaggle extension from the local build artifact
+statement ok
+load 'build/release/extension/gaggle/gaggle.duckdb_extension'
+
+# Test 1: gaggle_version() returns non-empty string
+query I
+select gaggle_version() != ''
+----
+1
+
+# Test 2: Setting credentials should succeed
+statement ok
+select gaggle_set_credentials('test_user', 'test_key')
+
+# Test 3: gaggle_cache_info() returns cache information (non-empty)
+query I
+select length(gaggle_cache_info()) > 0
+----
+1
+
+# Test 4: gaggle_clear_cache() should succeed
+statement ok
+select gaggle_clear_cache()
+
+# Test 5: Verify gaggle functions are available and callable
+query I
+select gaggle_version() is not null
+----
+1
+
+# Test 6: Cache info should be valid text type
+query T
+select typeof(gaggle_cache_info())
+----
+VARCHAR
+
+# Test 7: Multiple sequential operations
+statement ok
+select gaggle_set_credentials('user1', 'key1')
+
+statement ok
+select gaggle_set_credentials('user2', 'key2')
+
+# Test 8: Version is consistent
+query I
+select gaggle_version() = gaggle_version()
+----
+1

@@ -1,0 +1,70 @@
+name: Build Extension Binaries
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  duckdb-next-stable-build:
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
+    with:
+      duckdb_version: main
+      ci_tools_version: main
+      extension_name: onager
+      enable_rust: true
+      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
+
+  duckdb-stable-build:
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.4.3
+    with:
+      duckdb_version: v1.4.3
+      ci_tools_version: v1.4.3
+      extension_name: onager
+      enable_rust: true
+      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
+
+  create-release-draft:
+    name: Create Draft Release with Built Binaries
+    needs:
+      - duckdb-stable-build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: List Artifacts
+        run: |
+          echo "Downloaded artifacts to: $(pwd)/dist"
+          ls -la dist || true
+          find dist -type f -maxdepth 2 -print || true
+      - name: Create Draft Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Onager ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

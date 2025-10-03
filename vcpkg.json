@@ -1,0 +1,15 @@
+{
+    "name": "onager",
+    "version": "0.1.0",
+    "description": "C++ dependencies for Onager DuckDB extension",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}

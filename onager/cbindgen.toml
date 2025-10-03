@@ -1,0 +1,61 @@
+# `cbindgen` configuration for onager crate
+language = "C"
+header = "/* Generated with cbindgen */\n/* DO NOT EDIT */\n"
+trailer = "/* End of generated bindings */"
+include_version = true
+namespace = "onager"
+cpp_compat = true
+
+# Output settings
+tab_width = 2
+line_length = 100
+braces = "SameLine"
+include_guard = "ONAGER_H"
+pragma_once = true
+
+# Documentation settings
+documentation = true
+documentation_style = "doxy"
+
+# Structure settings
+[struct]
+must_use = "MUST_USE_STRUCT"
+
+# Enum settings
+[enum]
+must_use = "MUST_USE_ENUM"
+
+# Function settings
+[fn]
+must_use = "MUST_USE_FUNC"
+prefix = ""
+
+# Export settings
+[export]
+include = [
+    "onager_get_version",
+    "onager_free",
+    "onager_last_error",
+    "onager_create_graph",
+    "onager_drop_graph",
+    "onager_list_graphs",
+    "onager_add_node",
+    "onager_add_edge",
+    "onager_node_count",
+    "onager_edge_count"
+]
+
+# Type mappings
+[parse]
+parse_deps = false
+clean = false
+
+# Macro settings
+[macro_expansion]
+bitflags = true
+
+# Define settings
+[defines]
+"target_os = linux" = "ONAGER_LINUX"
+"target_os = windows" = "ONAGER_WINDOWS"
+"target_os = macos" = "ONAGER_MACOS"

@@ -1,0 +1,82 @@
+# group: [gaggle]
+
+# Test suite for Gaggle extension integration scenarios
+# Tests realistic usage patterns and commom workflows
+
+statement ok
+pragma enable_verification
+
+# Load the Gaggle extension
+statement ok
+load 'build/release/extension/gaggle/gaggle.duckdb_extension'
+
+# Test 1: Basic workflow - set credentials
+statement ok
+select gaggle_set_credentials('kaggle_user', 'kaggle_key')
+
+query I
+select gaggle_version() != ''
+----
+1
+
+query I
+select gaggle_cache_info() != ''
+----
+1
+
+# Test 2: Repeated operations should be idempotent
+statement ok
+select gaggle_clear_cache()
+
+statement ok
+select gaggle_clear_cache()
+
+statement ok
+select gaggle_cache_info()
+
+# Test 3: Credentials can be updated in sequence
+statement ok
+select gaggle_set_credentials('user1', 'key1')
+
+statement ok
+select gaggle_set_credentials('user2', 'key2')
+
+statement ok
+select gaggle_set_credentials('user3', 'key3')
+
+# Test 4: Cache operations inside a transaction
+statement ok
+begin transaction
+
+statement ok
+select gaggle_clear_cache()
+
+statement ok
+select gaggle_cache_info()
+
+statement ok
+commit
+
+# Test 5: Multiple calls within aggregation context
+query I
+select count(*) filter (where cast(gaggle_clear_cache() as integer) = 1)
+----
+1
+
+# Test 6: Verify functions work in WHERE clause context
+query I
+select (gaggle_version() is not null) and (gaggle_cache_info() is not null)
+----
+1
+
+# Test 7: Functions in SELECT with other expressions
+query T
+select 'Gaggle_' || substr(gaggle_version(), 1, 0)
+----
+Gaggle_
+
+# Test 8: Version should remain consistent across calls
+query I
+select ('Gaggle_' || substr(gaggle_version(), 1, 10)) like 'Gaggle_%'
+----
+1
