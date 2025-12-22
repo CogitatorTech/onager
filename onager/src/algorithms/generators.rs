@@ -19,7 +19,9 @@ pub fn generate_erdos_renyi(n: usize, p: f64, seed: u64) -> Result<GeneratorResu
         return Err(OnagerError::InvalidArgument("n must be > 0".to_string()));
     }
     if !(0.0..=1.0).contains(&p) {
-        return Err(OnagerError::InvalidArgument("p must be in [0, 1]".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "p must be in [0, 1]".to_string(),
+        ));
     }
 
     let graph: Graph<u32, f32> = erdos_renyi_graph::<Undirected>(n, p, seed)
@@ -37,7 +39,9 @@ pub fn generate_erdos_renyi(n: usize, p: f64, seed: u64) -> Result<GeneratorResu
 /// Generate a Barabási-Albert preferential attachment graph.
 pub fn generate_barabasi_albert(n: usize, m: usize, seed: u64) -> Result<GeneratorResult> {
     if n == 0 || m == 0 {
-        return Err(OnagerError::InvalidArgument("n and m must be > 0".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "n and m must be > 0".to_string(),
+        ));
     }
     if m > n {
         return Err(OnagerError::InvalidArgument("m must be <= n".to_string()));
@@ -56,15 +60,24 @@ pub fn generate_barabasi_albert(n: usize, m: usize, seed: u64) -> Result<Generat
 }
 
 /// Generate a Watts-Strogatz small-world graph.
-pub fn generate_watts_strogatz(n: usize, k: usize, beta: f64, seed: u64) -> Result<GeneratorResult> {
+pub fn generate_watts_strogatz(
+    n: usize,
+    k: usize,
+    beta: f64,
+    seed: u64,
+) -> Result<GeneratorResult> {
     if n == 0 {
         return Err(OnagerError::InvalidArgument("n must be > 0".to_string()));
     }
-    if k % 2 != 0 || k >= n {
-        return Err(OnagerError::InvalidArgument("k must be even and < n".to_string()));
+    if !k.is_multiple_of(2) || k >= n {
+        return Err(OnagerError::InvalidArgument(
+            "k must be even and < n".to_string(),
+        ));
     }
     if !(0.0..=1.0).contains(&beta) {
-        return Err(OnagerError::InvalidArgument("beta must be in [0, 1]".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "beta must be in [0, 1]".to_string(),
+        ));
     }
 
     let graph: Graph<u32, f32> = watts_strogatz_graph::<Undirected>(n, k, beta, seed)

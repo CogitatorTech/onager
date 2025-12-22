@@ -1,11 +1,17 @@
 //! Parallel algorithms module.
 //!
-//! Parallel PageRank using rayon.
+//! Parallel PageRank, BFS, shortest paths, connected components, clustering, triangles.
 
 use graphina::core::types::{Digraph, Graph, NodeId};
-use graphina::parallel::pagerank_parallel;
+use graphina::parallel::{
+    bfs_parallel, clustering_coefficients_parallel, connected_components_parallel,
+    pagerank_parallel, shortest_paths_parallel, triangles_parallel,
+};
 
 use crate::algorithms::centrality::PageRankResult;
+use crate::algorithms::community::ConnectedComponentsResult;
+use crate::algorithms::metrics::TriangleResult;
+use crate::algorithms::traversal::BfsResult;
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
@@ -19,13 +25,19 @@ pub fn compute_pagerank_parallel(
     directed: bool,
 ) -> Result<PageRankResult> {
     if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument("src and dst arrays must have same length".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
     }
     if !weights.is_empty() && weights.len() != src.len() {
-        return Err(OnagerError::InvalidArgument("weights must be empty or same length as edges".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "weights must be empty or same length as edges".to_string(),
+        ));
     }
     if src.is_empty() {
-        return Err(OnagerError::InvalidArgument("Cannot compute on empty graph".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -56,7 +68,10 @@ pub fn compute_pagerank_parallel(
                 rank_values.push(rank);
             }
         }
-        Ok(PageRankResult { node_ids, ranks: rank_values })
+        Ok(PageRankResult {
+            node_ids,
+            ranks: rank_values,
+        })
     } else {
         let mut graph: Graph<i64, f64> = Graph::new();
         for &node in src.iter().chain(dst.iter()) {
@@ -83,6 +98,266 @@ pub fn compute_pagerank_parallel(
                 rank_values.push(rank);
             }
         }
-        Ok(PageRankResult { node_ids, ranks: rank_values })
+        Ok(PageRankResult {
+            node_ids,
+            ranks: rank_values,
+        })
     }
+}
+
+/// Compute parallel BFS traversal from a single source.
+pub fn compute_bfs_parallel(src: &[i64], dst: &[i64], source: i64) -> Result<BfsResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let source_id = node_set
+        .get(&source)
+        .ok_or(OnagerError::NodeNotFound(source))?;
+
+    // bfs_parallel takes a slice of sources - we pass a single source
+    let results = bfs_parallel(&graph, &[*source_id]);
+    // Get the first (and only) result
+    let visit_order = results.into_iter().next().unwrap_or_default();
+
+    let order: Vec<i64> = visit_order
+        .into_iter()
+        .filter_map(|node_id| reverse_map.get(&node_id).copied())
+        .collect();
+
+    Ok(BfsResult {
+        node_ids: order.clone(),
+        order,
+    })
+}
+
+/// Result of parallel shortest paths.
+pub struct ShortestPathsParallelResult {
+    pub node_ids: Vec<i64>,
+    pub distances: Vec<f64>,
+}
+
+/// Compute parallel shortest paths from a single source.
+pub fn compute_shortest_paths_parallel(
+    src: &[i64],
+    dst: &[i64],
+    source: i64,
+) -> Result<ShortestPathsParallelResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let source_id = node_set
+        .get(&source)
+        .ok_or(OnagerError::NodeNotFound(source))?;
+
+    // shortest_paths_parallel takes a slice of sources, returns Vec<HashMap<NodeId, usize>>
+    let results = shortest_paths_parallel(&graph, &[*source_id]);
+    let distances_map = results.into_iter().next().unwrap_or_default();
+
+    let mut node_ids = Vec::with_capacity(distances_map.len());
+    let mut dist_values = Vec::with_capacity(distances_map.len());
+    for (node_id, dist) in distances_map {
+        if let Some(&ext_id) = reverse_map.get(&node_id) {
+            node_ids.push(ext_id);
+            dist_values.push(dist as f64);
+        }
+    }
+    Ok(ShortestPathsParallelResult {
+        node_ids,
+        distances: dist_values,
+    })
+}
+
+/// Compute parallel connected components.
+pub fn compute_components_parallel(src: &[i64], dst: &[i64]) -> Result<ConnectedComponentsResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    // connected_components_parallel returns HashMap<NodeId, usize>
+    let components = connected_components_parallel(&graph);
+
+    let mut node_ids = Vec::with_capacity(components.len());
+    let mut component_ids = Vec::with_capacity(components.len());
+    for (internal_id, comp_id) in components {
+        if let Some(&ext_id) = reverse_map.get(&internal_id) {
+            node_ids.push(ext_id);
+            component_ids.push(comp_id as i64);
+        }
+    }
+    Ok(ConnectedComponentsResult {
+        node_ids,
+        component_ids,
+    })
+}
+
+/// Result of parallel clustering coefficients.
+pub struct ClusteringParallelResult {
+    pub node_ids: Vec<i64>,
+    pub coefficients: Vec<f64>,
+}
+
+/// Compute parallel clustering coefficients for each node.
+pub fn compute_clustering_parallel(src: &[i64], dst: &[i64]) -> Result<ClusteringParallelResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let coefficients = clustering_coefficients_parallel(&graph);
+
+    let mut node_ids = Vec::with_capacity(coefficients.len());
+    let mut coef_values = Vec::with_capacity(coefficients.len());
+    for (node_id, coef) in coefficients {
+        if let Some(&ext_id) = reverse_map.get(&node_id) {
+            node_ids.push(ext_id);
+            coef_values.push(coef);
+        }
+    }
+    Ok(ClusteringParallelResult {
+        node_ids,
+        coefficients: coef_values,
+    })
+}
+
+/// Compute parallel triangle count for each node.
+pub fn compute_triangles_parallel(src: &[i64], dst: &[i64]) -> Result<TriangleResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let triangles = triangles_parallel(&graph);
+
+    let mut node_ids = Vec::with_capacity(triangles.len());
+    let mut triangle_counts = Vec::with_capacity(triangles.len());
+    for (node_id, count) in triangles {
+        if let Some(&ext_id) = reverse_map.get(&node_id) {
+            node_ids.push(ext_id);
+            triangle_counts.push(count as i64);
+        }
+    }
+    Ok(TriangleResult {
+        node_ids,
+        triangle_counts,
+    })
 }

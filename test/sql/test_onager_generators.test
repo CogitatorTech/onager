@@ -1,0 +1,26 @@
+# group: [onager]
+
+
+require onager
+# Test suite for Onager graph generators
+
+statement ok
+pragma enable_verification
+
+# Test Erdos-Renyi generator
+query I
+select count(*) > 0 from onager_gen_erdos_renyi(10, 0.5, seed := 42)
+----
+1
+
+# Test Barabasi-Albert generator
+query I
+select count(*) > 0 from onager_gen_barabasi_albert(10, 2, seed := 42)
+----
+1
+
+# Test Watts-Strogatz generator
+query I
+select count(*) > 0 from onager_gen_watts_strogatz(10, 4, 0.3, seed := 42)
+----
+1

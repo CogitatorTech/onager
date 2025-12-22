@@ -7,18 +7,18 @@ Community detection algorithms identify groups of densely connected nodes.
 The Louvain algorithm optimizes modularity to find communities.
 
 ```sql
-SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM edges));
+select * from onager_cmm_louvain((select src, dst from edges));
 ```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| node_id | BIGINT | Node identifier |
-| community | BIGINT | Community ID this node belongs to |
+| Column    | Type   | Description                       |
+|-----------|--------|-----------------------------------|
+| node_id   | bigint | Node identifier                   |
+| community | bigint | Community ID this node belongs to |
 
 ### Optional: Set Random Seed
 
 ```sql
-SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM edges), seed := 42);
+select * from onager_cmm_louvain((select src, dst from edges), seed := 42);
 ```
 
 ## Connected Components
@@ -26,35 +26,35 @@ SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM edges), seed := 42);
 Find groups of nodes that are reachable from each other.
 
 ```sql
-SELECT * FROM onager_cmm_components((SELECT src, dst FROM edges));
+select * from onager_cmm_components((select src, dst from edges));
 ```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| node_id | BIGINT | Node identifier |
-| component | BIGINT | Component ID |
+| Column    | Type   | Description     |
+|-----------|--------|-----------------|
+| node_id   | bigint | Node identifier |
+| component | bigint | Component ID    |
 
 ## Label Propagation
 
 Fast community detection by propagating labels through the network.
 
 ```sql
-SELECT * FROM onager_cmm_label_prop((SELECT src, dst FROM edges));
+select * from onager_cmm_label_prop((select src, dst from edges));
 ```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| node_id | BIGINT | Node identifier |
-| label | BIGINT | Community label |
+| Column  | Type   | Description     |
+|---------|--------|-----------------|
+| node_id | bigint | Node identifier |
+| label   | bigint | Community label |
 
 ## Example: Analyze Community Sizes
 
 ```sql
-WITH communities AS (
-  SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM edges))
+with communities as (
+  select * from onager_cmm_louvain((select src, dst from edges))
 )
-SELECT community, COUNT(*) as size
-FROM communities
-GROUP BY community
-ORDER BY size DESC;
+select community, count(*) as size
+from communities
+group by community
+order by size desc;
 ```

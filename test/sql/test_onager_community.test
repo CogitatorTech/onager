@@ -1,0 +1,54 @@
+# group: [onager]
+
+
+require onager
+# Test suite for Onager community detection algorithms
+
+statement ok
+pragma enable_verification
+
+# Create test edge data
+statement ok
+create table test_edges as select * from (values
+  (1::bigint, 2::bigint), (2, 3), (3, 1), (3, 4)
+) t(src, dst)
+
+# Test Louvain community detection
+query I
+select count(*) > 0 from onager_cmm_louvain((select src, dst from test_edges))
+----
+1
+
+# Test Connected Components
+query I
+select count(*) > 0 from onager_cmm_components((select src, dst from test_edges))
+----
+1
+
+# Test Label Propagation
+query I
+select count(*) > 0 from onager_cmm_label_prop((select src, dst from test_edges))
+----
+1
+
+# Test Girvan-Newman community detection
+query I
+select count(*) > 0 from onager_cmm_girvan_newman((select src, dst from test_edges), communities := 2)
+----
+1
+
+# Test Spectral clustering
+query I
+select count(*) > 0 from onager_cmm_spectral((select src, dst from test_edges), k := 2)
+----
+1
+
+# Test Infomap community detection
+query I
+select count(*) > 0 from onager_cmm_infomap((select src, dst from test_edges))
+----
+1
+
+# Cleanup
+statement ok
+drop table test_edges

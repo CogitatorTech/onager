@@ -1,5 +1,5 @@
 site_name: Onager Documentation
-site_description: Graph Analytics Extension for DuckDB
+site_description: A Graph Analytics Toolbox for DuckDB
 repo_url: https://github.com/CogitatorTech/onager
 repo_name: CogitatorTech/onager
 site_url: https://cogitatortech.github.io/onager/
@@ -50,22 +50,23 @@ nav:
       - Quick Start: getting-started/quickstart.md
   - User Guide:
       - SQL Functions:
+          - Graph Registry: guide/graph-registry.md
           - Centrality: guide/centrality.md
           - Community Detection: guide/community.md
           - Link Prediction: guide/links.md
           - Graph Metrics: guide/metrics.md
           - Traversal & Paths: guide/traversal.md
           - Graph Generators: guide/generators.md
-      - Advanced:
-          - Architecture: guide/architecture.md
+          - Subgraph Operations: guide/subgraphs.md
+          - Parallel Algorithms: guide/parallel.md
   - Examples:
       - Basic Usage: examples/basic.md
       - Centrality Analysis: examples/centrality.md
       - Community Detection: examples/community.md
       - Link Prediction: examples/links.md
+      - Analytics Use Cases: examples/analytics.md
   - API Reference:
       - SQL Functions: reference/sql-functions.md
-      - Rust API: https://docs.rs/onager
 
 markdown_extensions:
   - pymdownx.highlight:

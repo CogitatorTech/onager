@@ -1,46 +1,116 @@
-# Onager Roadmap
+## Feature Roadmap
 
-## Current Status: Alpha (v0.1.0)
+This document includes the roadmap for the Onager DuckDB extension.
+It outlines features to be implemented and their current status.
 
-### ✅ Implemented (25 SQL Functions)
+> [!IMPORTANT]
+> This roadmap is a work in progress and is subject to change.
 
-#### Centrality (`ctr`) — 7 functions
-- [x] pagerank, degree, betweenness, closeness, eigenvector, katz, harmonic
+### 1. Centrality Algorithms
 
-#### Community (`cmm`) — 3 functions
-- [x] louvain, components, label_prop
+* [x] PageRank centrality
+* [x] Personalized PageRank
+* [x] Degree centrality (in/out)
+* [x] Betweenness centrality
+* [x] Closeness centrality
+* [x] Harmonic centrality
+* [x] Eigenvector centrality
+* [x] Katz centrality
+* [x] VoteRank (influential spreaders)
+* [ ] Local reaching centrality
+* [ ] Laplacian centrality
 
-#### Link Prediction (`lnk`) — 4 functions  
-- [x] jaccard, adamic_adar, pref_attach, resource_alloc
+### 2. Community Detection
 
-#### Metrics (`mtr`) — 5 functions
-- [x] diameter, radius, avg_clustering, avg_path_length, transitivity
+* [x] Louvain modularity optimization
+* [x] Connected components
+* [x] Label propagation
+* [x] Girvan-Newman edge betweenness
+* [x] Spectral clustering
+* [x] Infomap community detection
+* [ ] Hierarchical clustering
+* [ ] K-core decomposition
 
-#### Paths (`pth`) — 1 function
-- [x] dijkstra
+### 3. Path \u0026 Traversal Algorithms
 
-#### Traversal (`trv`) — 2 functions
-- [x] bfs, dfs
+* [x] Dijkstra shortest paths
+* [x] Bellman-Ford shortest paths
+* [x] Breadth-first search (BFS)
+* [x] Depth-first search (DFS)
+* [x] Floyd-Warshall all-pairs shortest paths
+* [ ] A* search
+* [ ] Bidirectional search
 
-#### Generators (`gen`) — 3 functions
-- [x] erdos_renyi, barabasi_albert, watts_strogatz
+### 4. Graph Metrics
 
----
+* [x] Graph diameter
+* [x] Graph radius
+* [x] Average clustering coefficient
+* [x] Transitivity (global clustering)
+* [x] Triangle count per node
+* [x] Assortativity coefficient
+* [ ] Graph density
+* [ ] Average path length
 
-### 🔜 Planned
+### 5. Subgraph Operations
 
-#### More Algorithms
-- [ ] Bellman-Ford, A*, Floyd-Warshall shortest paths
-- [ ] Girvan-Newman, Infomap community detection
-- [ ] MST (Prim, Kruskal)
-- [ ] Parallel versions of core algorithms
+* [x] Ego graph extraction
+* [x] K-hop neighbors
+* [x] Induced subgraph
+* [ ] Subgraph isomorphism
+* [ ] Motif detection
 
----
+### 6. Approximation Algorithms
 
-## Architecture
+* [x] Maximum clique approximation
+* [x] Maximum independent set approximation
+* [x] Minimum vertex cover approximation
+* [ ] Traveling salesman approximation
+* [ ] Graph coloring approximation
 
-```
-SQL → DuckDB C++ → Rust FFI → graphina
-```
+### 7. Parallel Algorithms
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+* [x] Parallel BFS
+* [x] Parallel shortest paths
+* [x] Parallel connected components
+* [x] Parallel clustering coefficients
+* [x] Parallel triangle counting
+* [ ] Parallel PageRank
+
+### 8. Graph Generators
+
+* [x] Erdős-Rényi random graphs
+* [x] Barabási-Albert scale-free graphs
+* [x] Watts-Strogatz small-world graphs
+* [ ] Random regular graphs
+* [ ] Stochastic block models
+
+### 9. Minimum Spanning Tree
+
+* [x] Kruskal's algorithm
+* [x] Prim's algorithm
+* [ ] Borůvka's algorithm
+
+### 10. Link Prediction
+
+* [x] Jaccard coefficient
+* [x] Adamic-Adar index
+* [x] Preferential attachment
+* [x] Resource allocation
+* [ ] Common neighbors
+* [ ] Katz similarity
+
+### 11. Documentation \u0026 Testing
+
+* [x] SQL function reference
+* [x] User guide documentation
+* [x] SQL integration tests (75+ assertions)
+* [x] Rust unit tests
+* [ ] Performance benchmarks
+* [ ] Example notebooks
+
+### 12. Distribution
+
+* [x] Linux, macOS, Windows binaries (AMD64/ARM64)
+* [x] Submission to DuckDB community extensions
+* [ ] Python wheel packaging

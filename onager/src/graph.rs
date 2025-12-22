@@ -195,6 +195,64 @@ pub fn edge_count(graph_name: &str) -> Result<usize> {
     Ok(graph.edge_count())
 }
 
+/// Returns the in-degree of a node in the named graph.
+pub fn get_node_in_degree(graph_name: &str, external_node_id: i64) -> Result<usize> {
+    let registry = GRAPH_REGISTRY.read();
+    let graph = registry
+        .get(graph_name)
+        .ok_or_else(|| OnagerError::GraphNotFound(graph_name.to_string()))?;
+
+    match graph {
+        GraphType::Directed(w) => {
+            let node_id = w
+                .node_mapping
+                .get(&external_node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))?;
+            w.graph
+                .in_degree(*node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))
+        }
+        GraphType::Undirected(w) => {
+            let node_id = w
+                .node_mapping
+                .get(&external_node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))?;
+            w.graph
+                .degree(*node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))
+        }
+    }
+}
+
+/// Returns the out-degree of a node in the named graph.
+pub fn get_node_out_degree(graph_name: &str, external_node_id: i64) -> Result<usize> {
+    let registry = GRAPH_REGISTRY.read();
+    let graph = registry
+        .get(graph_name)
+        .ok_or_else(|| OnagerError::GraphNotFound(graph_name.to_string()))?;
+
+    match graph {
+        GraphType::Directed(w) => {
+            let node_id = w
+                .node_mapping
+                .get(&external_node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))?;
+            w.graph
+                .out_degree(*node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))
+        }
+        GraphType::Undirected(w) => {
+            let node_id = w
+                .node_mapping
+                .get(&external_node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))?;
+            w.graph
+                .degree(*node_id)
+                .ok_or(OnagerError::NodeNotFound(external_node_id))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

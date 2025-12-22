@@ -7,21 +7,21 @@ Link prediction algorithms predict which unconnected nodes are likely to become 
 Measures similarity based on common neighbors.
 
 ```sql
-SELECT * FROM onager_lnk_jaccard((SELECT src, dst FROM edges));
+select * from onager_lnk_jaccard((select src, dst from edges));
 ```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| node1 | BIGINT | First node |
-| node2 | BIGINT | Second node |
-| jaccard | DOUBLE | Jaccard similarity (0-1, higher = more similar) |
+| Column  | Type   | Description                                     |
+|---------|--------|-------------------------------------------------|
+| node1   | bigint | First node                                      |
+| node2   | bigint | Second node                                     |
+| jaccard | double | Jaccard similarity (0-1, higher = more similar) |
 
 ## Adamic-Adar Index
 
 Weights common neighbors by the inverse log of their degree.
 
 ```sql
-SELECT * FROM onager_lnk_adamic_adar((SELECT src, dst FROM edges));
+select * from onager_lnk_adamic_adar((select src, dst from edges));
 ```
 
 ## Preferential Attachment
@@ -29,7 +29,7 @@ SELECT * FROM onager_lnk_adamic_adar((SELECT src, dst FROM edges));
 Based on the idea that well-connected nodes attract more connections.
 
 ```sql
-SELECT * FROM onager_lnk_pref_attach((SELECT src, dst FROM edges));
+select * from onager_lnk_pref_attach((select src, dst from edges));
 ```
 
 ## Resource Allocation
@@ -37,13 +37,13 @@ SELECT * FROM onager_lnk_pref_attach((SELECT src, dst FROM edges));
 Similar to Adamic-Adar but with inverse degree (not log).
 
 ```sql
-SELECT * FROM onager_lnk_resource_alloc((SELECT src, dst FROM edges));
+select * from onager_lnk_resource_alloc((select src, dst from edges));
 ```
 
 ## Example: Top Predicted Links
 
 ```sql
-SELECT * FROM onager_lnk_adamic_adar((SELECT src, dst FROM edges))
-ORDER BY score DESC
-LIMIT 20;
+select * from onager_lnk_adamic_adar((select src, dst from edges))
+order by score desc
+limit 20;
 ```

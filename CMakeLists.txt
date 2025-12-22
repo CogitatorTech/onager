@@ -187,7 +187,21 @@ set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 project(${TARGET_NAME})
 
 include_directories(onager/bindings/include)
-set(EXTENSION_SOURCES onager/bindings/onager_extension.cpp)
+set(EXTENSION_SOURCES
+    onager/bindings/onager_extension.cpp
+    onager/bindings/functions/scalar_functions.cpp
+    onager/bindings/functions/centrality.cpp
+    onager/bindings/functions/community.cpp
+    onager/bindings/functions/traversal.cpp
+    onager/bindings/functions/generators.cpp
+    onager/bindings/functions/links.cpp
+    onager/bindings/functions/metrics.cpp
+    onager/bindings/functions/mst.cpp
+    onager/bindings/functions/approximation.cpp
+    onager/bindings/functions/personalized.cpp
+    onager/bindings/functions/subgraphs.cpp
+    onager/bindings/functions/parallel.cpp
+)
 
 # Remove previous attempt to include DuckDB extension macros when unavailable.
 # For a plain standalone configure (cmake ..) we just build the Rust crate; the

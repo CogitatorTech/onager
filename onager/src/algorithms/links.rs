@@ -2,10 +2,10 @@
 //!
 //! Jaccard, Adamic-Adar, Preferential Attachment, Resource Allocation.
 
+use graphina::core::types::{Graph, NodeId};
 use graphina::links::allocation::resource_allocation_index;
 use graphina::links::attachment::preferential_attachment;
 use graphina::links::similarity::{adamic_adar_index, jaccard_coefficient};
-use graphina::core::types::{Graph, NodeId};
 
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
@@ -23,10 +23,14 @@ pub type JaccardResult = LinkPredictionResult;
 /// Compute Jaccard coefficient for all node pairs.
 pub fn compute_jaccard(src: &[i64], dst: &[i64]) -> Result<LinkPredictionResult> {
     if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument("src and dst arrays must have same length".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
     }
     if src.is_empty() {
-        return Err(OnagerError::InvalidArgument("Cannot compute on empty graph".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -56,16 +60,24 @@ pub fn compute_jaccard(src: &[i64], dst: &[i64]) -> Result<LinkPredictionResult>
             scores.push(coef);
         }
     }
-    Ok(LinkPredictionResult { node1, node2, scores })
+    Ok(LinkPredictionResult {
+        node1,
+        node2,
+        scores,
+    })
 }
 
 /// Compute Adamic-Adar index for all node pairs.
 pub fn compute_adamic_adar(src: &[i64], dst: &[i64]) -> Result<LinkPredictionResult> {
     if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument("src and dst arrays must have same length".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
     }
     if src.is_empty() {
-        return Err(OnagerError::InvalidArgument("Cannot compute on empty graph".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -95,16 +107,24 @@ pub fn compute_adamic_adar(src: &[i64], dst: &[i64]) -> Result<LinkPredictionRes
             scores.push(coef);
         }
     }
-    Ok(LinkPredictionResult { node1, node2, scores })
+    Ok(LinkPredictionResult {
+        node1,
+        node2,
+        scores,
+    })
 }
 
 /// Compute preferential attachment for all node pairs.
 pub fn compute_preferential_attachment(src: &[i64], dst: &[i64]) -> Result<LinkPredictionResult> {
     if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument("src and dst arrays must have same length".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
     }
     if src.is_empty() {
-        return Err(OnagerError::InvalidArgument("Cannot compute on empty graph".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -134,16 +154,24 @@ pub fn compute_preferential_attachment(src: &[i64], dst: &[i64]) -> Result<LinkP
             scores.push(coef);
         }
     }
-    Ok(LinkPredictionResult { node1, node2, scores })
+    Ok(LinkPredictionResult {
+        node1,
+        node2,
+        scores,
+    })
 }
 
 /// Compute resource allocation index for all node pairs.
 pub fn compute_resource_allocation(src: &[i64], dst: &[i64]) -> Result<LinkPredictionResult> {
     if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument("src and dst arrays must have same length".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
     }
     if src.is_empty() {
-        return Err(OnagerError::InvalidArgument("Cannot compute on empty graph".to_string()));
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -173,5 +201,9 @@ pub fn compute_resource_allocation(src: &[i64], dst: &[i64]) -> Result<LinkPredi
             scores.push(coef);
         }
     }
-    Ok(LinkPredictionResult { node1, node2, scores })
+    Ok(LinkPredictionResult {
+        node1,
+        node2,
+        scores,
+    })
 }

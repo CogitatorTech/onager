@@ -7,34 +7,34 @@ Centrality measures identify the most important nodes in a graph. Onager provide
 Measures node importance based on the link structure of the graph.
 
 ```sql
-SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM edges));
+select * from onager_ctr_pagerank((select src, dst from edges));
 ```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| node_id | BIGINT | Node identifier |
-| rank | DOUBLE | PageRank score (higher = more important) |
+| Column  | Type   | Description                              |
+|---------|--------|------------------------------------------|
+| node_id | bigint | Node identifier                          |
+| rank    | double | PageRank score (higher = more important) |
 
 ## Degree Centrality
 
 Counts incoming and outgoing edges per node.
 
 ```sql
-SELECT * FROM onager_ctr_degree((SELECT src, dst FROM edges));
+select * from onager_ctr_degree((select src, dst from edges));
 ```
 
-| Column | Type | Description |
-|--------|------|-------------|
-| node_id | BIGINT | Node identifier |
-| in_degree | DOUBLE | Number of incoming edges |
-| out_degree | DOUBLE | Number of outgoing edges |
+| Column     | Type   | Description              |
+|------------|--------|--------------------------|
+| node_id    | bigint | Node identifier          |
+| in_degree  | double | Number of incoming edges |
+| out_degree | double | Number of outgoing edges |
 
 ## Betweenness Centrality
 
 Measures how often a node lies on shortest paths between other nodes.
 
 ```sql
-SELECT * FROM onager_ctr_betweenness((SELECT src, dst FROM edges));
+select * from onager_ctr_betweenness((select src, dst from edges));
 ```
 
 ## Closeness Centrality
@@ -42,7 +42,7 @@ SELECT * FROM onager_ctr_betweenness((SELECT src, dst FROM edges));
 Measures the average distance from a node to all other nodes.
 
 ```sql
-SELECT * FROM onager_ctr_closeness((SELECT src, dst FROM edges));
+select * from onager_ctr_closeness((select src, dst from edges));
 ```
 
 ## Eigenvector Centrality
@@ -50,7 +50,7 @@ SELECT * FROM onager_ctr_closeness((SELECT src, dst FROM edges));
 A node is important if it's connected to other important nodes.
 
 ```sql
-SELECT * FROM onager_ctr_eigenvector((SELECT src, dst FROM edges));
+select * from onager_ctr_eigenvector((select src, dst from edges));
 ```
 
 ## Katz Centrality
@@ -58,7 +58,7 @@ SELECT * FROM onager_ctr_eigenvector((SELECT src, dst FROM edges));
 Similar to eigenvector but accounts for all walks in the graph.
 
 ```sql
-SELECT * FROM onager_ctr_katz((SELECT src, dst FROM edges));
+select * from onager_ctr_katz((select src, dst from edges));
 ```
 
 ## Harmonic Centrality
@@ -66,13 +66,13 @@ SELECT * FROM onager_ctr_katz((SELECT src, dst FROM edges));
 Variant of closeness that handles disconnected graphs better.
 
 ```sql
-SELECT * FROM onager_ctr_harmonic((SELECT src, dst FROM edges));
+select * from onager_ctr_harmonic((select src, dst from edges));
 ```
 
 ## Example: Find Top Influencers
 
 ```sql
-SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM edges))
-ORDER BY rank DESC
-LIMIT 10;
+select * from onager_ctr_pagerank((select src, dst from edges))
+order by rank desc
+limit 10;
 ```

@@ -1,0 +1,53 @@
+# group: [onager]
+
+require onager
+# Test suite for Onager parallel algorithms
+
+statement ok
+pragma enable_verification
+
+# Create test edge data
+statement ok
+create table test_edges as select * from (values
+  (1::bigint, 2::bigint), (2, 3), (3, 4), (4, 5), (1, 3), (2, 4), (3, 5)
+) t(src, dst)
+
+# Test parallel BFS returns nodes
+query I
+select count(*) > 0 from onager_par_bfs((select src, dst from test_edges), source := 1)
+----
+1
+
+# Test parallel shortest paths returns distances
+query I
+select count(*) > 0 from onager_par_shortest_paths((select src, dst from test_edges), source := 1)
+----
+1
+
+# Test parallel connected components
+query I
+select count(*) > 0 from onager_par_components((select src, dst from test_edges))
+----
+1
+
+# All nodes should be in same component
+query I
+select count(distinct component) from onager_par_components((select src, dst from test_edges))
+----
+1
+
+# Test parallel clustering coefficients
+query I
+select count(*) > 0 from onager_par_clustering((select src, dst from test_edges))
+----
+1
+
+# Test parallel triangle count
+query I
+select count(*) > 0 from onager_par_triangles((select src, dst from test_edges))
+----
+1
+
+# Cleanup
+statement ok
+drop table test_edges

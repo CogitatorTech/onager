@@ -13,8 +13,8 @@ Get up and running with Onager in 5 minutes.
 Onager works with edge tables — any table with two columns representing source and destination nodes:
 
 ```sql
-CREATE TABLE edges AS SELECT * FROM (VALUES 
-  (1::BIGINT, 2::BIGINT),
+create table edges as select * from (values
+  (1::bigint, 2::bigint),
   (2, 3),
   (3, 1),
   (3, 4),
@@ -27,7 +27,7 @@ CREATE TABLE edges AS SELECT * FROM (VALUES
 ### PageRank
 
 ```sql
-SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM edges));
+select * from onager_ctr_pagerank((select src, dst from edges));
 ```
 
 ```
@@ -46,34 +46,35 @@ SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM edges));
 ### Community Detection
 
 ```sql
-SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM edges));
+select * from onager_cmm_louvain((select src, dst from edges));
 ```
 
 ### Graph Diameter
 
 ```sql
-SELECT * FROM onager_mtr_diameter((SELECT src, dst FROM edges));
+select * from onager_mtr_diameter((select src, dst from edges));
 ```
 
 ## 4. Generate Test Graphs
 
 ```sql
 -- Random graph with 100 nodes, 10% edge probability
-SELECT * FROM onager_gen_erdos_renyi(100, 0.1, seed := 42) LIMIT 5;
+select * from onager_gen_erdos_renyi(100, 0.1, seed := 42) limit 5;
 ```
 
 ## Input Format
 
 All analysis functions accept edge data as:
-- **Column 1**: Source node (`BIGINT`)
-- **Column 2**: Destination node (`BIGINT`)
+
+- **Column 1**: Source node (`bigint`)
+- **Column 2**: Destination node (`bigint`)
 
 Use a subquery to select the edge columns:
 
 ```sql
 -- From any table with edge data
-SELECT * FROM onager_ctr_pagerank((
-  SELECT from_user, to_user FROM follows
+select * from onager_ctr_pagerank((
+  select from_user, to_user from follows
 ));
 ```
 

@@ -3,7 +3,7 @@ name = "onager"
 version = "0.1.0-alpha.1"
 edition = "2021"
 publish = false
-description = "A graph analytics extension for DuckDB"
+description = "A Graph Analytics Toolbox for DuckDB"
 
 [lib]
 name = "onager"
@@ -14,7 +14,7 @@ duckdb_extension = []
 default = []
 
 [dependencies]
-graphina = { path = "../external/graphina", features = ["centrality", "community", "mst", "traversal", "subgraphs", "metrics", "links", "parallel"] }
+graphina = { path = "../external/graphina", features = ["centrality", "community", "mst", "traversal", "subgraphs", "metrics", "links", "parallel", "approximation"] }
 once_cell = "1.19"
 parking_lot = "0.12"
 thiserror = "2.0"

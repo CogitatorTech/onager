@@ -36,10 +36,11 @@ brew install cmake
 ## Verifying Installation
 
 ```bash
-./build/release/duckdb -c "SELECT onager_version();"
+./build/release/duckdb -c "select onager_version();"
 ```
 
 Should output:
+
 ```
 ┌──────────────────┐
 │ onager_version() │

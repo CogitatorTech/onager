@@ -1,0 +1,33 @@
+# group: [onager]
+
+
+require onager
+# Test suite for Onager MST algorithms
+
+statement ok
+pragma enable_verification
+
+# Create weighted edges for MST
+statement ok
+create table weighted_edges as select * from (values
+  (1::bigint, 2::bigint, 1.0::double),
+  (2, 3, 2.0),
+  (1, 3, 3.0),
+  (3, 4, 1.5)
+) t(src, dst, weight)
+
+# Test Kruskal MST returns results
+query I
+select count(*) > 0 from onager_mst_kruskal((select src, dst, weight from weighted_edges))
+----
+1
+
+# Verify MST has correct number of edges (n-1 for connected graph)
+query I
+select count(*) from onager_mst_kruskal((select src, dst, weight from weighted_edges))
+----
+3
+
+# Cleanup
+statement ok
+drop table weighted_edges
