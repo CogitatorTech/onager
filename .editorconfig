@@ -1,9 +1,7 @@
-# EditorConfig is awesome: https://EditorConfig.org
+# https://EditorConfig.org
 
-# Top-most EditorConfig file
 root = true
 
-# Global settings (applicable to all files unless overridden)
 [*]
 charset = utf-8
 end_of_line = lf
@@ -12,24 +10,19 @@ indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Rust files
 [*.rs]
 max_line_length = 100
 
-# Markdown files
 [*.md]
 max_line_length = 120
 trim_trailing_whitespace = false
 
-# Bash scripts
 [*.sh]
 indent_size = 2
 
-# YAML files
 [*.{yaml,yml}]
 indent_size = 2
 
-# C & C++ files
 [*.{c,cpp,h,hpp}]
 indent_size = 2
 max_line_length = 100

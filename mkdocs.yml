@@ -1,0 +1,80 @@
+site_name: Onager Documentation
+site_description: Graph Analytics Extension for DuckDB
+repo_url: https://github.com/CogitatorTech/onager
+repo_name: CogitatorTech/onager
+site_url: https://cogitatortech.github.io/onager/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - content.code.copy
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.expand
+    - content.code.select
+    - content.code.annotate
+    - navigation.tracking
+    - navigation.sections
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/CogitatorTech/onager
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - User Guide:
+      - SQL Functions:
+          - Centrality: guide/centrality.md
+          - Community Detection: guide/community.md
+          - Link Prediction: guide/links.md
+          - Graph Metrics: guide/metrics.md
+          - Traversal & Paths: guide/traversal.md
+          - Graph Generators: guide/generators.md
+      - Advanced:
+          - Architecture: guide/architecture.md
+  - Examples:
+      - Basic Usage: examples/basic.md
+      - Centrality Analysis: examples/centrality.md
+      - Community Detection: examples/community.md
+      - Link Prediction: examples/links.md
+  - API Reference:
+      - SQL Functions: reference/sql-functions.md
+      - Rust API: https://docs.rs/onager
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true

@@ -14,114 +14,104 @@ Graph Data Analytics for DuckDB
 
 ---
 
-Onager is a DuckDB extension that enables graph data analytics directly within SQL queries.
-It provides graph creation, manipulation, and analysis capabilities powered by the
-[graphina](https://github.com/habedi/graphina) graph data science library.
+Onager is a DuckDB extension for **graph analytics in SQL**. It provides **25 graph algorithms** that operate directly on edge tables — no external graph database required.
 
-### Features
-
-- **Graph Storage**: Create and manage named in-memory graphs
-- **Node/Edge Management**: Add nodes and weighted edges to graphs
-- **Centrality Measures**: PageRank, betweenness, closeness, and more (coming soon)
-- **Community Detection**: Louvain, label propagation (coming soon)
-- **Path Finding**: Shortest path algorithms (coming soon)
-- **Graph Generators**: Random graph generation (coming soon)
-
-> [!IMPORTANT]
-> Onager is in early development, so bugs and breaking changes are expected.
-> Please use the [issues page](https://github.com/CogitatorTech/onager/issues) to report bugs or request features.
+Powered by the [graphina](https://github.com/habedi/graphina) Rust library.
 
 ---
 
-### Quickstart
-
-#### Build from Source
-
-1. Clone the repository and initialize submodules:
+## Quickstart
 
 ```bash
 git clone --recursive https://github.com/CogitatorTech/onager.git
-cd onager
-```
-
-2. Build the extension:
-
-```bash
-# This may take a while on first run
-make release
-```
-
-3. Start DuckDB shell with Onager:
-
-```bash
+cd onager && make release
 ./build/release/duckdb
 ```
 
-#### Basic Usage
-
 ```sql
--- Get extension version
-SELECT onager_version();
+CREATE TABLE edges AS SELECT * FROM (VALUES
+  (1::BIGINT, 2::BIGINT), (2, 3), (3, 1), (3, 4)
+) t(src, dst);
 
--- Create a new undirected graph
-SELECT onager_create_graph('social_network');
-
--- Add nodes (node IDs 0, 1, 2)
-SELECT onager_add_node('social_network', 0);
-SELECT onager_add_node('social_network', 1);
-SELECT onager_add_node('social_network', 2);
-
--- Add edges with weights
-SELECT onager_add_edge('social_network', 0, 1, 1.0);
-SELECT onager_add_edge('social_network', 1, 2, 2.5);
-SELECT onager_add_edge('social_network', 0, 2, 1.5);
-
--- Get graph statistics
-SELECT onager_node_count('social_network');
-SELECT onager_edge_count('social_network');
-
--- List all graphs
-SELECT onager_list_graphs();
-
--- Drop a graph
-SELECT onager_drop_graph('social_network');
+SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM edges));
+SELECT * FROM onager_gen_erdos_renyi(100, 0.1, seed := 42);
 ```
 
 ---
 
-### SQL Functions
+## SQL Table Functions (25)
 
-| Function                                     | Description                                 |
-|----------------------------------------------|---------------------------------------------|
-| `onager_version()`                           | Returns extension version                   |
-| `onager_create_graph(name[, directed])`      | Creates a new graph (undirected by default) |
-| `onager_drop_graph(name)`                    | Drops an existing graph                     |
-| `onager_list_graphs()`                       | Returns JSON array of all graph names       |
-| `onager_add_node(graph, node_id)`            | Adds a node to the graph                    |
-| `onager_add_edge(graph, src, dst[, weight])` | Adds an edge (weight defaults to 1.0)       |
-| `onager_node_count(graph)`                   | Returns number of nodes                     |
-| `onager_edge_count(graph)`                   | Returns number of edges                     |
-| `onager_last_error()`                        | Returns last error message or NULL          |
+### Centrality (`onager_ctr_*`) — 7 functions
+| Function | Returns |
+|----------|---------|
+| `onager_ctr_pagerank(edges)` | node_id, rank |
+| `onager_ctr_degree(edges)` | node_id, in_degree, out_degree |
+| `onager_ctr_betweenness(edges)` | node_id, betweenness |
+| `onager_ctr_closeness(edges)` | node_id, closeness |
+| `onager_ctr_eigenvector(edges)` | node_id, eigenvector |
+| `onager_ctr_katz(edges)` | node_id, katz |
+| `onager_ctr_harmonic(edges)` | node_id, harmonic |
+
+### Community (`onager_cmm_*`) — 3 functions
+| Function | Returns |
+|----------|---------|
+| `onager_cmm_louvain(edges)` | node_id, community |
+| `onager_cmm_components(edges)` | node_id, component |
+| `onager_cmm_label_prop(edges)` | node_id, label |
+
+### Link Prediction (`onager_lnk_*`) — 4 functions
+| Function | Returns |
+|----------|---------|
+| `onager_lnk_jaccard(edges)` | node1, node2, jaccard |
+| `onager_lnk_adamic_adar(edges)` | node1, node2, score |
+| `onager_lnk_pref_attach(edges)` | node1, node2, score |
+| `onager_lnk_resource_alloc(edges)` | node1, node2, score |
+
+### Metrics (`onager_mtr_*`) — 5 functions
+| Function | Returns |
+|----------|---------|
+| `onager_mtr_diameter(edges)` | diameter |
+| `onager_mtr_radius(edges)` | radius |
+| `onager_mtr_avg_clustering(edges)` | avg_clustering |
+| `onager_mtr_avg_path_length(edges)` | avg_path_length |
+| `onager_mtr_transitivity(edges)` | transitivity |
+
+### Paths (`onager_pth_*`) — 1 function
+| Function | Returns |
+|----------|---------|
+| `onager_pth_dijkstra(edges)` | node_id, distance |
+
+### Traversal (`onager_trv_*`) — 2 functions
+| Function | Returns |
+|----------|---------|
+| `onager_trv_bfs(edges)` | node_id, order |
+| `onager_trv_dfs(edges)` | node_id, order |
+
+### Generators (`onager_gen_*`) — 3 functions
+| Function | Returns |
+|----------|---------|
+| `onager_gen_erdos_renyi(n, p)` | src, dst |
+| `onager_gen_barabasi_albert(n, m)` | src, dst |
+| `onager_gen_watts_strogatz(n, k, beta)` | src, dst |
 
 ---
 
-### Documentation
+## Input Format
 
-See the [ROADMAP.md](ROADMAP.md) for planned features and development status.
+All analysis functions accept edge tables with positional columns:
+- **Column 1**: Source node (BIGINT)
+- **Column 2**: Destination node (BIGINT)
+
+```sql
+SELECT * FROM onager_ctr_pagerank((SELECT a, b FROM my_edges));
+```
 
 ---
 
-### Contributing
+## License
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to make a contribution.
+MIT or Apache 2.0 — your choice.
 
-### License
-
-Onager is available under either of the following licenses:
-
-* MIT License ([LICENSE-MIT](LICENSE-MIT))
-* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
-
-### Acknowledgements
+## Acknowledgements
 
 * Graph algorithms powered by [graphina](https://github.com/habedi/graphina)

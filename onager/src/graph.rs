@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use graphina::core::types::{Graph, Digraph, NodeId};
+use graphina::core::types::{Digraph, Graph, NodeId};
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 
@@ -102,14 +102,26 @@ impl GraphType {
     pub fn add_edge(&mut self, src: i64, dst: i64, weight: f64) -> Result<()> {
         match self {
             GraphType::Directed(w) => {
-                let src_id = w.node_mapping.get(&src).ok_or(OnagerError::NodeNotFound(src))?;
-                let dst_id = w.node_mapping.get(&dst).ok_or(OnagerError::NodeNotFound(dst))?;
+                let src_id = w
+                    .node_mapping
+                    .get(&src)
+                    .ok_or(OnagerError::NodeNotFound(src))?;
+                let dst_id = w
+                    .node_mapping
+                    .get(&dst)
+                    .ok_or(OnagerError::NodeNotFound(dst))?;
                 w.graph.add_edge(*src_id, *dst_id, weight);
                 Ok(())
             }
             GraphType::Undirected(w) => {
-                let src_id = w.node_mapping.get(&src).ok_or(OnagerError::NodeNotFound(src))?;
-                let dst_id = w.node_mapping.get(&dst).ok_or(OnagerError::NodeNotFound(dst))?;
+                let src_id = w
+                    .node_mapping
+                    .get(&src)
+                    .ok_or(OnagerError::NodeNotFound(src))?;
+                let dst_id = w
+                    .node_mapping
+                    .get(&dst)
+                    .ok_or(OnagerError::NodeNotFound(dst))?;
                 w.graph.add_edge(*src_id, *dst_id, weight);
                 Ok(())
             }
@@ -200,18 +212,18 @@ mod tests {
     fn test_add_nodes_and_edges() {
         let name = "test_graph_2";
         create_graph(name, false).unwrap();
-        
+
         add_node(name, 0).unwrap();
         add_node(name, 1).unwrap();
         add_node(name, 2).unwrap();
-        
+
         assert_eq!(node_count(name).unwrap(), 3);
-        
+
         add_edge(name, 0, 1, 1.0).unwrap();
         add_edge(name, 1, 2, 2.0).unwrap();
-        
+
         assert_eq!(edge_count(name).unwrap(), 2);
-        
+
         drop_graph(name).unwrap();
     }
 }

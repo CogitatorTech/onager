@@ -9,6 +9,7 @@ EXT_CONFIG := ${PROJ_DIR}extension_config.cmake
 EXAMPLES_DIR := docs/examples
 SHELL := /bin/bash
 PYTHON := python3
+PY_DEP_MNGR := uv
 
 # ==============================================================================
 # DuckDB Extension Build Configuration
@@ -151,3 +152,13 @@ examples: ## Run SQL examples for Onager extension
 		./build/release/duckdb < $$sql_file; \
 		echo "============================================================================"; \
 	done
+
+.PHONY: docs
+docs: ## Generate Onager MkDocs documentation
+	@echo "Generating MkDocs documentation..."
+	@source .venv/bin/activate && $(PY_DEP_MNGR) run mkdocs build --config-file mkdocs.yml
+
+.PHONY: docs-serve
+docs-serve: ## Serve Onager MkDocs documentation locally
+	@echo "Serving MkDocs documentation locally..."
+	@source .venv/bin/activate && $(PY_DEP_MNGR) run mkdocs serve --config-file mkdocs.yml

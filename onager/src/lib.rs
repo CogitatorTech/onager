@@ -3,6 +3,7 @@
 //! This crate provides graph analytics capabilities within DuckDB,
 //! powered by the graphina library.
 
+pub mod algorithms;
 pub mod error;
 pub mod ffi;
 pub mod graph;

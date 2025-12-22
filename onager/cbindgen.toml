@@ -30,20 +30,9 @@ must_use = "MUST_USE_ENUM"
 must_use = "MUST_USE_FUNC"
 prefix = ""
 
-# Export settings
+# Export settings (let cbindingen auto-export all #[no_mangle] functions)
 [export]
-include = [
-    "onager_get_version",
-    "onager_free",
-    "onager_last_error",
-    "onager_create_graph",
-    "onager_drop_graph",
-    "onager_list_graphs",
-    "onager_add_node",
-    "onager_add_edge",
-    "onager_node_count",
-    "onager_edge_count"
-]
+include = []
 
 # Type mappings
 [parse]
