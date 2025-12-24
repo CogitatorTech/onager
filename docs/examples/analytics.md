@@ -103,7 +103,7 @@ where node_id > 1000;  -- Filter to items only
 
 ## Network Health Metrics
 
-### Comprehensive Network Summary
+### Detailed Network Summary
 
 ```sql
 -- Get network health metrics

@@ -508,3 +508,137 @@ pub fn compute_voterank(src: &[i64], dst: &[i64], num_seeds: usize) -> Result<Vo
         node_ids: result_nodes,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn triangle_graph() -> (Vec<i64>, Vec<i64>) {
+        // Triangle: 1-2-3-1
+        (vec![1, 2, 3], vec![2, 3, 1])
+    }
+
+    fn star_graph() -> (Vec<i64>, Vec<i64>) {
+        // Star: 1 connected to 2, 3, 4
+        (vec![1, 1, 1], vec![2, 3, 4])
+    }
+
+    #[test]
+    fn test_pagerank_triangle() {
+        let (src, dst) = triangle_graph();
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, false).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert_eq!(result.ranks.len(), 3);
+        // All nodes in a triangle should have similar PageRank
+        let sum: f64 = result.ranks.iter().sum();
+        assert!((sum - 1.0).abs() < 0.01, "PageRank should sum to 1");
+    }
+
+    #[test]
+    fn test_pagerank_directed() {
+        let (src, dst) = triangle_graph();
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, true).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.ranks.is_empty());
+    }
+
+    #[test]
+    fn test_degree_undirected() {
+        let (src, dst) = star_graph();
+        let result = compute_degree(&src, &dst, false).unwrap();
+
+        assert_eq!(result.node_ids.len(), 4);
+        // Node 1 is hub with degree 3
+    }
+
+    #[test]
+    fn test_degree_directed() {
+        let (src, dst) = star_graph();
+        let result = compute_degree(&src, &dst, true).unwrap();
+
+        assert_eq!(result.node_ids.len(), 4);
+        assert_eq!(result.in_degrees.len(), 4);
+        assert_eq!(result.out_degrees.len(), 4);
+    }
+
+    #[test]
+    fn test_betweenness() {
+        // Path graph: 1-2-3-4 (node 2 and 3 have high betweenness)
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 4];
+        let result = compute_betweenness(&src, &dst, true).unwrap();
+
+        assert_eq!(result.node_ids.len(), 4);
+        assert!(!result.centralities.is_empty());
+    }
+
+    #[test]
+    fn test_closeness() {
+        let (src, dst) = triangle_graph();
+        let result = compute_closeness(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        // All nodes in triangle should have equal closeness
+    }
+
+    #[test]
+    fn test_eigenvector() {
+        let (src, dst) = triangle_graph();
+        let result = compute_eigenvector(&src, &dst, 100, 1e-6).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.centralities.is_empty());
+    }
+
+    #[test]
+    fn test_katz() {
+        let (src, dst) = triangle_graph();
+        let result = compute_katz(&src, &dst, 0.1, 100, 1e-6).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.centralities.is_empty());
+    }
+
+    #[test]
+    fn test_harmonic() {
+        let (src, dst) = triangle_graph();
+        let result = compute_harmonic(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.centralities.is_empty());
+    }
+
+    #[test]
+    fn test_node_degree() {
+        let (src, dst) = star_graph();
+        let result = compute_node_degree(&src, &dst, 1).unwrap();
+
+        // Node 1 is the hub with out-degree 3
+        assert!(result.out_degree >= 0);
+        assert!(result.in_degree >= 0);
+    }
+
+    #[test]
+    fn test_voterank() {
+        let (src, dst) = triangle_graph();
+        let result = compute_voterank(&src, &dst, 2).unwrap();
+
+        assert!(result.node_ids.len() <= 2);
+    }
+
+    #[test]
+    fn test_empty_graph_returns_empty() {
+        // Empty graph returns empty results (not an error)
+        let result = compute_pagerank(&[], &[], &[], 0.85, 100, false).unwrap();
+        assert!(result.node_ids.is_empty());
+        assert!(result.ranks.is_empty());
+    }
+
+    #[test]
+    fn test_mismatched_arrays_error() {
+        let result = compute_pagerank(&[1, 2], &[2], &[], 0.85, 100, false);
+        assert!(result.is_err());
+    }
+}

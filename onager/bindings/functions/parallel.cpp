@@ -2,13 +2,67 @@
  * @file parallel.cpp
  * @brief Parallel algorithm table functions for Onager DuckDB extension.
  *
- * Parallel BFS, Shortest Paths, Connected Components, Clustering Coefficients, Triangle Count.
+ * Parallel PageRank, BFS, Shortest Paths, Connected Components, Clustering Coefficients, Triangle Count.
  */
 #include "functions.hpp"
 
 namespace duckdb {
 
 using namespace onager;
+
+// =============================================================================
+// Parallel PageRank
+// =============================================================================
+
+struct ParallelPageRankBindData : public TableFunctionData {
+  double damping = 0.85;
+  int64_t iterations = 100;
+  bool directed = false;
+};
+struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
+  std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
+  std::vector<double> result_ranks;
+  idx_t output_idx = 0; bool computed = false;
+  idx_t MaxThreads() const override { return 1; }
+};
+
+static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<ParallelPageRankBindData>();
+  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_pagerank requires 2 columns");
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "damping") bd->damping = kv.second.GetValue<double>();
+    if (kv.first == "iterations") bd->iterations = kv.second.GetValue<int64_t>();
+    if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  }
+  rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
+  rt.push_back(LogicalType::DOUBLE); nm.push_back("rank");
+  return std::move(bd);
+}
+static unique_ptr<GlobalTableFunctionState> ParallelPageRankInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelPageRankGlobalState>(); }
+static OperatorResultType ParallelPageRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
+  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
+  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+}
+static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<ParallelPageRankBindData>(); auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
+  if (!gs.computed) {
+    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.directed, nullptr, nullptr);
+    if (nc < 0) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
+    gs.result_nodes.resize(nc); gs.result_ranks.resize(nc);
+    ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    gs.computed = true;
+  }
+  idx_t rem = gs.result_nodes.size() - gs.output_idx;
+  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
+  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto r = FlatVector::GetData<double>(output.data[1]);
+  for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; r[i] = gs.result_ranks[gs.output_idx+i]; }
+  gs.output_idx += to; output.SetCardinality(to);
+  return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
+}
 
 // =============================================================================
 // Parallel BFS
@@ -234,6 +288,14 @@ static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, 
 namespace onager {
 
 void RegisterParallelFunctions(ExtensionLoader &loader) {
+  TableFunction par_pr("onager_par_pagerank", {LogicalType::TABLE}, nullptr, ParallelPageRankBind, ParallelPageRankInitGlobal);
+  par_pr.in_out_function = ParallelPageRankInOut;
+  par_pr.in_out_function_final = ParallelPageRankFinal;
+  par_pr.named_parameters["damping"] = LogicalType::DOUBLE;
+  par_pr.named_parameters["iterations"] = LogicalType::BIGINT;
+  par_pr.named_parameters["directed"] = LogicalType::BOOLEAN;
+  loader.RegisterFunction(par_pr);
+
   TableFunction par_bfs("onager_par_bfs", {LogicalType::TABLE}, nullptr, ParallelBfsBind, ParallelBfsInitGlobal);
   par_bfs.in_out_function = ParallelBfsInOut;
   par_bfs.in_out_function_final = ParallelBfsFinal;

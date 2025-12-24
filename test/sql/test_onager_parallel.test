@@ -14,6 +14,12 @@ create table test_edges as select * from (values
 
 # Test parallel BFS returns nodes
 query I
+select count(*) > 0 from onager_par_pagerank((select src, dst from test_edges))
+----
+1
+
+# Test parallel BFS returns nodes
+query I
 select count(*) > 0 from onager_par_bfs((select src, dst from test_edges), source := 1)
 ----
 1

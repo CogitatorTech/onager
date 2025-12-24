@@ -177,3 +177,29 @@ pub extern "C" fn onager_compute_assortativity(
         }
     }
 }
+
+/// Compute graph density.
+/// For directed=true: density = edges / (nodes * (nodes - 1))
+/// For directed=false: density = 2 * edges / (nodes * (nodes - 1))
+#[no_mangle]
+pub extern "C" fn onager_compute_graph_density(
+    src_ptr: *const i64,
+    dst_ptr: *const i64,
+    edge_count: usize,
+    directed: bool,
+) -> f64 {
+    clear_last_error();
+    if src_ptr.is_null() || dst_ptr.is_null() {
+        set_last_error("Null pointer");
+        return f64::NAN;
+    }
+    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+    match algorithms::compute_graph_density(src, dst, directed) {
+        Ok(v) => v,
+        Err(e) => {
+            set_last_error(&e.to_string());
+            f64::NAN
+        }
+    }
+}

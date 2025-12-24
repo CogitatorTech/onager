@@ -55,7 +55,7 @@ nav:
           - Community Detection: guide/community.md
           - Link Prediction: guide/links.md
           - Graph Metrics: guide/metrics.md
-          - Traversal & Paths: guide/traversal.md
+          - Traversal and Paths: guide/traversal.md
           - Graph Generators: guide/generators.md
           - Subgraph Operations: guide/subgraphs.md
           - Parallel Algorithms: guide/parallel.md

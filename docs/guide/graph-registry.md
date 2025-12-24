@@ -36,19 +36,21 @@ select onager_add_edge('social', 2, 3, 1.0);
 
 ```sql
 -- Get graph statistics
-select onager_node_count('social');  -- 3
-select onager_edge_count('social');  -- 3
+select onager_node_count('social'); -- 3
+select onager_edge_count('social');
+-- 3
 
 -- Query node degrees
-select onager_node_in_degree('social', 3);   -- 2 (from nodes 1 and 2)
-select onager_node_out_degree('social', 1);  -- 2 (to nodes 2 and 3)
+select onager_node_in_degree('social', 3); -- 2 (from nodes 1 and 2)
+select onager_node_out_degree('social', 1); -- 2 (to nodes 2 and 3)
 ```
 
 ## Managing Graphs
 
 ```sql
 -- List all graphs
-select onager_list_graphs();  -- '["social", "network"]'
+select onager_list_graphs();
+-- '["social", "network"]'
 
 -- Delete a graph
 select onager_drop_graph('social');
@@ -70,14 +72,15 @@ select onager_drop_graph('social');
 select onager_create_graph('friends', true);
 
 -- Bulk load from table
-select onager_add_node('friends', user_id) from users;
-select onager_add_edge('friends', follower_id, followed_id, 1.0) from follows;
+select onager_add_node('friends', user_id)
+from users;
+select onager_add_edge('friends', follower_id, followed_id, 1.0)
+from follows;
 
 -- Query influential users (high out-degree)
 select user_id, onager_node_out_degree('friends', user_id) as followers
 from users
-order by followers desc
-limit 10;
+order by followers desc limit 10;
 
 -- Cleanup
 select onager_drop_graph('friends');

@@ -271,6 +271,49 @@ static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, Tabl
 }
 
 // =============================================================================
+// Graph Density
+// =============================================================================
+
+struct DensityBindData : public TableFunctionData { bool directed = false; };
+struct DensityGlobalState : public GlobalTableFunctionState {
+  std::vector<int64_t> src_nodes, dst_nodes;
+  double result = 0.0;
+  bool computed = false, output_done = false;
+  idx_t MaxThreads() const override { return 1; }
+};
+
+static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_density requires 2 columns");
+  rt.push_back(LogicalType::DOUBLE); nm.push_back("density");
+  auto bd = make_uniq<DensityBindData>();
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  }
+  return bd;
+}
+static unique_ptr<GlobalTableFunctionState> DensityInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DensityGlobalState>(); }
+static OperatorResultType DensityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &gs = data.global_state->Cast<DensityGlobalState>();
+  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
+  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+}
+static OperatorFinalizeResultType DensityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &gs = data.global_state->Cast<DensityGlobalState>();
+  auto &bd = data.bind_data->Cast<DensityBindData>();
+  if (!gs.computed) {
+    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    gs.result = ::onager::onager_compute_graph_density(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
+    if (std::isnan(gs.result)) throw InvalidInputException("Density failed: " + GetOnagerError());
+    gs.computed = true;
+  }
+  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  FlatVector::GetData<double>(output.data[0])[0] = gs.result;
+  output.SetCardinality(1); gs.output_done = true;
+  return OperatorFinalizeResultType::FINISHED;
+}
+
+// =============================================================================
 // Registration
 // =============================================================================
 
@@ -311,6 +354,12 @@ void RegisterMetricFunctions(ExtensionLoader &loader) {
   assortativity.in_out_function = AssortativityInOut;
   assortativity.in_out_function_final = AssortativityFinal;
   loader.RegisterFunction(assortativity);
+
+  TableFunction density("onager_mtr_density", {LogicalType::TABLE}, nullptr, DensityBind, DensityInitGlobal);
+  density.in_out_function = DensityInOut;
+  density.in_out_function_final = DensityFinal;
+  density.named_parameters["directed"] = LogicalType::BOOLEAN;
+  loader.RegisterFunction(density);
 }
 
 } // namespace onager

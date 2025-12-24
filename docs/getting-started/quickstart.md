@@ -1,85 +1,114 @@
+---
+title: Quick Start
+description: Get up and running with Onager in 5 minutes.
+---
+
 # Quick Start
 
-Get up and running with Onager in 5 minutes.
+This guide walks you through your first graph analysis with Onager.
 
-## 1. Start DuckDB with Onager
-
-```bash
-./build/release/duckdb
-```
-
-## 2. Create Edge Data
-
-Onager works with edge tables — any table with two columns representing source and destination nodes:
+## 1. Install and Load
 
 ```sql
-create table edges as select * from (values
-  (1::bigint, 2::bigint),
-  (2, 3),
-  (3, 1),
-  (3, 4),
-  (4, 5)
-) t(src, dst);
+install
+onager from community;
+load
+onager;
 ```
 
-## 3. Run Graph Algorithms
+## 2. Create Some Edge Data
 
-### PageRank
+Onager works with edge tables — any table with source and destination columns:
 
 ```sql
-select * from onager_ctr_pagerank((select src, dst from edges));
+create table edges as
+select *
+from (values (1::bigint, 2::bigint),
+             (2, 3),
+             (3, 1),
+             (3, 4),
+             (4, 5),
+             (5, 6)) t(src, dst);
 ```
 
-```
-┌─────────┬────────────────────┐
-│ node_id │        rank        │
-│  int64  │       double       │
-├─────────┼────────────────────┤
-│       1 │ 0.2156862745098039 │
-│       2 │ 0.1568627450980392 │
-│       3 │ 0.2549019607843137 │
-│       4 │ 0.2156862745098039 │
-│       5 │ 0.1568627450980392 │
-└─────────┴────────────────────┘
-```
+## 3. Find Important Nodes
 
-### Community Detection
+Use PageRank to identify the most important nodes:
 
 ```sql
-select * from onager_cmm_louvain((select src, dst from edges));
+select node_id, round(rank, 4) as importance
+from onager_ctr_pagerank((select src, dst from edges))
+order by rank desc;
 ```
 
-### Graph Diameter
+## 4. Detect Communities
+
+Find clusters of connected nodes:
 
 ```sql
-select * from onager_mtr_diameter((select src, dst from edges));
+select node_id, community
+from onager_cmm_louvain((select src, dst from edges))
+order by community, node_id;
 ```
 
-## 4. Generate Test Graphs
+## 5. Explore Graph Structure
+
+Measure network properties:
 
 ```sql
--- Random graph with 100 nodes, 10% edge probability
-select * from onager_gen_erdos_renyi(100, 0.1, seed := 42) limit 5;
+-- How many hops across the network?
+select diameter
+from onager_mtr_diameter((select src, dst from edges));
+
+-- How clustered is it?
+select round(avg_clustering, 4) as clustering
+from onager_mtr_avg_clustering((select src, dst from edges));
+```
+
+## 6. Find Shortest Paths
+
+Calculate distances from a starting node:
+
+```sql
+select node_id, distance
+from onager_pth_dijkstra((select src, dst from edges), source := 1)
+order by distance;
+```
+
+## Working with Real Data
+
+Import your edge data from any source DuckDB supports:
+
+```sql
+-- From a CSV file
+create table my_edges as
+select *
+from read_csv('edges.csv');
+
+-- From a Parquet file
+create table my_edges as
+select *
+from read_parquet('edges.parquet');
+
+-- Run PageRank on your data
+select *
+from onager_ctr_pagerank((select source_id as src, target_id as dst
+                          from my_edges));
 ```
 
 ## Input Format
 
-All analysis functions accept edge data as:
-
-- **Column 1**: Source node (`bigint`)
-- **Column 2**: Destination node (`bigint`)
-
-Use a subquery to select the edge columns:
+All functions expect edges as a subquery with two bigint columns:
 
 ```sql
--- From any table with edge data
-select * from onager_ctr_pagerank((
-  select from_user, to_user from follows
-));
+select *
+from onager_function_name((select source_column as src, target_column as dst
+                           from your_table));
 ```
 
 ## Next Steps
 
-- [Centrality Algorithms](../guide/centrality.md)
-- [Community Detection](../guide/community.md)
-- [SQL Function Reference](../reference/sql-functions.md)
+- [Centrality Algorithms](../guide/centrality.md) — Find important nodes
+- [Community Detection](../guide/community.md) — Discover clusters
+- [Graph Metrics](../guide/metrics.md) — Measure network properties
+- [SQL Function Reference](../reference/sql-functions.md) — All functions

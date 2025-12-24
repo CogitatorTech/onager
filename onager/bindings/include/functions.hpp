@@ -33,6 +33,7 @@ inline std::string GetOnagerError() {
 // Forward declarations for modular function registration
 void RegisterScalarFunctions(ExtensionLoader &loader);
 void RegisterCentralityFunctions(ExtensionLoader &loader);
+void RegisterAllCentralityFunctions(ExtensionLoader &loader);
 void RegisterCommunityFunctions(ExtensionLoader &loader);
 void RegisterTraversalFunctions(ExtensionLoader &loader);
 void RegisterGeneratorFunctions(ExtensionLoader &loader);

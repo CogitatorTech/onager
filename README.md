@@ -7,7 +7,7 @@
 <h2>Onager</h2>
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/CogitatorTech/onager/tests.yml?label=tests&style=flat&labelColor=282c34&logo=github)](https://github.com/CogitatorTech/onager/actions/workflows/tests.yml)
-[![Code Quality](https://img.shields.io/codefactor/grade/github/CogitatorTech/onager?label=quality&style=flat&labelColor=282c34&logo=codefactor)](https://www.codefactor.io/repository/github/CogitatorTech/onager)
+[![Code Quality](https://img.shields.io/codefactor/grade/github/CogitatorTech/onager?label=code%20quality&style=flat&labelColor=282c34&logo=codefactor)](https://www.codefactor.io/repository/github/CogitatorTech/onager)
 [![Docs](https://img.shields.io/badge/docs-read-blue?style=flat&labelColor=282c34&logo=read-the-docs)](https://cogitatortech.github.io/onager/)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?style=flat&labelColor=282c34&logo=open-source-initiative)](https://github.com/CogitatorTech/onager)
 
@@ -17,23 +17,16 @@ A Graph Analytics Toolbox for DuckDB
 
 ---
 
-Onager is a DuckDB extension that brings powerful graph algorithms directly to SQL.
-It is built on [Graphina](https://github.com/CogitatorTech/graphina), a high-performance Rust graph analytics library,
-and exposes 30+ table functions for centrality analysis, community detection, pathfinding, and more.
-
-Onager lets you analyze graph-structured data without leaving DuckDB — no external tools, no data exports, just SQL.
+Onager is a DuckDB extension that adds a large number of graph analytics functions to DuckDB,
+including centrality measures, community detection algorithms, pathfinding algorithms, graph metrics,
+and graph generators.
+Onager is written in Rust and uses [Graphina](https://github.com/habedi/graphina) graph library under the hood.
 
 ### Features
 
-- **30+ SQL table functions** for graph analytics
-- **Centrality algorithms**: PageRank, betweenness, closeness, eigenvector, Katz, harmonic, VoteRank
-- **Community detection**: Louvain, label propagation, Girvan-Newman, spectral clustering, Infomap
-- **Pathfinding**: Dijkstra, Bellman-Ford, BFS, DFS, Floyd-Warshall
-- **Graph metrics**: diameter, radius, clustering coefficients, transitivity, assortativity
-- **Parallel algorithms**: parallel BFS, shortest paths, components, clustering, triangle counting
-- **Subgraph operations**: ego graphs, k-hop neighbors, induced subgraphs
-- **Graph generators**: Erdős-Rényi, Barabási-Albert, Watts-Strogatz
-- **Approximation algorithms**: max clique, independent set, vertex cover
+- Adds over 30 popular graph algorithms as SQL functions
+- Supports both directed and undirected graphs
+- Supports weighted and unweighted graphs
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
@@ -86,21 +79,24 @@ make release
 #### Trying Onager
 
 ```sql
--- create an edge table
-create table edges as select * from (values
-  (1::bigint, 2::bigint), (2, 3), (3, 1), (3, 4)
-) t(src, dst);
+-- Create an edge table
+create table edges as
+select * from
+             (values (1::bigint, 2::bigint),
+             (2, 3),
+             (3, 1),
+             (3, 4)) t(src, dst);
 
--- compute PageRank
+-- Compute PageRank
 select * from onager_ctr_pagerank((select src, dst from edges));
 
--- detect communities
+-- Detect communities
 select * from onager_cmm_louvain((select src, dst from edges));
 
--- find shortest paths
+-- Find shortest paths
 select * from onager_pth_dijkstra((select src, dst from edges), source := 1);
 
--- generate a random graph
+-- Generate a random graph
 select * from onager_gen_erdos_renyi(100, 0.1, seed := 42);
 ```
 
@@ -110,7 +106,7 @@ select * from onager_gen_erdos_renyi(100, 0.1, seed := 42);
 
 ### Documentation
 
-Check out the [docs](https://cogitatortech.github.io/minish/) directory for the API documentation and examples.
+Check out the [docs](https://cogitatortech.github.io/onager/) directory for the API documentation and examples.
 
 ---
 

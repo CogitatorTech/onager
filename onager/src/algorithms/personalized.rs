@@ -102,3 +102,93 @@ pub fn compute_personalized_pagerank(
     }
     Ok(PersonalizedPageRankResult { node_ids, scores })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn triangle_graph() -> (Vec<i64>, Vec<i64>) {
+        // Triangle: 1-2-3-1
+        (vec![1, 2, 3], vec![2, 3, 1])
+    }
+
+    #[test]
+    fn test_personalized_pagerank_basic() {
+        let (src, dst) = triangle_graph();
+        let personalization = vec![(1, 1.0)]; // Bias towards node 1
+        let result =
+            compute_personalized_pagerank(&src, &dst, &personalization, 0.85, 100, 1e-6).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert_eq!(result.scores.len(), 3);
+
+        // Scores should sum to approximately 1
+        let sum: f64 = result.scores.iter().sum();
+        assert!((sum - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_personalized_pagerank_empty_personalization() {
+        let (src, dst) = triangle_graph();
+        let personalization: Vec<(i64, f64)> = vec![];
+        let result =
+            compute_personalized_pagerank(&src, &dst, &personalization, 0.85, 100, 1e-6).unwrap();
+
+        // With no personalization, should work like regular PageRank
+        assert_eq!(result.node_ids.len(), 3);
+    }
+
+    #[test]
+    fn test_personalized_pagerank_multiple_sources() {
+        let (src, dst) = triangle_graph();
+        let personalization = vec![(1, 0.5), (2, 0.5)]; // Split between nodes 1 and 2
+        let result =
+            compute_personalized_pagerank(&src, &dst, &personalization, 0.85, 100, 1e-6).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+    }
+
+    #[test]
+    fn test_personalized_pagerank_star_graph() {
+        // Star: hub 1 connected to 2, 3, 4
+        let src = vec![1, 1, 1];
+        let dst = vec![2, 3, 4];
+        let personalization = vec![(1, 1.0)]; // Bias towards hub
+        let result =
+            compute_personalized_pagerank(&src, &dst, &personalization, 0.85, 100, 1e-6).unwrap();
+
+        assert_eq!(result.node_ids.len(), 4);
+    }
+
+    #[test]
+    fn test_personalized_pagerank_empty_graph_error() {
+        let result = compute_personalized_pagerank(&[], &[], &[], 0.85, 100, 1e-6);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_personalized_pagerank_invalid_damping() {
+        let (src, dst) = triangle_graph();
+
+        // damping >= 1 should fail
+        let result = compute_personalized_pagerank(&src, &dst, &[], 1.0, 100, 1e-6);
+        assert!(result.is_err());
+
+        // damping <= 0 should fail
+        let result2 = compute_personalized_pagerank(&src, &dst, &[], 0.0, 100, 1e-6);
+        assert!(result2.is_err());
+    }
+
+    #[test]
+    fn test_personalized_pagerank_invalid_max_iter() {
+        let (src, dst) = triangle_graph();
+        let result = compute_personalized_pagerank(&src, &dst, &[], 0.85, 0, 1e-6);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_personalized_pagerank_mismatched_arrays() {
+        let result = compute_personalized_pagerank(&[1, 2], &[2], &[], 0.85, 100, 1e-6);
+        assert!(result.is_err());
+    }
+}

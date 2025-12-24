@@ -55,6 +55,12 @@ select count(*) > 0 from onager_ctr_eigenvector((select src, dst from test_edges
 ----
 1
 
+# Test VoteRank
+query I
+select count(*) > 0 from onager_ctr_voterank((select src, dst from test_edges), num_seeds := 3)
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

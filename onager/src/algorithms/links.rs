@@ -207,3 +207,100 @@ pub fn compute_resource_allocation(src: &[i64], dst: &[i64]) -> Result<LinkPredi
         scores,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn triangle_with_extra() -> (Vec<i64>, Vec<i64>) {
+        // Triangle 1-2-3 plus node 4 connected to 3
+        (vec![1, 2, 3, 3], vec![2, 3, 1, 4])
+    }
+
+    #[test]
+    fn test_jaccard_basic() {
+        let (src, dst) = triangle_with_extra();
+        let result = compute_jaccard(&src, &dst).unwrap();
+
+        // Should return pairs with their Jaccard coefficients
+        assert!(!result.node1.is_empty());
+        assert_eq!(result.node1.len(), result.node2.len());
+        assert_eq!(result.node1.len(), result.scores.len());
+
+        // All Jaccard coefficients should be in [0, 1]
+        for &score in &result.scores {
+            assert!(score >= 0.0 && score <= 1.0);
+        }
+    }
+
+    #[test]
+    fn test_adamic_adar_basic() {
+        let (src, dst) = triangle_with_extra();
+        let result = compute_adamic_adar(&src, &dst).unwrap();
+
+        assert!(!result.node1.is_empty());
+        assert_eq!(result.node1.len(), result.node2.len());
+        assert_eq!(result.node1.len(), result.scores.len());
+
+        // Adamic-Adar scores should be non-negative
+        for &score in &result.scores {
+            assert!(score >= 0.0);
+        }
+    }
+
+    #[test]
+    fn test_preferential_attachment_basic() {
+        let (src, dst) = triangle_with_extra();
+        let result = compute_preferential_attachment(&src, &dst).unwrap();
+
+        assert!(!result.node1.is_empty());
+        assert_eq!(result.node1.len(), result.node2.len());
+        assert_eq!(result.node1.len(), result.scores.len());
+
+        // Preferential attachment scores should be non-negative
+        for &score in &result.scores {
+            assert!(score >= 0.0);
+        }
+    }
+
+    #[test]
+    fn test_resource_allocation_basic() {
+        let (src, dst) = triangle_with_extra();
+        let result = compute_resource_allocation(&src, &dst).unwrap();
+
+        assert!(!result.node1.is_empty());
+        assert_eq!(result.node1.len(), result.node2.len());
+        assert_eq!(result.node1.len(), result.scores.len());
+
+        // Resource allocation scores should be non-negative
+        for &score in &result.scores {
+            assert!(score >= 0.0);
+        }
+    }
+
+    #[test]
+    fn test_empty_graph_error() {
+        let result = compute_jaccard(&[], &[]);
+        assert!(result.is_err());
+
+        let result2 = compute_adamic_adar(&[], &[]);
+        assert!(result2.is_err());
+    }
+
+    #[test]
+    fn test_mismatched_arrays_error() {
+        let result = compute_jaccard(&[1, 2], &[2]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_jaccard_on_triangle() {
+        // In a triangle, all pairs have same number of common neighbors
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 1];
+        let result = compute_jaccard(&src, &dst).unwrap();
+
+        // All nodes in triangle have 2 neighbors each
+        assert!(!result.scores.is_empty());
+    }
+}

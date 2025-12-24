@@ -20,19 +20,19 @@ select count(*) > 0 from onager_sub_ego_graph((select src, dst from test_edges),
 
 # Test k-hop neighbors returns nodes
 query I
-select count(*) > 0 from onager_sub_k_hop_neighbors((select src, dst from test_edges), start := 1, k := 2)
+select count(*) > 0 from onager_sub_k_hop((select src, dst from test_edges), start := 1, k := 2)
 ----
 1
 
 # Test k-hop radius 0 returns just the start node
 query I
-select count(*) from onager_sub_k_hop_neighbors((select src, dst from test_edges), start := 1, k := 0)
+select count(*) from onager_sub_k_hop((select src, dst from test_edges), start := 1, k := 0)
 ----
 1
 
 # Test k-hop with larger radius
 query I
-select count(*) >= 3 from onager_sub_k_hop_neighbors((select src, dst from test_edges), start := 1, k := 2)
+select count(*) >= 3 from onager_sub_k_hop((select src, dst from test_edges), start := 1, k := 2)
 ----
 1
 

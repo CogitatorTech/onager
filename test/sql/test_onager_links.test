@@ -1,0 +1,30 @@
+# group: [onager]
+
+require onager
+# Test suite for Onager link prediction algorithms
+
+statement ok
+pragma enable_verification
+
+# Create test edge data - triangle with extra node
+statement ok
+create table test_edges as select * from (values
+  (1::bigint, 2::bigint), (2, 3), (3, 1),
+  (1, 4)
+) t(src, dst)
+
+# Test Jaccard Coefficient
+query I
+select count(*) > 0 from onager_lnk_jaccard((select src, dst from test_edges))
+----
+1
+
+# Test Adamic-Adar Index
+query I
+select count(*) > 0 from onager_lnk_adamic_adar((select src, dst from test_edges))
+----
+1
+
+# Cleanup
+statement ok
+drop table test_edges

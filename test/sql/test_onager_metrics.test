@@ -50,6 +50,18 @@ select assortativity is not null from onager_mtr_assortativity((select src, dst 
 ----
 true
 
+# Test Average Path Length
+query I
+select avg_path_length > 0 from onager_mtr_avg_path_length((select src, dst from test_edges))
+----
+true
+
+# Test Graph Density (undirected)
+query I
+select density > 0 from onager_mtr_density((select src, dst from test_edges))
+----
+true
+
 # Cleanup
 statement ok
 drop table test_edges

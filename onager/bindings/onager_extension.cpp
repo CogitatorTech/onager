@@ -22,7 +22,7 @@ void OnagerExtension::Load(ExtensionLoader &loader) {
 
   // Register all functions from modular files
   onager::RegisterScalarFunctions(loader);
-  onager::RegisterCentralityFunctions(loader);
+  onager::RegisterAllCentralityFunctions(loader);
   onager::RegisterCommunityFunctions(loader);
   onager::RegisterTraversalFunctions(loader);
   onager::RegisterGeneratorFunctions(loader);

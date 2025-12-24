@@ -48,8 +48,8 @@ It outlines features to be implemented and their current status.
 * [x] Transitivity (global clustering)
 * [x] Triangle count per node
 * [x] Assortativity coefficient
-* [ ] Graph density
-* [ ] Average path length
+* [x] Average path length
+* [x] Graph density
 
 ### 5. Subgraph Operations
 
@@ -69,12 +69,12 @@ It outlines features to be implemented and their current status.
 
 ### 7. Parallel Algorithms
 
+* [x] Parallel PageRank
 * [x] Parallel BFS
 * [x] Parallel shortest paths
 * [x] Parallel connected components
 * [x] Parallel clustering coefficients
 * [x] Parallel triangle counting
-* [ ] Parallel PageRank
 
 ### 8. Graph Generators
 
@@ -103,7 +103,7 @@ It outlines features to be implemented and their current status.
 
 * [x] SQL function reference
 * [x] User guide documentation
-* [x] SQL integration tests (75+ assertions)
+* [x] SQL integration tests
 * [x] Rust unit tests
 * [ ] Performance benchmarks
 * [ ] Example notebooks

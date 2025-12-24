@@ -1,51 +1,68 @@
+---
+title: Installation
+description: Install Onager in DuckDB.
+---
+
 # Installation
 
-## Building from Source
+Onager is available in the DuckDB community extensions repository. Installation takes just two commands.
 
-Onager is built as a DuckDB extension. Clone and build:
+## Install from Community Extensions
 
-```bash
-git clone --recursive https://github.com/CogitatorTech/onager.git
-cd onager
-make release
+Open any DuckDB client (CLI, Python, Node.js, etc.) and run:
+
+```sql
+install onager from community;
+load onager;
 ```
 
-This creates a DuckDB binary with Onager built-in at `./build/release/duckdb`.
+That's it. You're ready to run graph algorithms on your data.
 
-## Requirements
+## Verify Installation
 
-- **Rust** 1.70+ (for building the graph algorithms)
-- **CMake** 3.15+
-- **C++ compiler** with C++17 support
-- **Make**
-
-### Linux/macOS
-
-```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Ubuntu/Debian
-sudo apt install build-essential cmake
-
-# macOS
-xcode-select --install
-brew install cmake
+```sql
+select onager_version();
 ```
 
-## Verifying Installation
-
-```bash
-./build/release/duckdb -c "select onager_version();"
-```
-
-Should output:
+Expected output:
 
 ```
 ┌──────────────────┐
 │ onager_version() │
 │     varchar      │
 ├──────────────────┤
-│ 0.1.0-alpha.1    │
+│ 0.1.0            │
 └──────────────────┘
 ```
+
+## Loading Automatically
+
+To load Onager automatically when DuckDB starts, run:
+
+```sql
+install onager from community;
+load onager;
+set autoload_known_extensions=true;
+set autoinstall_known_extensions=true;
+```
+
+## Supported Platforms
+
+At the moment, Onager is available for:
+
+- Linux (x86_64 and aarch64)
+- macOS (x86_64 and aarch64)
+- Windows (x86_64)
+
+## Building from Source
+
+For development or to use the latest unreleased features:
+
+```bash
+git clone --recursive https://github.com/CogitatorTech/onager.git
+cd onager
+make release
+./build/release/duckdb
+```
+
+Build requirements: Rust 1.70+, CMake 3.15+, C++17 compiler.

@@ -7,7 +7,7 @@
 
 #pragma once
 
-/* Generated with cbindgen:0.26.0 */
+/* Generated with cbindgen:0.29.0 */
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -16,7 +16,7 @@
 
 #ifdef __cplusplus
 namespace onager {
-#endif // __cplusplus
+#endif  // __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
@@ -451,6 +451,17 @@ double onager_compute_assortativity(const int64_t *src_ptr,
                                     uintptr_t edge_count);
 
 /**
+ * Compute graph density.
+ * For directed=true: density = edges / (nodes * (nodes - 1))
+ * For directed=false: density = 2 * edges / (nodes * (nodes - 1))
+ */
+
+double onager_compute_graph_density(const int64_t *src_ptr,
+                                    const int64_t *dst_ptr,
+                                    uintptr_t edge_count,
+                                    bool directed);
+
+/**
  * Compute Prim's MST on weighted edge arrays.
  */
 
@@ -644,13 +655,13 @@ double onager_compute_shortest_distance(const int64_t *src_ptr,
                                         int64_t target_node);
 
 #ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #ifdef __cplusplus
-} // namespace onager
-#endif // __cplusplus
+}  // namespace onager
+#endif  // __cplusplus
 
-#endif /* ONAGER_H */
+#endif  /* ONAGER_H */
 
 /* End of generated bindings */

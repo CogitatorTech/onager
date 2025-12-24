@@ -418,9 +418,14 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   eigenvector.named_parameters["max_iter"] = LogicalType::BIGINT;
   eigenvector.named_parameters["tolerance"] = LogicalType::DOUBLE;
   loader.RegisterFunction(eigenvector);
+}
 
-  // VoteRank needs forward declarations which are below, so we register inline here
-  // The implementation is at the end of the file
+// Forward declare VoteRank registration (defined at end of file)
+void RegisterVoteRankFunction(ExtensionLoader &loader);
+
+void RegisterAllCentralityFunctions(ExtensionLoader &loader) {
+  RegisterCentralityFunctions(loader);
+  RegisterVoteRankFunction(loader);
 }
 
 } // namespace onager
@@ -478,7 +483,7 @@ static OperatorFinalizeResultType VoteRankFinal(ExecutionContext &ctx, TableFunc
 
 namespace onager {
 // Register VoteRank separately to avoid restructuring entire file
-static void RegisterVoteRankFunction(ExtensionLoader &loader) {
+void RegisterVoteRankFunction(ExtensionLoader &loader) {
   TableFunction voterank("onager_ctr_voterank", {LogicalType::TABLE}, nullptr, VoteRankBind, VoteRankInitGlobal);
   voterank.in_out_function = VoteRankInOut;
   voterank.in_out_function_final = VoteRankFinal;

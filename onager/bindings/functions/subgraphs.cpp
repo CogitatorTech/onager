@@ -167,14 +167,14 @@ void RegisterSubgraphFunctions(ExtensionLoader &loader) {
   ego_graph.named_parameters["radius"] = LogicalType::BIGINT;
   loader.RegisterFunction(ego_graph);
 
-  TableFunction k_hop("onager_sub_k_hop_neighbors", {LogicalType::TABLE}, nullptr, KHopBind, KHopInitGlobal);
+  TableFunction k_hop("onager_sub_k_hop", {LogicalType::TABLE}, nullptr, KHopBind, KHopInitGlobal);
   k_hop.in_out_function = KHopInOut;
   k_hop.in_out_function_final = KHopFinal;
   k_hop.named_parameters["start"] = LogicalType::BIGINT;
   k_hop.named_parameters["k"] = LogicalType::BIGINT;
   loader.RegisterFunction(k_hop);
 
-  TableFunction induced("onager_sub_induced_subgraph", {LogicalType::TABLE}, nullptr, InducedSubgraphBind, InducedSubgraphInitGlobal);
+  TableFunction induced("onager_sub_induced", {LogicalType::TABLE}, nullptr, InducedSubgraphBind, InducedSubgraphInitGlobal);
   induced.in_out_function = InducedSubgraphInOut;
   induced.in_out_function_final = InducedSubgraphFinal;
   loader.RegisterFunction(induced);

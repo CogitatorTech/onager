@@ -1,6 +1,7 @@
 //! Parallel algorithms FFI exports.
 //!
-//! Parallel PageRank, BFS, shortest paths, components, clustering, triangles.
+//! Parallel BFS, shortest paths, components, clustering, triangles.
+//! Note: Parallel PageRank is in centrality.rs.
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use super::common::{clear_last_error, set_last_error};

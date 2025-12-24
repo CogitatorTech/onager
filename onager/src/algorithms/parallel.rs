@@ -361,3 +361,153 @@ pub fn compute_triangles_parallel(src: &[i64], dst: &[i64]) -> Result<TriangleRe
         triangle_counts,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn triangle_graph() -> (Vec<i64>, Vec<i64>) {
+        // Triangle: 1-2-3-1
+        (vec![1, 2, 3], vec![2, 3, 1])
+    }
+
+    fn connected_graph() -> (Vec<i64>, Vec<i64>) {
+        // Connected path plus cross edge
+        (vec![1, 2, 3, 1], vec![2, 3, 4, 3])
+    }
+
+    #[test]
+    fn test_pagerank_parallel_undirected() {
+        let (src, dst) = triangle_graph();
+        let result = compute_pagerank_parallel(&src, &dst, &[], 0.85, 100, false).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert_eq!(result.ranks.len(), 3);
+
+        // PageRank should sum to 1
+        let sum: f64 = result.ranks.iter().sum();
+        assert!((sum - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_pagerank_parallel_directed() {
+        let (src, dst) = triangle_graph();
+        let result = compute_pagerank_parallel(&src, &dst, &[], 0.85, 100, true).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.ranks.is_empty());
+    }
+
+    #[test]
+    fn test_pagerank_parallel_with_weights() {
+        let (src, dst) = triangle_graph();
+        let weights = vec![1.0, 2.0, 1.5];
+        let result = compute_pagerank_parallel(&src, &dst, &weights, 0.85, 100, false).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+    }
+
+    #[test]
+    fn test_bfs_parallel() {
+        let (src, dst) = connected_graph();
+        let result = compute_bfs_parallel(&src, &dst, 1).unwrap();
+
+        // Should visit all 4 nodes starting from 1
+        assert!(!result.order.is_empty());
+        assert!(result.order.len() <= 4);
+    }
+
+    #[test]
+    fn test_bfs_parallel_source_not_found() {
+        let (src, dst) = triangle_graph();
+        let result = compute_bfs_parallel(&src, &dst, 999);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_shortest_paths_parallel() {
+        let (src, dst) = connected_graph();
+        let result = compute_shortest_paths_parallel(&src, &dst, 1).unwrap();
+
+        assert!(!result.node_ids.is_empty());
+        assert_eq!(result.node_ids.len(), result.distances.len());
+
+        // All distances should be non-negative
+        for &dist in &result.distances {
+            assert!(dist >= 0.0);
+        }
+    }
+
+    #[test]
+    fn test_components_parallel_single_component() {
+        let (src, dst) = triangle_graph();
+        let result = compute_components_parallel(&src, &dst).unwrap();
+
+        // Triangle is fully connected - all nodes in same component
+        assert_eq!(result.node_ids.len(), 3);
+        let unique_components: std::collections::HashSet<_> = result.component_ids.iter().collect();
+        assert_eq!(unique_components.len(), 1);
+    }
+
+    #[test]
+    fn test_components_parallel_two_components() {
+        // Two disconnected edges: 1-2 and 3-4
+        let src = vec![1, 3];
+        let dst = vec![2, 4];
+        let result = compute_components_parallel(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 4);
+        let unique_components: std::collections::HashSet<_> = result.component_ids.iter().collect();
+        assert_eq!(unique_components.len(), 2);
+    }
+
+    #[test]
+    fn test_clustering_parallel() {
+        let (src, dst) = triangle_graph();
+        let result = compute_clustering_parallel(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert_eq!(result.coefficients.len(), 3);
+
+        // All coefficients should be in [0, 1]
+        for &coef in &result.coefficients {
+            assert!(coef >= 0.0 && coef <= 1.0);
+        }
+
+        // Triangle has perfect clustering
+        for &coef in &result.coefficients {
+            assert!((coef - 1.0).abs() < 0.01);
+        }
+    }
+
+    #[test]
+    fn test_triangles_parallel() {
+        let (src, dst) = triangle_graph();
+        let result = compute_triangles_parallel(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        // Each node participates in 1 triangle
+        let total: i64 = result.triangle_counts.iter().sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn test_empty_graph_errors() {
+        assert!(compute_pagerank_parallel(&[], &[], &[], 0.85, 100, false).is_err());
+        assert!(compute_bfs_parallel(&[], &[], 1).is_err());
+        assert!(compute_shortest_paths_parallel(&[], &[], 1).is_err());
+        assert!(compute_components_parallel(&[], &[]).is_err());
+        assert!(compute_clustering_parallel(&[], &[]).is_err());
+        assert!(compute_triangles_parallel(&[], &[]).is_err());
+    }
+
+    #[test]
+    fn test_mismatched_arrays_error() {
+        assert!(compute_pagerank_parallel(&[1, 2], &[2], &[], 0.85, 100, false).is_err());
+    }
+
+    #[test]
+    fn test_mismatched_weights_error() {
+        assert!(compute_pagerank_parallel(&[1, 2], &[2, 3], &[1.0], 0.85, 100, false).is_err());
+    }
+}

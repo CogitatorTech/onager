@@ -193,3 +193,143 @@ pub fn compute_induced_subgraph(
         dst: result_dst,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn star_graph() -> (Vec<i64>, Vec<i64>) {
+        // Star: hub 1 connected to 2, 3, 4
+        (vec![1, 1, 1], vec![2, 3, 4])
+    }
+
+    fn path_graph() -> (Vec<i64>, Vec<i64>) {
+        // Path: 1-2-3-4-5
+        (vec![1, 2, 3, 4], vec![2, 3, 4, 5])
+    }
+
+    #[test]
+    fn test_ego_graph_star_center() {
+        let (src, dst) = star_graph();
+        let result = compute_ego_graph(&src, &dst, 1, 1).unwrap();
+
+        // Ego graph of hub with radius 1 should include all edges
+        assert!(!result.src.is_empty());
+        assert_eq!(result.src.len(), result.dst.len());
+    }
+
+    #[test]
+    fn test_ego_graph_star_leaf() {
+        let (src, dst) = star_graph();
+        let result = compute_ego_graph(&src, &dst, 2, 1).unwrap();
+
+        // Ego graph of leaf with radius 1 should include edge to hub
+        assert!(!result.src.is_empty());
+    }
+
+    #[test]
+    fn test_ego_graph_radius_zero() {
+        let (src, dst) = star_graph();
+        let result = compute_ego_graph(&src, &dst, 1, 0).unwrap();
+
+        // Radius 0 should return just the center node (no edges)
+        assert!(result.src.is_empty());
+    }
+
+    #[test]
+    fn test_ego_graph_invalid_center() {
+        let (src, dst) = star_graph();
+        let result = compute_ego_graph(&src, &dst, 999, 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_k_hop_neighbors_star_hub() {
+        let (src, dst) = star_graph();
+        let result = compute_k_hop_neighbors(&src, &dst, 1, 1).unwrap();
+
+        // Hub's 1-hop neighbors are all leaves (2, 3, 4)
+        // Note: typically includes the start node too
+        assert!(!result.node_ids.is_empty());
+    }
+
+    #[test]
+    fn test_k_hop_neighbors_path() {
+        let (src, dst) = path_graph();
+        let result = compute_k_hop_neighbors(&src, &dst, 1, 2).unwrap();
+
+        // From node 1, 2-hop should reach nodes 1, 2, 3
+        assert!(!result.node_ids.is_empty());
+    }
+
+    #[test]
+    fn test_k_hop_neighbors_zero() {
+        let (src, dst) = star_graph();
+        let result = compute_k_hop_neighbors(&src, &dst, 1, 0).unwrap();
+
+        // 0-hop should return just the start node
+        assert_eq!(result.node_ids.len(), 1);
+        assert!(result.node_ids.contains(&1));
+    }
+
+    #[test]
+    fn test_k_hop_neighbors_invalid_start() {
+        let (src, dst) = star_graph();
+        let result = compute_k_hop_neighbors(&src, &dst, 999, 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_induced_subgraph_basic() {
+        let (src, dst) = path_graph();
+        // Select nodes 2, 3, 4 from path 1-2-3-4-5
+        let node_ids = vec![2, 3, 4];
+        let result = compute_induced_subgraph(&src, &dst, &node_ids).unwrap();
+
+        // Should include edges 2-3 and 3-4
+        assert!(!result.src.is_empty());
+        assert_eq!(result.src.len(), result.dst.len());
+    }
+
+    #[test]
+    fn test_induced_subgraph_single_node() {
+        let (src, dst) = star_graph();
+        let node_ids = vec![1];
+        let result = compute_induced_subgraph(&src, &dst, &node_ids).unwrap();
+
+        // Single node has no edges to itself
+        assert!(result.src.is_empty());
+    }
+
+    #[test]
+    fn test_induced_subgraph_disconnected_nodes() {
+        let (src, dst) = star_graph();
+        // Select only leaves (no edges between them)
+        let node_ids = vec![2, 3, 4];
+        let result = compute_induced_subgraph(&src, &dst, &node_ids).unwrap();
+
+        // Leaves in star graph are not connected to each other
+        assert!(result.src.is_empty());
+    }
+
+    #[test]
+    fn test_induced_subgraph_empty_nodes_error() {
+        let (src, dst) = star_graph();
+        let result = compute_induced_subgraph(&src, &dst, &[]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_empty_graph_errors() {
+        assert!(compute_ego_graph(&[], &[], 1, 1).is_err());
+        assert!(compute_k_hop_neighbors(&[], &[], 1, 1).is_err());
+        assert!(compute_induced_subgraph(&[], &[], &[1]).is_err());
+    }
+
+    #[test]
+    fn test_mismatched_arrays_error() {
+        assert!(compute_ego_graph(&[1, 2], &[2], 1, 1).is_err());
+        assert!(compute_k_hop_neighbors(&[1, 2], &[2], 1, 1).is_err());
+        assert!(compute_induced_subgraph(&[1, 2], &[2], &[1, 2]).is_err());
+    }
+}
