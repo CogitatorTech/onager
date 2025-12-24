@@ -31,14 +31,13 @@ It outlines features to be implemented and their current status.
 * [ ] Hierarchical clustering
 * [ ] K-core decomposition
 
-### 3. Path \u0026 Traversal Algorithms
+### 3. Path and Traversal Algorithms
 
 * [x] Dijkstra shortest paths
 * [x] Bellman-Ford shortest paths
 * [x] Breadth-first search (BFS)
 * [x] Depth-first search (DFS)
 * [x] Floyd-Warshall all-pairs shortest paths
-* [ ] A* search
 * [ ] Bidirectional search
 
 ### 4. Graph Metrics
@@ -100,7 +99,7 @@ It outlines features to be implemented and their current status.
 * [ ] Common neighbors
 * [ ] Katz similarity
 
-### 11. Documentation \u0026 Testing
+### 11. Documentation and Testing
 
 * [x] SQL function reference
 * [x] User guide documentation
@@ -108,9 +107,3 @@ It outlines features to be implemented and their current status.
 * [x] Rust unit tests
 * [ ] Performance benchmarks
 * [ ] Example notebooks
-
-### 12. Distribution
-
-* [x] Linux, macOS, Windows binaries (AMD64/ARM64)
-* [x] Submission to DuckDB community extensions
-* [ ] Python wheel packaging
