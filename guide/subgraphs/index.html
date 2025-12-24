@@ -1549,7 +1549,7 @@ the specified number of hops, and all edges between them.</p>
 <h2 id="induced-subgraph">Induced Subgraph<a class="headerlink" href="#induced-subgraph" title="Permanent link">&para;</a></h2>
 <p>Given a set of nodes, returns the subgraph containing only those nodes and the edges between them. The induced subgraph
 preserves the original graph structure within the specified node set.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Extract subgraph for nodes 2,3,4,5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Extract subgraph for specific nodes using array syntax</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_sub_induced</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="n">nodes</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">]);</span>
 </code></pre></div>
@@ -1574,6 +1574,10 @@ preserves the original graph structure within the specified node set.</p>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p>[!NOTE]
+DuckDB table functions support only one subquery parameter, so use the array syntax shown above.</p>
+</blockquote>
 <hr />
 <h2 id="complete-example-neighborhood-analysis">Complete Example: Neighborhood Analysis<a class="headerlink" href="#complete-example-neighborhood-analysis" title="Permanent link">&para;</a></h2>
 <p>Analyze the local structure around a node of interest:</p>

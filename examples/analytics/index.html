@@ -1285,10 +1285,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#comprehensive-network-summary" class="md-nav__link">
+  <a href="#detailed-network-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comprehensive Network Summary
+        Detailed Network Summary
       
     </span>
   </a>
@@ -1543,10 +1543,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#comprehensive-network-summary" class="md-nav__link">
+  <a href="#detailed-network-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comprehensive Network Summary
+        Detailed Network Summary
       
     </span>
   </a>
@@ -1655,7 +1655,7 @@
 </code></pre></div>
 <hr />
 <h2 id="network-health-metrics">Network Health Metrics<a class="headerlink" href="#network-health-metrics" title="Permanent link">&para;</a></h2>
-<h3 id="comprehensive-network-summary">Comprehensive Network Summary<a class="headerlink" href="#comprehensive-network-summary" title="Permanent link">&para;</a></h3>
+<h3 id="detailed-network-summary">Detailed Network Summary<a class="headerlink" href="#detailed-network-summary" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Get network health metrics</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">select</span><span class="w"> </span><span class="s1">&#39;Diameter&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">metric</span><span class="p">,</span><span class="w"> </span><span class="n">diameter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">value</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_diameter</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>

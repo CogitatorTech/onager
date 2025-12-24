@@ -1579,17 +1579,17 @@
 </code></pre></div>
 <h2 id="working-with-real-data">Working with Real Data<a class="headerlink" href="#working-with-real-data" title="Permanent link">&para;</a></h2>
 <p>Import your edge data from any source DuckDB supports:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">-- From CSV</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">-- From a CSV file</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">my_edges</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">from</span><span class="w"> </span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;edges.csv&#39;</span><span class="p">);</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">-- From Parquet</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">-- From a Parquet file</span>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">my_edges</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">from</span><span class="w"> </span><span class="n">read_parquet</span><span class="p">(</span><span class="s1">&#39;edges.parquet&#39;</span><span class="p">);</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">-- Run analysis</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">-- Run PageRank on your data</span>
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
 <a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">source_id</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">target_id</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dst</span>
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">                          </span><span class="k">from</span><span class="w"> </span><span class="n">my_edges</span><span class="p">));</span>

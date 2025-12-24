@@ -479,10 +479,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#algorithm-categories" class="md-nav__link">
+  <a href="#algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Algorithm Categories
+        Algorithms
       
     </span>
   </a>
@@ -1396,10 +1396,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#algorithm-categories" class="md-nav__link">
+  <a href="#algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Algorithm Categories
+        Algorithms
       
     </span>
   </a>
@@ -1442,14 +1442,13 @@
   <img src="https://raw.githubusercontent.com/CogitatorTech/onager/main/logo.svg" alt="Onager Logo" width="200" />
 </p>
 
-<p>Onager is a DuckDB extension for graph analytics in SQL. Run graph algorithms directly on your edge tables — no external
-graph database required.</p>
-<p>Powered by <a href="https://github.com/CogitatorTech/graphina">Graphina</a>, a high-performance Rust graph library.</p>
+<p>Onager is a DuckDB extension that adds a large number of graph analytics functions to DuckDB,
+including centrality measures, community detection algorithms, pathfinding algorithms, graph metrics,
+and graph generators.</p>
+<p>Onager is written in Rust 🦀 and uses <a href="https://github.com/habedi/graphina">Graphina</a> graph library under the hood.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">install</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">onager</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">community</span><span class="p">;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">load</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">onager</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">install</span><span class="w"> </span><span class="n">onager</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">community</span><span class="p">;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">load</span><span class="w"> </span><span class="n">onager</span><span class="p">;</span>
 </code></pre></div>
 <h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- Create edge data</span>
@@ -1477,10 +1476,11 @@ graph database required.</p>
 <ul>
 <li>SQL-native: Run algorithms directly on DuckDB tables</li>
 <li>No ETL: Your data stays in DuckDB</li>
-<li>Fast: Rust-powered with parallel algorithms</li>
+<li>Fast: Written in Rust</li>
 <li>Simple: <code>select * from onager_function((select src, dst from edges))</code></li>
 </ul>
-<h2 id="algorithm-categories">Algorithm Categories<a class="headerlink" href="#algorithm-categories" title="Permanent link">&para;</a></h2>
+<h2 id="algorithms">Algorithms<a class="headerlink" href="#algorithms" title="Permanent link">&para;</a></h2>
+<p>Onager currently supports the following algorithms:</p>
 <table>
 <thead>
 <tr>
@@ -1491,35 +1491,35 @@ graph database required.</p>
 <tbody>
 <tr>
 <td>Centrality</td>
-<td>PageRank, degree, betweenness, closeness, eigenvector, Katz, harmonic, VoteRank</td>
+<td>PageRank, degree, betweenness, closeness, eigenvector, Katz, harmonic, and VoteRank</td>
 </tr>
 <tr>
 <td>Community</td>
-<td>Louvain, connected components, label propagation, Girvan-Newman, spectral, Infomap</td>
+<td>Louvain, connected components, label propagation, Girvan-Newman, spectral, and Infomap</td>
 </tr>
 <tr>
 <td>Paths</td>
-<td>Dijkstra, Bellman-Ford, Floyd-Warshall, BFS, DFS</td>
+<td>Dijkstra, Bellman-Ford, Floyd-Warshall, BFS, and DFS</td>
 </tr>
 <tr>
 <td>Metrics</td>
-<td>diameter, radius, clustering, transitivity, triangles, assortativity</td>
+<td>diameter, radius, clustering, transitivity, triangles, and assortativity</td>
 </tr>
 <tr>
 <td>Link Prediction</td>
-<td>Jaccard, Adamic-Adar, preferential attachment, resource allocation</td>
+<td>Jaccard, Adamic-Adar, preferential attachment, and resource allocation</td>
 </tr>
 <tr>
 <td>Subgraphs</td>
-<td>ego graph, k-hop neighbors, induced subgraph</td>
+<td>ego graph, k-hop neighbors, and induced subgraph</td>
 </tr>
 <tr>
 <td>Generators</td>
-<td>Erdős-Rényi, Barabási-Albert, Watts-Strogatz</td>
+<td>Erdős-Rényi, Barabási-Albert, and Watts-Strogatz</td>
 </tr>
 <tr>
 <td>Approximation</td>
-<td>max clique, independent set, vertex cover</td>
+<td>max clique, independent set, and vertex cover</td>
 </tr>
 </tbody>
 </table>
