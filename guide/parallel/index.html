@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="High-performance parallel graph algorithms for large-scale analysis.">
+        <meta name="description" content="High-performance algorithms using parallel execution.">
       
       
       
@@ -962,10 +962,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#when-to-use-parallel-algorithms" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use Parallel Algorithms
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-pagerank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel PageRank
       
     </span>
   </a>
@@ -1028,10 +1039,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#performance-comparison" class="md-nav__link">
+  <a href="#complete-example-large-graph-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Performance Comparison
+        Complete Example: Large Graph Analysis
       
     </span>
   </a>
@@ -1039,10 +1050,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#when-to-use-parallel-algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        When to Use Parallel Algorithms
       
     </span>
   </a>
@@ -1406,10 +1417,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#when-to-use-parallel-algorithms" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use Parallel Algorithms
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-pagerank" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel PageRank
       
     </span>
   </a>
@@ -1472,10 +1494,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#performance-comparison" class="md-nav__link">
+  <a href="#complete-example-large-graph-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Performance Comparison
+        Complete Example: Large Graph Analysis
       
     </span>
   </a>
@@ -1483,10 +1505,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#when-to-use-parallel-algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        When to Use Parallel Algorithms
       
     </span>
   </a>
@@ -1514,20 +1536,30 @@
 
 
 <h1 id="parallel-algorithms">Parallel Algorithms<a class="headerlink" href="#parallel-algorithms" title="Permanent link">&para;</a></h1>
-<p>Onager provides parallel implementations of common graph algorithms that leverage multiple CPU cores for improved performance on large graphs.</p>
-<h2 id="when-to-use-parallel-algorithms">When to Use Parallel Algorithms<a class="headerlink" href="#when-to-use-parallel-algorithms" title="Permanent link">&para;</a></h2>
-<p>Use parallel versions when:</p>
-<ul>
-<li>Your graph has <strong>1M+ edges</strong></li>
-<li>You're running algorithms on multiple sources</li>
-<li>Your workload is CPU-bound</li>
-</ul>
-<p>For smaller graphs, the sequential versions may be faster due to reduced overhead.</p>
-<h2 id="parallel-bfs">Parallel BFS<a class="headerlink" href="#parallel-bfs" title="Permanent link">&para;</a></h2>
-<p>Multi-threaded breadth-first search:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">-- Parallel BFS from node 1</span>
+<p>Parallel algorithms use multiple threads to process large graphs faster. These are optimized versions of common
+algorithms designed for better performance on multi-core systems.</p>
+<h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_bfs</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">::</span><span class="nb">bigint</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">::</span><span class="nb">bigint</span><span class="p">),</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">             </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">             </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">             </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">             </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">             </span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">             </span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">),</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">             </span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">),</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">             </span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">),</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">             </span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">),</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">             </span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">))</span><span class="w"> </span><span class="n">t</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="p">);</span>
+</code></pre></div>
+<hr />
+<h2 id="parallel-pagerank">Parallel PageRank<a class="headerlink" href="#parallel-pagerank" title="Permanent link">&para;</a></h2>
+<p>Computes PageRank centrality using parallel processing. Same semantics as the sequential version but faster on large
+graphs.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">rank</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rank</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1541,14 +1573,26 @@
 <tr>
 <td>node_id</td>
 <td>bigint</td>
-<td>Nodes in BFS traversal order</td>
+<td>Node identifier</td>
+</tr>
+<tr>
+<td>rank</td>
+<td>double</td>
+<td>PageRank score</td>
 </tr>
 </tbody>
 </table>
-<h2 id="parallel-shortest-paths">Parallel Shortest Paths<a class="headerlink" href="#parallel-shortest-paths" title="Permanent link">&para;</a></h2>
-<p>Parallel single-source shortest paths:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_shortest_paths</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<p>Optional parameters:</p>
+<ul>
+<li><code>damping</code> (default 0.85): Probability of following a link</li>
+<li><code>iterations</code> (default 100): Maximum iterations</li>
+<li><code>directed</code> (default false): Treat graph as directed</li>
+</ul>
+<hr />
+<h2 id="parallel-bfs">Parallel BFS<a class="headerlink" href="#parallel-bfs" title="Permanent link">&para;</a></h2>
+<p>Breadth-first search using parallel execution. Returns nodes in BFS order from the source.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_bfs</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1562,18 +1606,44 @@
 <tr>
 <td>node_id</td>
 <td>bigint</td>
-<td>Target node</td>
+<td>Node visited during BFS</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parallel-shortest-paths">Parallel Shortest Paths<a class="headerlink" href="#parallel-shortest-paths" title="Permanent link">&para;</a></h2>
+<p>Computes shortest path distances from a source to all reachable nodes using parallel processing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">distance</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_shortest_paths</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">distance</span><span class="p">;</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node_id</td>
+<td>bigint</td>
+<td>Node identifier</td>
 </tr>
 <tr>
 <td>distance</td>
 <td>double</td>
-<td>Distance from source</td>
+<td>Shortest distance from source</td>
 </tr>
 </tbody>
 </table>
+<hr />
 <h2 id="parallel-connected-components">Parallel Connected Components<a class="headerlink" href="#parallel-connected-components" title="Permanent link">&para;</a></h2>
-<p>Find connected components using parallel union-find:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_par_components</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>Finds connected components using a parallel union-find algorithm.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">component</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_components</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">component</span><span class="p">,</span><span class="w"> </span><span class="n">node_id</span><span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1592,13 +1662,17 @@
 <tr>
 <td>component</td>
 <td>bigint</td>
-<td>Component identifier</td>
+<td>Component ID</td>
 </tr>
 </tbody>
 </table>
+<hr />
 <h2 id="parallel-clustering-coefficients">Parallel Clustering Coefficients<a class="headerlink" href="#parallel-clustering-coefficients" title="Permanent link">&para;</a></h2>
-<p>Compute local clustering coefficients in parallel:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_par_clustering</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>Computes local clustering coefficient for each node using parallel processing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">coefficient</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">clustering</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_clustering</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">where</span><span class="w"> </span><span class="n">coefficient</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">coefficient</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1621,9 +1695,13 @@
 </tr>
 </tbody>
 </table>
+<hr />
 <h2 id="parallel-triangle-count">Parallel Triangle Count<a class="headerlink" href="#parallel-triangle-count" title="Permanent link">&para;</a></h2>
-<p>Count triangles per node using parallel computation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_par_triangles</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>Counts triangles participating at each node using parallel processing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">triangles</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_triangles</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">where</span><span class="w"> </span><span class="n">triangles</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">triangles</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1642,49 +1720,44 @@
 <tr>
 <td>triangles</td>
 <td>bigint</td>
-<td>Number of triangles containing node</td>
+<td>Number of triangles at node</td>
 </tr>
 </tbody>
 </table>
-<h2 id="performance-comparison">Performance Comparison<a class="headerlink" href="#performance-comparison" title="Permanent link">&para;</a></h2>
-<p>Example on a 10M edge graph:</p>
-<table>
-<thead>
-<tr>
-<th>Algorithm</th>
-<th>Sequential</th>
-<th>Parallel</th>
-<th>Speedup</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>BFS</td>
-<td>2.1s</td>
-<td>0.6s</td>
-<td>3.5x</td>
-</tr>
-<tr>
-<td>Connected Components</td>
-<td>3.2s</td>
-<td>0.9s</td>
-<td>3.6x</td>
-</tr>
-<tr>
-<td>Triangle Count</td>
-<td>8.5s</td>
-<td>2.2s</td>
-<td>3.9x</td>
-</tr>
-</tbody>
-</table>
-<p><em>Results vary based on graph structure and hardware.</em></p>
-<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Thread count</strong>: Onager automatically uses available CPU cores</li>
-<li><strong>Memory</strong>: Parallel algorithms require more memory for thread-local storage</li>
-<li><strong>Graph density</strong>: Parallel algorithms provide more speedup on denser graphs</li>
-</ol>
+<hr />
+<h2 id="complete-example-large-graph-analysis">Complete Example: Large Graph Analysis<a class="headerlink" href="#complete-example-large-graph-analysis" title="Permanent link">&para;</a></h2>
+<p>Use parallel algorithms for analyzing larger networks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">-- Generate a larger test graph</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">large_net</span><span class="w"> </span><span class="k">as</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_gen_barabasi_albert</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">seed</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">);</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1">-- Parallel analysis pipeline</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="k">select</span><span class="w"> </span><span class="s1">&#39;Edges&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">metric</span><span class="p">,</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="p">::</span><span class="nb">varchar</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">value</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="k">from</span><span class="w"> </span><span class="n">large_net</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="k">union</span><span class="w"> </span><span class="k">all</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="k">select</span><span class="w"> </span><span class="s1">&#39;Components&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="k">distinct</span><span class="w"> </span><span class="n">component</span><span class="p">)</span><span class="w"> </span><span class="p">::</span><span class="nb">varchar</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_components</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">large_net</span><span class="p">))</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="k">union</span><span class="w"> </span><span class="k">all</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="k">select</span><span class="w"> </span><span class="s1">&#39;Avg Clustering&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="k">avg</span><span class="p">(</span><span class="n">coefficient</span><span class="p">),</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="p">::</span><span class="nb">varchar</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_clustering</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">large_net</span><span class="p">))</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="k">union</span><span class="w"> </span><span class="k">all</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="k">select</span><span class="w"> </span><span class="s1">&#39;Total Triangles&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">sum</span><span class="p">(</span><span class="n">triangles</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">::</span><span class="nb">varchar</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_triangles</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">large_net</span><span class="p">));</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="c1">-- Find top nodes by parallel PageRank</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">rank</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_par_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">large_net</span><span class="p">))</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rank</span><span class="w"> </span><span class="k">desc</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="when-to-use-parallel-algorithms">When to Use Parallel Algorithms<a class="headerlink" href="#when-to-use-parallel-algorithms" title="Permanent link">&para;</a></h2>
+<p>Parallel algorithms provide benefits for:</p>
+<ul>
+<li>Graphs with thousands of nodes or more</li>
+<li>Analysis pipelines running multiple algorithms</li>
+<li>Batch processing of multiple graphs</li>
+</ul>
+<p>For small graphs (under 1000 nodes), sequential algorithms may be faster due to parallelization overhead.</p>
 
 
 

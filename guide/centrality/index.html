@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A Graph Analytics Toolbox for DuckDB">
+        <meta name="description" content="Identify the most important nodes in your graph.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Centrality - Onager Documentation</title>
+        <title>Centrality Algorithms - Onager Documentation</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Centrality
+              Centrality Algorithms
             
           </span>
         </div>
@@ -766,6 +766,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pagerank" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -810,6 +821,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#harmonic-centrality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Harmonic Centrality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#eigenvector-centrality" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -832,21 +854,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#harmonic-centrality" class="md-nav__link">
+  <a href="#complete-example-influencer-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Harmonic Centrality
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-find-top-influencers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: Find Top Influencers
+        Complete Example: Influencer Analysis
       
     </span>
   </a>
@@ -1406,6 +1417,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pagerank" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1450,6 +1472,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#harmonic-centrality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Harmonic Centrality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#eigenvector-centrality" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1472,21 +1505,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#harmonic-centrality" class="md-nav__link">
+  <a href="#complete-example-influencer-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Harmonic Centrality
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-find-top-influencers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: Find Top Influencers
+        Complete Example: Influencer Analysis
       
     </span>
   </a>
@@ -1514,10 +1536,22 @@
 
 
 <h1 id="centrality-algorithms">Centrality Algorithms<a class="headerlink" href="#centrality-algorithms" title="Permanent link">&para;</a></h1>
-<p>Centrality measures identify the most important nodes in a graph. Onager provides 7 centrality algorithms.</p>
+<p>Centrality measures identify the most important or influential nodes in a graph. Different algorithms capture different
+notions of "importance" - some focus on connectivity, others on information flow or structural position.</p>
+<h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
+<p>All examples use this sample social network:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p">(</span><span class="mi">1</span><span class="p">::</span><span class="nb">bigint</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">::</span><span class="nb">bigint</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span><span class="w"> </span><span class="n">t</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="p">);</span>
+</code></pre></div>
+<hr />
 <h2 id="pagerank">PageRank<a class="headerlink" href="#pagerank" title="Permanent link">&para;</a></h2>
-<p>Measures node importance based on the link structure of the graph.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>PageRank measures importance based on the link structure. A node is important if many important nodes point to it.
+Originally developed by Google for ranking web pages.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">rank</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rank</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1540,9 +1574,26 @@
 </tr>
 </tbody>
 </table>
+<p>Optional parameters:</p>
+<ul>
+<li><code>damping</code> (default 0.85): Probability of following a link vs jumping randomly</li>
+<li><code>iterations</code> (default 100): Maximum iterations</li>
+<li><code>directed</code> (default false): Treat graph as directed</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">-- Custom damping factor</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="n">damping</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">9</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="n">iterations</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">50</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">);</span>
+</code></pre></div>
+<hr />
 <h2 id="degree-centrality">Degree Centrality<a class="headerlink" href="#degree-centrality" title="Permanent link">&para;</a></h2>
-<p>Counts incoming and outgoing edges per node.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_degree</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>The simplest centrality measure - counts the number of connections per node. High degree nodes are "hubs" with many
+direct connections.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">in_degree</span><span class="p">,</span><span class="w"> </span><span class="n">out_degree</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">in_degree</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">out_degree</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_degree</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1570,30 +1621,134 @@
 </tr>
 </tbody>
 </table>
+<hr />
 <h2 id="betweenness-centrality">Betweenness Centrality<a class="headerlink" href="#betweenness-centrality" title="Permanent link">&para;</a></h2>
-<p>Measures how often a node lies on shortest paths between other nodes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_betweenness</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>Measures how often a node appears on shortest paths between other nodes. High betweenness nodes act as bridges or
+bottlenecks controlling information flow.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">betweenness</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">betweenness</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_betweenness</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">where</span><span class="w"> </span><span class="n">betweenness</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">betweenness</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node_id</td>
+<td>bigint</td>
+<td>Node identifier</td>
+</tr>
+<tr>
+<td>betweenness</td>
+<td>double</td>
+<td>Betweenness centrality score</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="closeness-centrality">Closeness Centrality<a class="headerlink" href="#closeness-centrality" title="Permanent link">&para;</a></h2>
-<p>Measures the average distance from a node to all other nodes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_closeness</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>Measures how close a node is to all other nodes (average shortest path distance). High closeness means information can
+spread quickly from this node.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">closeness</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">closeness</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_closeness</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">closeness</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
-<h2 id="eigenvector-centrality">Eigenvector Centrality<a class="headerlink" href="#eigenvector-centrality" title="Permanent link">&para;</a></h2>
-<p>A node is important if it's connected to other important nodes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_eigenvector</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
-</code></pre></div>
-<h2 id="katz-centrality">Katz Centrality<a class="headerlink" href="#katz-centrality" title="Permanent link">&para;</a></h2>
-<p>Similar to eigenvector but accounts for all walks in the graph.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_katz</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
-</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node_id</td>
+<td>bigint</td>
+<td>Node identifier</td>
+</tr>
+<tr>
+<td>closeness</td>
+<td>double</td>
+<td>Inverse of average distance to others</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="harmonic-centrality">Harmonic Centrality<a class="headerlink" href="#harmonic-centrality" title="Permanent link">&para;</a></h2>
-<p>Variant of closeness that handles disconnected graphs better.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_harmonic</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<p>A variant of closeness that handles disconnected graphs. Uses the sum of inverse distances instead of inverse of sum.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">harmonic</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">harmonic</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_harmonic</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">harmonic</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
 </code></pre></div>
-<h2 id="example-find-top-influencers">Example: Find Top Influencers<a class="headerlink" href="#example-find-top-influencers" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rank</span><span class="w"> </span><span class="k">desc</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">limit</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<hr />
+<h2 id="eigenvector-centrality">Eigenvector Centrality<a class="headerlink" href="#eigenvector-centrality" title="Permanent link">&para;</a></h2>
+<p>A node is important if connected to other important nodes. This creates a recursive definition where connections to
+high-scoring nodes contribute more.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">eigenvector</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">eigenvector</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_eigenvector</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">eigenvector</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
+</code></pre></div>
+<p>Optional parameters:</p>
+<ul>
+<li><code>max_iter</code> (default 100): Maximum iterations</li>
+<li><code>tolerance</code> (default 1e-6): Convergence threshold</li>
+</ul>
+<hr />
+<h2 id="katz-centrality">Katz Centrality<a class="headerlink" href="#katz-centrality" title="Permanent link">&para;</a></h2>
+<p>Similar to eigenvector centrality but counts all paths, not just direct connections. Longer paths contribute less based
+on an attenuation factor.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">katz</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">katz</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_katz</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">katz</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
+</code></pre></div>
+<p>Optional parameters:</p>
+<ul>
+<li><code>alpha</code> (default 0.1): Attenuation factor for longer paths</li>
+<li><code>beta</code> (default 1.0): Weight for initial centrality</li>
+</ul>
+<hr />
+<h2 id="complete-example-influencer-analysis">Complete Example: Influencer Analysis<a class="headerlink" href="#complete-example-influencer-analysis" title="Permanent link">&para;</a></h2>
+<p>Find the top influencers using multiple centrality metrics:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">-- Create a social network</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">follows</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">),</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">)</span><span class="w"> </span><span class="n">t</span><span class="p">(</span><span class="n">follower</span><span class="p">,</span><span class="w"> </span><span class="n">followed</span><span class="p">);</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1">-- Combine multiple centrality measures</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="k">with</span><span class="w"> </span><span class="n">pr</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">  </span><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">rank</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">(</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="n">follower</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">followed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">follows</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">  </span><span class="p">)</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="p">),</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="n">deg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">  </span><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">in_degree</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_degree</span><span class="p">(</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="n">follower</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">followed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">follows</span><span class="p">)</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">  </span><span class="p">)</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="p">),</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="n">bet</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">  </span><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">betweenness</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_betweenness</span><span class="p">(</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">    </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="n">follower</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">followed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">follows</span><span class="p">)</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">  </span><span class="p">)</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="p">)</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="k">select</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">  </span><span class="n">pr</span><span class="p">.</span><span class="n">node_id</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">user_id</span><span class="p">,</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">  </span><span class="n">round</span><span class="p">(</span><span class="n">pr</span><span class="p">.</span><span class="n">rank</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">pagerank</span><span class="p">,</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">  </span><span class="n">deg</span><span class="p">.</span><span class="n">in_degree</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">followers</span><span class="p">,</span>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="w">  </span><span class="n">round</span><span class="p">(</span><span class="n">bet</span><span class="p">.</span><span class="n">betweenness</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">bridge_score</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="k">from</span><span class="w"> </span><span class="n">pr</span>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="k">join</span><span class="w"> </span><span class="n">deg</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">node_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">deg</span><span class="p">.</span><span class="n">node_id</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="k">join</span><span class="w"> </span><span class="n">bet</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">node_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bet</span><span class="p">.</span><span class="n">node_id</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">rank</span><span class="w"> </span><span class="k">desc</span>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="k">limit</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
 </code></pre></div>
 
 
@@ -1601,6 +1756,9 @@
 
 
 
+
+  
+  
 
 
 

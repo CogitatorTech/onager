@@ -25,7 +25,7 @@
     
     
       
-        <title>Onager Documentation</title>
+        <title>Onager - Onager Documentation</title>
       
     
     
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Onager
             
           </span>
         </div>
@@ -446,10 +446,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-onager" class="md-nav__link">
+  <a href="#install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why Onager?
+        Install
       
     </span>
   </a>
@@ -468,10 +468,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-features" class="md-nav__link">
+  <a href="#why-onager" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Features
+        Why Onager?
       
     </span>
   </a>
@@ -479,10 +479,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
+  <a href="#algorithm-categories" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Links
+        Algorithm Categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Started
       
     </span>
   </a>
@@ -1352,10 +1363,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-onager" class="md-nav__link">
+  <a href="#install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why Onager?
+        Install
       
     </span>
   </a>
@@ -1374,10 +1385,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-features" class="md-nav__link">
+  <a href="#why-onager" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Features
+        Why Onager?
       
     </span>
   </a>
@@ -1385,10 +1396,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
+  <a href="#algorithm-categories" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Links
+        Algorithm Categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Started
       
     </span>
   </a>
@@ -1420,90 +1442,92 @@
   <img src="https://raw.githubusercontent.com/CogitatorTech/onager/main/logo.svg" alt="Onager Logo" width="200" />
 </p>
 
-<p><strong>Onager</strong> is a DuckDB extension for <strong>graph analytics in SQL</strong>. It provides graph algorithms and a graph registry that
-operate directly on edge tables — no external graph database required.</p>
-<p>Powered by the <a href="https://github.com/habedi/graphina">graphina</a> Rust library.</p>
+<p>Onager is a DuckDB extension for graph analytics in SQL. Run graph algorithms directly on your edge tables — no external
+graph database required.</p>
+<p>Powered by <a href="https://github.com/CogitatorTech/graphina">Graphina</a>, a high-performance Rust graph library.</p>
+<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">install</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">onager</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">community</span><span class="p">;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">load</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">onager</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- Create edge data</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">::</span><span class="nb">bigint</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">::</span><span class="nb">bigint</span><span class="p">),</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">             </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">             </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">             </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">))</span><span class="w"> </span><span class="n">t</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="p">);</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">-- Compute PageRank</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">rank</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rank</span><span class="w"> </span><span class="k">desc</span><span class="p">;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1">-- Detect communities</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">community</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_cmm_louvain</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">-- Find shortest paths</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">distance</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_pth_dijkstra</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+</code></pre></div>
 <h2 id="why-onager">Why Onager?<a class="headerlink" href="#why-onager" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>SQL-Native</strong>: Run graph algorithms directly on your DuckDB tables</li>
-<li><strong>No ETL Required</strong>: Your edge data stays in DuckDB — no export needed</li>
-<li><strong>High Performance</strong>: Rust-powered algorithms with parallel execution</li>
-<li><strong>Easy Integration</strong>: <code>select * from onager_ctr_pagerank((select src, dst from edges))</code></li>
+<li>SQL-native: Run algorithms directly on DuckDB tables</li>
+<li>No ETL: Your data stays in DuckDB</li>
+<li>Fast: Rust-powered with parallel algorithms</li>
+<li>Simple: <code>select * from onager_function((select src, dst from edges))</code></li>
 </ul>
-<h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">-- Create edge data</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">::</span><span class="nb">bigint</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">::</span><span class="nb">bigint</span><span class="p">),</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">             </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">             </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">             </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">))</span><span class="w"> </span><span class="n">t</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="p">);</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1">-- Compute PageRank</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">-- Detect communities</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_cmm_louvain</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">-- Generate random graphs</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_gen_erdos_renyi</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">seed</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">);</span>
-</code></pre></div>
-<h2 id="available-features">Available Features<a class="headerlink" href="#available-features" title="Permanent link">&para;</a></h2>
+<h2 id="algorithm-categories">Algorithm Categories<a class="headerlink" href="#algorithm-categories" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Category</th>
-<th>Functions</th>
+<th>Algorithms</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Centrality</strong></td>
-<td>pagerank, personalized_pagerank, degree, betweenness, closeness, eigenvector, katz, harmonic</td>
+<td>Centrality</td>
+<td>PageRank, degree, betweenness, closeness, eigenvector, Katz, harmonic, VoteRank</td>
 </tr>
 <tr>
-<td><strong>Community</strong></td>
-<td>louvain, components, label_prop, girvan_newman, spectral, infomap</td>
+<td>Community</td>
+<td>Louvain, connected components, label propagation, Girvan-Newman, spectral, Infomap</td>
 </tr>
 <tr>
-<td><strong>Link Prediction</strong></td>
-<td>jaccard, adamic_adar, pref_attach, resource_alloc</td>
+<td>Paths</td>
+<td>Dijkstra, Bellman-Ford, Floyd-Warshall, BFS, DFS</td>
 </tr>
 <tr>
-<td><strong>Metrics</strong></td>
-<td>diameter, radius, avg_clustering, avg_path_length, transitivity, assortativity</td>
+<td>Metrics</td>
+<td>diameter, radius, clustering, transitivity, triangles, assortativity</td>
 </tr>
 <tr>
-<td><strong>Traversal</strong></td>
-<td>dijkstra, bfs, dfs</td>
+<td>Link Prediction</td>
+<td>Jaccard, Adamic-Adar, preferential attachment, resource allocation</td>
 </tr>
 <tr>
-<td><strong>Generators</strong></td>
-<td>erdos_renyi, barabasi_albert, watts_strogatz</td>
+<td>Subgraphs</td>
+<td>ego graph, k-hop neighbors, induced subgraph</td>
 </tr>
 <tr>
-<td><strong>Subgraphs</strong></td>
-<td>ego_graph, k_hop_neighbors, induced_subgraph</td>
+<td>Generators</td>
+<td>Erdős-Rényi, Barabási-Albert, Watts-Strogatz</td>
 </tr>
 <tr>
-<td><strong>Parallel</strong></td>
-<td>pagerank, bfs, shortest_paths, components, clustering, triangles</td>
-</tr>
-<tr>
-<td><strong>Graph Registry</strong></td>
-<td>create_graph, drop_graph, add_node, add_edge, list_graphs, node_count, edge_count, node_in_degree, node_out_degree</td>
+<td>Approximation</td>
+<td>max clique, independent set, vertex cover</td>
 </tr>
 </tbody>
 </table>
-<h2 id="quick-links">Quick Links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
+<h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="getting-started/installation/">Getting Started</a></li>
-<li><a href="guide/graph-registry/">Graph Registry</a></li>
+<li><a href="getting-started/installation/">Installation</a></li>
+<li><a href="getting-started/quickstart/">Quick Start</a></li>
 <li><a href="reference/sql-functions/">SQL Function Reference</a></li>
-<li><a href="https://github.com/CogitatorTech/onager">GitHub Repository</a></li>
 </ul>
 
 
@@ -1511,6 +1535,9 @@ operate directly on edge tables — no external graph database required.</p>
 
 
 
+
+  
+  
 
 
 
