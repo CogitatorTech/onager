@@ -46,10 +46,9 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started:
-      - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
   - User Guide:
-      - SQL Functions:
+      - Function Categories:
           - Graph Registry: guide/graph-registry.md
           - Centrality: guide/centrality.md
           - Community Detection: guide/community.md
@@ -59,6 +58,8 @@ nav:
           - Graph Generators: guide/generators.md
           - Subgraph Operations: guide/subgraphs.md
           - Parallel Algorithms: guide/parallel.md
+          - Approximation Algorithms: guide/approximation.md
+          - Minimum Spanning Tree: guide/mst.md
   - Examples:
       - Basic Usage: examples/basic.md
       - Centrality Analysis: examples/centrality.md
@@ -67,6 +68,7 @@ nav:
       - Analytics Use Cases: examples/analytics.md
   - API Reference:
       - SQL Functions: reference/sql-functions.md
+      - Input Formats: reference/input-formats.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -75,7 +77,14 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences
   - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
   - admonition
   - attr_list
   - toc:
       permalink: true
+
+extra_javascript:
+  - assets/js/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

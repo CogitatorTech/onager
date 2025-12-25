@@ -492,3 +492,114 @@ void RegisterVoteRankFunction(ExtensionLoader &loader) {
 }
 } // namespace onager
 } // namespace duckdb
+
+// =============================================================================
+// Local Reaching Centrality Table Function
+// =============================================================================
+
+namespace duckdb {
+using namespace onager;
+
+struct LocalReachingBindData : public TableFunctionData { int64_t distance = 2; };
+struct LocalReachingGlobalState : public GlobalTableFunctionState {
+  std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
+  std::vector<double> result_centrality;
+  idx_t output_idx = 0; bool computed = false;
+  idx_t MaxThreads() const override { return 1; }
+};
+
+static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<LocalReachingBindData>();
+  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_local_reaching requires 2 columns");
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "distance") bd->distance = kv.second.GetValue<int64_t>();
+  }
+  rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
+  rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
+  return std::move(bd);
+}
+static unique_ptr<GlobalTableFunctionState> LocalReachingInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LocalReachingGlobalState>(); }
+static OperatorResultType LocalReachingInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &gs = data.global_state->Cast<LocalReachingGlobalState>();
+  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
+  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+}
+static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<LocalReachingBindData>(); auto &gs = data.global_state->Cast<LocalReachingGlobalState>();
+  if (!gs.computed) {
+    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    int64_t nc = ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, nullptr, nullptr);
+    if (nc < 0) throw InvalidInputException("LocalReaching failed: " + GetOnagerError());
+    gs.result_nodes.resize(nc); gs.result_centrality.resize(nc);
+    ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, gs.result_nodes.data(), gs.result_centrality.data());
+    gs.computed = true;
+  }
+  idx_t rem = gs.result_nodes.size() - gs.output_idx;
+  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
+  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centrality[gs.output_idx+i]; }
+  gs.output_idx += to; output.SetCardinality(to);
+  return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
+}
+
+// =============================================================================
+// Laplacian Centrality Table Function
+// =============================================================================
+
+struct LaplacianGlobalState : public GlobalTableFunctionState {
+  std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
+  std::vector<double> result_centrality;
+  idx_t output_idx = 0; bool computed = false;
+  idx_t MaxThreads() const override { return 1; }
+};
+
+static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_laplacian requires 2 columns");
+  rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
+  rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
+  return make_uniq<TableFunctionData>();
+}
+static unique_ptr<GlobalTableFunctionState> LaplacianInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LaplacianGlobalState>(); }
+static OperatorResultType LaplacianInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &gs = data.global_state->Cast<LaplacianGlobalState>();
+  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
+  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+}
+static OperatorFinalizeResultType LaplacianFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &gs = data.global_state->Cast<LaplacianGlobalState>();
+  if (!gs.computed) {
+    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    int64_t nc = ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
+    if (nc < 0) throw InvalidInputException("Laplacian failed: " + GetOnagerError());
+    gs.result_nodes.resize(nc); gs.result_centrality.resize(nc);
+    ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_centrality.data());
+    gs.computed = true;
+  }
+  idx_t rem = gs.result_nodes.size() - gs.output_idx;
+  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
+  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centrality[gs.output_idx+i]; }
+  gs.output_idx += to; output.SetCardinality(to);
+  return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
+}
+
+namespace onager {
+void RegisterLocalReachingFunction(ExtensionLoader &loader) {
+  TableFunction lr("onager_ctr_local_reaching", {LogicalType::TABLE}, nullptr, LocalReachingBind, LocalReachingInitGlobal);
+  lr.in_out_function = LocalReachingInOut;
+  lr.in_out_function_final = LocalReachingFinal;
+  lr.named_parameters["distance"] = LogicalType::BIGINT;
+  loader.RegisterFunction(lr);
+}
+void RegisterLaplacianFunction(ExtensionLoader &loader) {
+  TableFunction lap("onager_ctr_laplacian", {LogicalType::TABLE}, nullptr, LaplacianBind, LaplacianInitGlobal);
+  lap.in_out_function = LaplacianInOut;
+  lap.in_out_function_final = LaplacianFinal;
+  loader.RegisterFunction(lap);
+}
+} // namespace onager
+} // namespace duckdb

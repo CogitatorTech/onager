@@ -61,6 +61,18 @@ select count(*) > 0 from onager_ctr_voterank((select src, dst from test_edges), 
 ----
 1
 
+# Test Local Reaching Centrality
+query I
+select count(*) > 0 from onager_ctr_local_reaching((select src, dst from test_edges), distance := 2)
+----
+1
+
+# Test Laplacian Centrality
+query I
+select count(*) > 0 from onager_ctr_laplacian((select src, dst from test_edges))
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

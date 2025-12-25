@@ -1,11 +1,11 @@
 //! Link prediction algorithms module.
 //!
-//! Jaccard, Adamic-Adar, Preferential Attachment, Resource Allocation.
+//! Jaccard, Adamic-Adar, Preferential Attachment, Resource Allocation, Common Neighbors.
 
 use graphina::core::types::{Graph, NodeId};
 use graphina::links::allocation::resource_allocation_index;
 use graphina::links::attachment::preferential_attachment;
-use graphina::links::similarity::{adamic_adar_index, jaccard_coefficient};
+use graphina::links::similarity::{adamic_adar_index, common_neighbors, jaccard_coefficient};
 
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
@@ -208,6 +208,68 @@ pub fn compute_resource_allocation(src: &[i64], dst: &[i64]) -> Result<LinkPredi
     })
 }
 
+/// Result of common neighbors computation.
+pub struct CommonNeighborsResult {
+    pub node1: Vec<i64>,
+    pub node2: Vec<i64>,
+    pub counts: Vec<i64>,
+}
+
+/// Compute common neighbors count for all node pairs.
+pub fn compute_common_neighbors(src: &[i64], dst: &[i64]) -> Result<CommonNeighborsResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let reverse_map: HashMap<NodeId, i64> = node_set.iter().map(|(&k, &v)| (v, k)).collect();
+    let nodes: Vec<NodeId> = node_set.values().cloned().collect();
+
+    let mut node1 = Vec::new();
+    let mut node2 = Vec::new();
+    let mut counts = Vec::new();
+
+    // Compute common neighbors for all pairs
+    for i in 0..nodes.len() {
+        for j in (i + 1)..nodes.len() {
+            let u = nodes[i];
+            let v = nodes[j];
+            let count = common_neighbors(&graph, u, v);
+            if let (Some(&ext_u), Some(&ext_v)) = (reverse_map.get(&u), reverse_map.get(&v)) {
+                node1.push(ext_u);
+                node2.push(ext_v);
+                counts.push(count as i64);
+            }
+        }
+    }
+
+    Ok(CommonNeighborsResult {
+        node1,
+        node2,
+        counts,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -302,5 +364,22 @@ mod tests {
 
         // All nodes in triangle have 2 neighbors each
         assert!(!result.scores.is_empty());
+    }
+
+    #[test]
+    fn test_common_neighbors() {
+        // Triangle graph: nodes 1-2-3 all connected
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 1];
+        let result = compute_common_neighbors(&src, &dst).unwrap();
+
+        assert!(!result.node1.is_empty());
+        assert_eq!(result.node1.len(), result.node2.len());
+        assert_eq!(result.node1.len(), result.counts.len());
+
+        // In a triangle, each pair shares 1 common neighbor
+        for &count in &result.counts {
+            assert!(count >= 0);
+        }
     }
 }

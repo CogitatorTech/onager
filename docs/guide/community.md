@@ -5,9 +5,8 @@ description: Find groups of densely connected nodes in your graph.
 
 # Community Detection
 
-Community detection algorithms identify clusters of nodes that are more densely connected to each other than to the rest
-of the graph. These groups often represent meaningful structures like social circles, functional modules, or topic
-clusters.
+Community detection algorithms identify clusters of nodes that are more densely connected to each other than to the rest of the graph.
+These groups often represent meaningful structures like social circles, functional modules, or topic clusters.
 
 ## Setup
 
@@ -37,8 +36,15 @@ from (values
 
 ## Louvain Algorithm
 
-The Louvain algorithm is a greedy optimization method that maximizes modularity. It works hierarchically, first finding
-small communities, then aggregating them into larger ones. Fast and produces high-quality results on most networks.
+The Louvain algorithm is a greedy optimization method that maximizes modularity.
+It works hierarchically, first finding small communities, then aggregating them into larger ones.
+Fast and produces high-quality results on most networks.
+
+\[
+Q = \frac{1}{2m} \sum_{ij} \left[ A_{ij} - \frac{k_i k_j}{2m} \right] \delta(c_i, c_j)
+\]
+
+where \(A_{ij}\) is the adjacency matrix, \(k_i\) is the degree of node \(i\), \(m\) is the total edges, and \(\delta(c_i, c_j)\) is 1 if nodes \(i\) and \(j\) are in the same community.
 
 ```sql
 select node_id, community
@@ -62,8 +68,8 @@ from onager_cmm_louvain((select src, dst from edges), seed := 42);
 
 ## Connected Components
 
-Finds groups of nodes where every node is reachable from every other node in the group. Unlike community detection, this
-is a topological property - nodes are in the same component if any path connects them.
+Finds groups of nodes where every node is reachable from every other node in the group.
+Unlike community detection, this is a topological property - nodes are in the same component if any path connects them.
 
 ```sql
 select node_id, component
@@ -80,8 +86,8 @@ order by component, node_id;
 
 ## Label Propagation
 
-A fast, near-linear time algorithm. Each node adopts the most common label among its neighbors. Simple but can produce
-different results on each run.
+A fast, near-linear time algorithm. Each node adopts the most common label among its neighbors.
+Simple but can produce different results on each run.
 
 ```sql
 select node_id, label
@@ -98,8 +104,12 @@ order by label, node_id;
 
 ## Girvan-Newman
 
-Detects communities by progressively removing edges with highest betweenness. Produces a hierarchy of communities.
+Detects communities by progressively removing edges with highest betweenness.
+Produces a hierarchy of communities.
 Specify the desired number of communities.
+
+!!! warning "Performance"
+    This algorithm has O(m²·n) complexity. So, it's recommended to use it only on smaller graphs (like with fewer than 500 nodes).
 
 ```sql
 select node_id, community
@@ -111,7 +121,11 @@ order by community, node_id;
 
 ## Spectral Clustering
 
-Uses eigenvalues of the graph Laplacian to partition nodes. Works well when communities have similar sizes.
+Uses eigenvalues of the graph Laplacian to partition nodes.
+Works well when communities have similar sizes.
+
+!!! warning "Performance"
+    This algorithm requires eigendecomposition with O(n³) complexity. Use only on graphs with fewer than 5,000 nodes.
 
 ```sql
 select node_id, cluster
@@ -123,8 +137,8 @@ order by cluster, node_id;
 
 ## Infomap
 
-Optimizes the map equation to find communities that minimize the description length of a random walk. Particularly good
-at finding flow-based communities.
+Optimizes the map equation to find communities that minimize the description length of a random walk.
+Particularly good at finding flow-based communities.
 
 ```sql
 select node_id, community

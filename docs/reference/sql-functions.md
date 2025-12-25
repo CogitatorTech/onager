@@ -21,21 +21,23 @@ Complete reference for all Onager SQL functions.
 | `onager_node_in_degree(graph, node)`  | `bigint` | In-degree of a node  |
 | `onager_node_out_degree(graph, node)` | `bigint` | Out-degree of a node |
 
-## Centrality Functions (`onager_ctr_*`)
+## Centrality Functions
 
-| Function                                | Returns                          | Description                    |
-|-----------------------------------------|----------------------------------|--------------------------------|
-| `onager_ctr_pagerank(edges)`            | `node_id, rank`                  | PageRank centrality            |
-| `onager_ctr_degree(edges)`              | `node_id, in_degree, out_degree` | Degree centrality              |
-| `onager_ctr_betweenness(edges)`         | `node_id, betweenness`           | Betweenness centrality         |
-| `onager_ctr_closeness(edges)`           | `node_id, closeness`             | Closeness centrality           |
-| `onager_ctr_eigenvector(edges)`         | `node_id, eigenvector`           | Eigenvector centrality         |
-| `onager_ctr_katz(edges, alpha)`         | `node_id, katz`                  | Katz centrality                |
-| `onager_ctr_harmonic(edges)`            | `node_id, harmonic`              | Harmonic centrality            |
-| `onager_ctr_personalized_pagerank(...)` | `node_id, rank`                  | Personalized PageRank          |
-| `onager_ctr_voterank(edges, num_seeds)` | `node_id`                        | VoteRank influential spreaders |
+| Function                                     | Returns                          | Description                    |
+|----------------------------------------------|----------------------------------|--------------------------------|
+| `onager_ctr_pagerank(edges)`                 | `node_id, rank`                  | PageRank centrality            |
+| `onager_ctr_degree(edges)`                   | `node_id, in_degree, out_degree` | Degree centrality              |
+| `onager_ctr_betweenness(edges)`              | `node_id, betweenness`           | Betweenness centrality         |
+| `onager_ctr_closeness(edges)`                | `node_id, closeness`             | Closeness centrality           |
+| `onager_ctr_eigenvector(edges)`              | `node_id, eigenvector`           | Eigenvector centrality         |
+| `onager_ctr_katz(edges, alpha)`              | `node_id, katz`                  | Katz centrality                |
+| `onager_ctr_harmonic(edges)`                 | `node_id, harmonic`              | Harmonic centrality            |
+| `onager_ctr_personalized_pagerank(...)`      | `node_id, rank`                  | Personalized PageRank          |
+| `onager_ctr_voterank(edges, num_seeds)`      | `node_id`                        | VoteRank influential spreaders |
+| `onager_ctr_local_reaching(edges, distance)` | `node_id, centrality`            | Local reaching centrality      |
+| `onager_ctr_laplacian(edges)`                | `node_id, centrality`            | Laplacian centrality           |
 
-## Community Detection Functions (`onager_cmm_*`)
+## Community Detection Functions
 
 | Function                                       | Returns              | Description                     |
 |------------------------------------------------|----------------------|---------------------------------|
@@ -46,16 +48,17 @@ Complete reference for all Onager SQL functions.
 | `onager_cmm_spectral(edges, k)`                | `node_id, cluster`   | Spectral clustering             |
 | `onager_cmm_infomap(edges)`                    | `node_id, community` | Infomap community detection     |
 
-## Link Prediction Functions (`onager_lnk_*`)
+## Link Prediction Functions
 
-| Function                           | Returns                 | Description             |
-|------------------------------------|-------------------------|-------------------------|
-| `onager_lnk_jaccard(edges)`        | `node1, node2, jaccard` | Jaccard coefficient     |
-| `onager_lnk_adamic_adar(edges)`    | `node1, node2, score`   | Adamic-Adar index       |
-| `onager_lnk_pref_attach(edges)`    | `node1, node2, score`   | Preferential attachment |
-| `onager_lnk_resource_alloc(edges)` | `node1, node2, score`   | Resource allocation     |
+| Function                             | Returns                 | Description             |
+|--------------------------------------|-------------------------|-------------------------|
+| `onager_lnk_jaccard(edges)`          | `node1, node2, jaccard` | Jaccard coefficient     |
+| `onager_lnk_adamic_adar(edges)`      | `node1, node2, score`   | Adamic-Adar index       |
+| `onager_lnk_pref_attach(edges)`      | `node1, node2, score`   | Preferential attachment |
+| `onager_lnk_resource_alloc(edges)`   | `node1, node2, score`   | Resource allocation     |
+| `onager_lnk_common_neighbors(edges)` | `node1, node2, count`   | Common neighbors count  |
 
-## Metric Functions (`onager_mtr_*`)
+## Metric Functions
 
 | Function                            | Returns              | Description                      |
 |-------------------------------------|----------------------|----------------------------------|
@@ -68,7 +71,7 @@ Complete reference for all Onager SQL functions.
 | `onager_mtr_assortativity(edges)`   | `assortativity`      | Degree assortativity coefficient |
 | `onager_mtr_density(edges)`         | `density`            | Graph density (0 to 1)           |
 
-## Path & Traversal Functions (`onager_pth_*`, `onager_trv_*`)
+## Path and Traversal Functions
 
 | Function                                          | Returns              | Description                       |
 |---------------------------------------------------|----------------------|-----------------------------------|
@@ -78,21 +81,22 @@ Complete reference for all Onager SQL functions.
 | `onager_trv_bfs(edges, source)`                   | `node_id, order`     | Breadth-first traversal           |
 | `onager_trv_dfs(edges, source)`                   | `node_id, order`     | Depth-first traversal             |
 
-## Approximation Functions (`onager_apx_*`)
+## Approximation Functions
 
-| Function                            | Returns   | Description                      |
-|-------------------------------------|-----------|----------------------------------|
-| `onager_apx_max_clique(edges)`      | `node_id` | Maximum clique (approximation)   |
-| `onager_apx_independent_set(edges)` | `node_id` | Maximum independent set (approx) |
-| `onager_apx_vertex_cover(edges)`    | `node_id` | Minimum vertex cover (approx)    |
+| Function                            | Returns          | Description                      |
+|-------------------------------------|------------------|----------------------------------|
+| `onager_apx_max_clique(edges)`      | `node_id`        | Maximum clique (approximation)   |
+| `onager_apx_independent_set(edges)` | `node_id`        | Maximum independent set (approx) |
+| `onager_apx_vertex_cover(edges)`    | `node_id`        | Minimum vertex cover (approx)    |
+| `onager_apx_tsp(weighted_edges)`    | `order, node_id` | TSP tour (greedy approx)         |
 
-## Minimum Spanning Tree (`onager_mst_*`)
+## Minimum Spanning Tree
 
 | Function                             | Returns            | Description   |
 |--------------------------------------|--------------------|---------------|
 | `onager_mst_kruskal(weighted_edges)` | `src, dst, weight` | Kruskal's MST |
 
-## Generator Functions (`onager_gen_*`)
+## Generator Functions
 
 | Function                                         | Returns    | Description           |
 |--------------------------------------------------|------------|-----------------------|
@@ -100,7 +104,7 @@ Complete reference for all Onager SQL functions.
 | `onager_gen_barabasi_albert(n, m [, seed])`      | `src, dst` | Scale-free graph      |
 | `onager_gen_watts_strogatz(n, k, beta [, seed])` | `src, dst` | Small-world graph     |
 
-## Subgraph Operations (`onager_sub_*`)
+## Subgraph Operations
 
 | Function                                      | Returns    | Description             |
 |-----------------------------------------------|------------|-------------------------|
@@ -108,7 +112,7 @@ Complete reference for all Onager SQL functions.
 | `onager_sub_k_hop(edges, start, k)`           | `node_id`  | Nodes within k hops     |
 | `onager_sub_induced(edges, nodes)`            | `src, dst` | Induced subgraph        |
 
-## Parallel Algorithms (`onager_par_*`)
+## Parallel Algorithms
 
 | Function                                   | Returns                | Description                      |
 |--------------------------------------------|------------------------|----------------------------------|
@@ -126,19 +130,4 @@ Complete reference for all Onager SQL functions.
 | `onager_version()`    | `varchar` | Extension version  |
 | `onager_last_error()` | `varchar` | Last error message |
 
-## Input Formats
-
-Table functions expect edges as a subquery with two `bigint` columns:
-
-```sql
-select *
-from onager_ctr_pagerank((select src, dst from my_edges));
-```
-
-Scalar functions operate on named graphs stored in the registry:
-
-```sql
-select onager_create_graph('social', true);
-select onager_add_node('social', 1);
-select onager_node_in_degree('social', 1);
-```
+See [Input Formats](input-formats.md) for details on how to pass graph data to functions.

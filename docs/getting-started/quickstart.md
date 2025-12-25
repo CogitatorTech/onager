@@ -9,11 +9,11 @@ This guide walks you through your first graph analysis with Onager.
 
 ## 1. Install and Load
 
+Onager is available in the [DuckDB community extensions repository](https://duckdb.org/community_extensions/extensions/onager) and can be installed with the following commands:
+
 ```sql
-install
-onager from community;
-load
-onager;
+install onager from community;
+load onager;
 ```
 
 ## 2. Create Some Edge Data
@@ -98,13 +98,15 @@ from onager_ctr_pagerank((select source_id as src, target_id as dst
 
 ## Input Format
 
-All functions expect edges as a subquery with two bigint columns:
+All functions expect edges as a subquery with two `bigint` columns:
 
 ```sql
 select *
 from onager_function_name((select source_column as src, target_column as dst
                            from your_table));
 ```
+
+See the [Input Formats](../reference/input-formats.md) reference for details on node IDs, weighted functions, and directed graphs.
 
 ## Next Steps
 

@@ -44,6 +44,8 @@ void RegisterApproximationFunctions(ExtensionLoader &loader);
 void RegisterPersonalizedFunctions(ExtensionLoader &loader);
 void RegisterSubgraphFunctions(ExtensionLoader &loader);
 void RegisterParallelFunctions(ExtensionLoader &loader);
+void RegisterLocalReachingFunction(ExtensionLoader &loader);
+void RegisterLaplacianFunction(ExtensionLoader &loader);
 
 } // namespace onager
 } // namespace duckdb

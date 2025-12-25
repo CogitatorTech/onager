@@ -1,6 +1,6 @@
 # Basic Usage
 
-This example shows basic graph analytics workflows.
+This example shows basic graph analytics workflows using the Onager.
 
 ## Setup
 

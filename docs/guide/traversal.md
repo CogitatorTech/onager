@@ -5,7 +5,8 @@ description: Navigate graphs with BFS, DFS, and shortest path algorithms.
 
 # Traversal and Paths
 
-Traversal algorithms systematically visit nodes in a graph. Shortest path algorithms find optimal routes between nodes.
+Traversal algorithms systematically visit nodes in a graph.
+Shortest path algorithms find optimal routes between nodes.
 These are fundamental operations for graph analysis.
 
 ## Setup
@@ -28,7 +29,8 @@ from (values (1::bigint, 2::bigint),
 
 ## Breadth-First Search (BFS)
 
-Explores nodes level by level, starting from a source. Visits all neighbors before moving to neighbors of neighbors.
+Explores nodes level by level, starting from a source.
+Visits all neighbors before moving to neighbors of neighbors.
 Useful for finding shortest paths in unweighted graphs.
 
 ```sql
@@ -46,8 +48,9 @@ order by order_num;
 
 ## Depth-First Search (DFS)
 
-Explores as far as possible along each branch before backtracking. Visits a neighbor, then that neighbor's neighbor, and
-so on. Useful for topological sorting and cycle detection.
+Explores as far as possible along each branch before backtracking.
+Visits a neighbor, then that neighbor's neighbor, and so on.
+Useful for topological sorting and cycle detection.
 
 ```sql
 select node_id, order_num
@@ -59,8 +62,8 @@ order by order_num;
 
 ## Dijkstra's Algorithm
 
-Finds shortest paths from a source to all reachable nodes. Assumes non-negative edge weights. The classic algorithm for
-shortest paths.
+Finds shortest paths from a source to all reachable nodes.
+Assumes non-negative edge weights. The classic algorithm for shortest paths.
 
 ```sql
 select node_id, distance
@@ -77,7 +80,8 @@ order by distance;
 
 ## Bellman-Ford Algorithm
 
-Finds shortest paths even with negative edge weights. Slower than Dijkstra but more general. Can detect negative cycles.
+Finds shortest paths even with negative edge weights.
+Slower than Dijkstra but more general. Can detect negative cycles.
 
 For weighted edges, provide a third column:
 
@@ -99,8 +103,11 @@ order by distance;
 
 ## Floyd-Warshall Algorithm
 
-Computes shortest paths between all pairs of nodes. Returns a row for every (source, destination) pair. Useful when you
-need distances between many node pairs.
+Computes shortest paths between all pairs of nodes.
+Returns a row for every (source, destination) pair. Useful when you need distances between many node pairs.
+
+!!! warning "Performance"
+    This algorithm has O(n³) time and O(n²) space complexity. So, it's recommended to use it only on smaller graphs (like with fewer than 1,000 nodes).
 
 ```sql
 select src, dst, round(distance, 2) as distance

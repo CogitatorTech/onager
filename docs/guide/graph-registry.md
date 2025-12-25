@@ -4,9 +4,9 @@ Onager provides an in-memory graph registry that stores named graphs for efficie
 
 ## When to Use the Registry
 
-- **Multiple queries on same data**: Store once, query many times
-- **Scalar node queries**: Get degree, check existence
-- **Session-persistent graphs**: Graphs persist for database session lifetime
+- When querying the same graph multiple times
+- When querying node or graph statistics
+- When you want to run different queries or algorithms on the same graph
 
 ## Creating Graphs
 

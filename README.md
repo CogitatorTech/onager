@@ -22,6 +22,14 @@ including centrality measures, community detection algorithms, pathfinding algor
 and graph generators.
 Onager is written in Rust and uses [Graphina](https://github.com/habedi/graphina) graph library under the hood.
 
+Compared to [DuckPGQ](https://github.com/cwida/duckpgq-extension), Onager is focused on graph analytics instead of graph querying.
+More specifically, DuckPGQ tries to implement SQL/PGQ (the SQL:2023 standard)
+for graph pattern matching and path-finding queries with a property graph model.
+Onager instead provides a collection of ready-to-use graph algorithms (like PageRank, Louvain community detection, Dijkstra's shortest path, etc.)
+as simple table functions.
+Users typically want something like DuckPGQ when they need to query graph patterns or model the data in a property graph model
+(like a graph database), and use Onager when they need to run specific graph algorithms on their graph data for a specific application.
+
 ### Features
 
 - Adds over 30 popular graph algorithms as SQL functions
@@ -100,7 +108,7 @@ select * from onager_pth_dijkstra((select src, dst from edges), source := 1);
 select * from onager_gen_erdos_renyi(100, 0.1, seed := 42);
 ```
 
-[![Simple Demo 1](https://asciinema.org/a/do6g8xv1G5tkRc4e3bExbNYwZ.svg)](https://asciinema.org/a/do6g8xv1G5tkRc4e3bExbNYwZ)
+[![Simple Demo 1](https://asciinema.org/a/5RBqT9bO2mB28EaEn8qPesn8t.svg)](https://asciinema.org/a/5RBqT9bO2mB28EaEn8qPesn8t)
 
 ---
 

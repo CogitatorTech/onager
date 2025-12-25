@@ -38,3 +38,18 @@ select count(*) > 0 from onager_apx_vertex_cover((select src, dst from test_edge
 # Cleanup
 statement ok
 drop table test_edges
+
+# TSP Test - requires weighted edges
+statement ok
+create table weighted_edges as select * from (values
+  (1::bigint, 2::bigint, 1.0::double), (2, 3, 1.0), (3, 4, 1.0), (4, 1, 1.0)
+) t(src, dst, weight)
+
+# Test TSP Approximation
+query I
+select count(*) > 0 from onager_apx_tsp((select src, dst, weight from weighted_edges))
+----
+1
+
+statement ok
+drop table weighted_edges

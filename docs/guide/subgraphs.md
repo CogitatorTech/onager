@@ -5,8 +5,8 @@ description: Extract portions of a graph around specific nodes.
 
 # Subgraph Operations
 
-Subgraph operations extract portions of a larger graph based on structural proximity or node membership. Useful for
-analyzing local neighborhoods or focusing on specific regions.
+Subgraph operations extract portions of a larger graph based on structural proximity or node membership.
+Useful for analyzing local neighborhoods or focusing on specific regions.
 
 ## Setup
 
@@ -31,8 +31,8 @@ from (values (1::bigint, 2::bigint),
 
 ## Ego Graph
 
-Extracts the subgraph within a given radius of a center node. The ego graph includes the center node, all nodes within
-the specified number of hops, and all edges between them.
+Extracts the subgraph within a given radius of a center node.
+The ego graph includes the center node, all nodes within the specified number of hops, and all edges between them.
 
 ```sql
 select src, dst
@@ -96,8 +96,8 @@ where h1.node_id is null;
 
 ## Induced Subgraph
 
-Given a set of nodes, returns the subgraph containing only those nodes and the edges between them. The induced subgraph
-preserves the original graph structure within the specified node set.
+Given a set of nodes, returns the subgraph containing only those nodes and the edges between them.
+The induced subgraph preserves the original graph structure within the specified node set.
 
 ```sql
 -- Extract subgraph for specific nodes using array syntax

@@ -5,8 +5,8 @@ description: Compute structural properties of your graph.
 
 # Graph Metrics
 
-Graph metrics provide summary statistics about the overall structure of a network. These help understand properties like
-how tightly connected the graph is, how clustered it is, and how node degrees are distributed.
+Graph metrics provide summary statistics about the overall structure of a network.
+These help understand properties like how tightly connected the graph is, how clustered it is, and how node degrees are distributed.
 
 ## Setup
 
@@ -27,8 +27,9 @@ from (values (1::bigint, 2::bigint),
 
 ## Diameter
 
-The diameter is the longest shortest path between any two nodes. It measures how "spread out" the graph is. A small
-diameter means information can travel quickly across the network.
+The diameter is the longest shortest path between any two nodes.
+It measures how "spread out" the graph is.
+A small diameter means information can travel quickly across the network.
 
 ```sql
 select diameter
@@ -59,8 +60,14 @@ from onager_mtr_radius((select src, dst from edges));
 
 ## Average Clustering Coefficient
 
-Measures how much nodes tend to cluster together. A clustering coefficient of 1.0 means every node's neighbors are all
-connected to each other (perfect cliques).
+Measures how much nodes tend to cluster together.
+A clustering coefficient of 1.0 means every node's neighbors are all connected to each other (perfect cliques).
+
+\[
+C_i = \frac{2 \cdot |\{e_{jk}\}|}{k_i(k_i - 1)}
+\]
+
+where \(k_i\) is the degree of node \(i\) and \(|\{e_{jk}\}|\) is the number of edges between its neighbors.
 
 ```sql
 select round(avg_clustering, 4) as clustering
@@ -75,8 +82,12 @@ from onager_mtr_avg_clustering((select src, dst from edges));
 
 ## Transitivity
 
-Global clustering coefficient. The ratio of triangles to connected triples. Measures the overall tendency of the graph
-to form triangles.
+Global clustering coefficient. The ratio of triangles to connected triples.
+Measures the overall tendency of the graph to form triangles.
+
+\[
+T = \frac{3 \times \text{triangles}}{\text{connected triples}}
+\]
 
 ```sql
 select round(transitivity, 4) as transitivity
@@ -91,8 +102,8 @@ from onager_mtr_transitivity((select src, dst from edges));
 
 ## Triangle Count
 
-Counts the number of triangles each node participates in. Triangles indicate strong local connectivity and are the basis
-for clustering coefficients.
+Counts the number of triangles each node participates in.
+Triangles indicate strong local connectivity and are the basis for clustering coefficients.
 
 ```sql
 select node_id, triangles
@@ -110,9 +121,9 @@ order by triangles desc;
 
 ## Assortativity
 
-Degree assortativity measures whether nodes tend to connect to nodes with similar degree. Positive values mean
-high-degree nodes connect to other high-degree nodes (assortative). Negative values mean high-degree nodes connect to
-low-degree nodes (disassortative).
+Degree assortativity measures whether nodes tend to connect to nodes with similar degree.
+Positive values mean high-degree nodes connect to other high-degree nodes (assortative).
+Negative values mean high-degree nodes connect to low-degree nodes (disassortative).
 
 ```sql
 select round(assortativity, 4) as assortativity
@@ -127,8 +138,8 @@ from onager_mtr_assortativity((select src, dst from edges));
 
 ## Average Path Length
 
-The average shortest path distance between all pairs of reachable nodes. Lower values indicate a more tightly connected
-network where information can spread quickly.
+The average shortest path distance between all pairs of reachable nodes.
+Lower values indicate a more tightly connected network where information can spread quickly.
 
 ```sql
 select round(avg_path_length, 4) as avg_path
@@ -143,8 +154,8 @@ from onager_mtr_avg_path_length((select src, dst from edges));
 
 ## Graph Density
 
-The fraction of possible edges that actually exist. A density of 1.0 means a complete graph (all possible edges exist),
-while 0.0 means no edges.
+The fraction of possible edges that actually exist.
+A density of 1.0 means a complete graph (all possible edges exist), while 0.0 means no edges.
 
 ```sql
 select round(density, 4) as density

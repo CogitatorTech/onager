@@ -33,6 +33,8 @@ void OnagerExtension::Load(ExtensionLoader &loader) {
   onager::RegisterPersonalizedFunctions(loader);
   onager::RegisterSubgraphFunctions(loader);
   onager::RegisterParallelFunctions(loader);
+  onager::RegisterLocalReachingFunction(loader);
+  onager::RegisterLaplacianFunction(loader);
 }
 
 std::string OnagerExtension::Name() {
@@ -51,12 +53,12 @@ std::string OnagerExtension::Version() const {
 
 extern "C" {
 
-DUCKDB_EXTENSION_API void onager_init(duckdb::DatabaseInstance &db) {
+DUCKDB_EXTENSION_API void onager_duckdb_cpp_init(duckdb::DatabaseInstance &db) {
   duckdb::DuckDB db_wrapper(db);
   db_wrapper.LoadStaticExtension<duckdb::OnagerExtension>();
 }
 
-DUCKDB_EXTENSION_API const char *onager_version() {
+DUCKDB_EXTENSION_API const char *onager_duckdb_cpp_version() {
   return duckdb::DuckDB::LibraryVersion();
 }
 

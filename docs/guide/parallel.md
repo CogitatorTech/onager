@@ -5,8 +5,8 @@ description: High-performance algorithms using parallel execution.
 
 # Parallel Algorithms
 
-Parallel algorithms use multiple threads to process large graphs faster. These are optimized versions of common
-algorithms designed for better performance on multi-core systems.
+Parallel algorithms use multiple threads to process large graphs faster.
+These are optimized versions of common algorithms designed for better performance on multi-core systems.
 
 ## Setup
 
@@ -30,8 +30,8 @@ from (values (1::bigint, 2::bigint),
 
 ## Parallel PageRank
 
-Computes PageRank centrality using parallel processing. Same semantics as the sequential version but faster on large
-graphs.
+Computes PageRank centrality using parallel processing.
+Same semantics as the sequential version but faster on large graphs.
 
 ```sql
 select node_id, round(rank, 4) as rank
@@ -54,7 +54,8 @@ Optional parameters:
 
 ## Parallel BFS
 
-Breadth-first search using parallel execution. Returns nodes in BFS order from the source.
+Breadth-first search using parallel execution.
+Returns nodes in BFS order from the source.
 
 ```sql
 select node_id

@@ -5,8 +5,8 @@ description: Identify the most important nodes in your graph.
 
 # Centrality Algorithms
 
-Centrality measures identify the most important or influential nodes in a graph. Different algorithms capture different
-notions of "importance" - some focus on connectivity, others on information flow or structural position.
+Centrality measures identify the most important nodes (or vertices) in a graph.
+The importance of a node depends on the context and measured differently by each algorithm.
 
 ## Setup
 
@@ -23,8 +23,15 @@ create table edges as select * from (values
 
 ## PageRank
 
-PageRank measures importance based on the link structure. A node is important if many important nodes point to it.
-Originally developed by Google for ranking web pages.
+PageRank measures importance based on the link structure.
+A node is important if many important nodes point to it.
+It was originally developed by Google for ranking web pages.
+
+\[
+PR(u) = \frac{1-d}{N} + d \sum_{v \in B_u} \frac{PR(v)}{L(v)}
+\]
+
+where \(d\) is the damping factor, \(N\) is the number of nodes, \(B_u\) is the set of nodes linking to \(u\), and \(L(v)\) is the out-degree of \(v\).
 
 ```sql
 select node_id, round(rank, 4) as rank
@@ -56,8 +63,12 @@ select * from onager_ctr_pagerank(
 
 ## Degree Centrality
 
-The simplest centrality measure - counts the number of connections per node. High degree nodes are "hubs" with many
-direct connections.
+The simplest centrality measure — counts the number of connections per node.
+High degree nodes are "hubs" with many direct connections.
+
+\[
+C_D(v) = \frac{\deg(v)}{N-1}
+\]
 
 ```sql
 select node_id, in_degree, out_degree, (in_degree + out_degree) as total
@@ -75,8 +86,17 @@ order by total desc;
 
 ## Betweenness Centrality
 
-Measures how often a node appears on shortest paths between other nodes. High betweenness nodes act as bridges or
-bottlenecks controlling information flow.
+Measures how often a node appears on shortest paths between other nodes.
+High betweenness nodes act as bridges or bottlenecks controlling information flow.
+
+\[
+C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}
+\]
+
+where \(\sigma_{st}\) is the number of shortest paths from \(s\) to \(t\), and \(\sigma_{st}(v)\) is the number passing through \(v\).
+
+!!! warning "Performance"
+    This algorithm has O(n·m) complexity. So, it may be slow on dense graphs with more than 10,000 nodes.
 
 ```sql
 select node_id, round(betweenness, 4) as betweenness
@@ -94,8 +114,14 @@ order by betweenness desc;
 
 ## Closeness Centrality
 
-Measures how close a node is to all other nodes (average shortest path distance). High closeness means information can
-spread quickly from this node.
+Measures how close a node is to all other nodes (average shortest path distance).
+High closeness means information can spread quickly from this node.
+
+\[
+C_C(v) = \frac{N-1}{\sum_{u \neq v} d(u, v)}
+\]
+
+where \(d(u, v)\) is the shortest path distance between \(u\) and \(v\).
 
 ```sql
 select node_id, round(closeness, 4) as closeness
@@ -112,7 +138,12 @@ order by closeness desc;
 
 ## Harmonic Centrality
 
-A variant of closeness that handles disconnected graphs. Uses the sum of inverse distances instead of inverse of sum.
+A variant of closeness that handles disconnected graphs.
+Uses the sum of inverse distances instead of inverse of sum.
+
+\[
+C_H(v) = \sum_{u \neq v} \frac{1}{d(u, v)}
+\]
 
 ```sql
 select node_id, round(harmonic, 4) as harmonic
@@ -124,8 +155,11 @@ order by harmonic desc;
 
 ## Eigenvector Centrality
 
-A node is important if connected to other important nodes. This creates a recursive definition where connections to
-high-scoring nodes contribute more.
+A node is important if connected to other important nodes.
+This creates a recursive definition where connections to high-scoring nodes contribute more.
+
+!!! warning "Performance"
+    This algorithm uses power iteration on the adjacency matrix. May be slow on graphs with more than 10,000 nodes.
 
 ```sql
 select node_id, round(eigenvector, 4) as eigenvector
@@ -142,8 +176,8 @@ Optional parameters:
 
 ## Katz Centrality
 
-Similar to eigenvector centrality but counts all paths, not just direct connections. Longer paths contribute less based
-on an attenuation factor.
+Similar to eigenvector centrality but counts all paths, not just direct connections.
+Longer paths contribute less based on an attenuation factor.
 
 ```sql
 select node_id, round(katz, 4) as katz
@@ -160,8 +194,8 @@ Optional parameters:
 
 ## VoteRank
 
-VoteRank identifies influential spreaders in a network. It iteratively selects nodes that can best spread information,
-penalizing neighbors of already-selected nodes to ensure diversity.
+VoteRank identifies influential spreaders in a network.
+It iteratively selects nodes that can best spread information, penalizing neighbors of already-selected nodes to ensure diversity.
 
 ```sql
 select node_id
@@ -176,6 +210,46 @@ order by node_id;
 Optional parameters:
 
 - `num_seeds` (default 10): Number of influential nodes to return
+
+---
+
+## Local Reaching Centrality
+
+Measures how many nodes can be reached within a specified distance.
+Higher values indicate nodes that can quickly spread information.
+
+```sql
+select node_id, round(centrality, 2) as reach
+from onager_ctr_local_reaching((select src, dst from edges), distance := 2)
+order by centrality desc;
+```
+
+| Column     | Type   | Description                         |
+|------------|--------|-------------------------------------|
+| node_id    | bigint | Node identifier                     |
+| centrality | double | Number of reachable nodes           |
+
+Optional parameters:
+
+- `distance` (default 2): Maximum distance to consider
+
+---
+
+## Laplacian Centrality
+
+Based on the Laplacian matrix of the graph.
+Captures both node degree and neighbor connectivity.
+
+```sql
+select node_id, round(centrality, 2) as laplacian
+from onager_ctr_laplacian((select src, dst from edges))
+order by centrality desc;
+```
+
+| Column     | Type   | Description             |
+|------------|--------|-------------------------|
+| node_id    | bigint | Node identifier         |
+| centrality | double | Laplacian centrality    |
 
 ---
 

@@ -1,9 +1,10 @@
 //! Approximation algorithms module.
 //!
-//! Maximum Clique, Independent Set, Vertex Cover.
+//! Maximum Clique, Independent Set, Vertex Cover, TSP.
 
 use graphina::approximation::clique::max_clique;
 use graphina::approximation::independent_set::maximum_independent_set;
+use graphina::approximation::tsp::traveling_salesman_problem;
 use graphina::approximation::vertex_cover::min_weighted_vertex_cover;
 use graphina::core::types::{Graph, NodeId};
 
@@ -161,6 +162,54 @@ pub fn compute_vertex_cover(src: &[i64], dst: &[i64]) -> Result<VertexCoverResul
     })
 }
 
+/// Result of TSP computation.
+pub struct TspResult {
+    pub tour: Vec<i64>,
+    pub cost: f64,
+}
+
+/// Compute Traveling Salesman Problem approximation using greedy nearest-neighbor.
+pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResult> {
+    if src.len() != dst.len() || src.len() != weights.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src, dst, and weights arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute TSP on empty graph".to_string(),
+        ));
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, weights[i]);
+    }
+
+    let (tour_internal, cost) =
+        traveling_salesman_problem(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+
+    let mut tour = Vec::with_capacity(tour_internal.len());
+    for node_id in tour_internal {
+        if let Some(&ext_id) = reverse_map.get(&node_id) {
+            tour.push(ext_id);
+        }
+    }
+
+    Ok(TspResult { tour, cost })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -193,5 +242,27 @@ mod tests {
         let dst = vec![2, 3, 4];
         let result = compute_vertex_cover(&src, &dst).unwrap();
         assert!(!result.node_ids.is_empty());
+    }
+
+    #[test]
+    fn test_tsp_square() {
+        // Square graph (4 nodes in a cycle) - should visit all nodes
+        let src = vec![1, 2, 3, 4];
+        let dst = vec![2, 3, 4, 1];
+        let weights = vec![1.0, 1.0, 1.0, 1.0];
+
+        let result = compute_tsp(&src, &dst, &weights).unwrap();
+
+        // Tour should include all 4 nodes plus return to start
+        assert!(result.tour.len() >= 5);
+        assert!(result.cost > 0.0);
+        // First and last should be the same (return to start)
+        assert_eq!(result.tour.first(), result.tour.last());
+    }
+
+    #[test]
+    fn test_tsp_empty_error() {
+        let result = compute_tsp(&[], &[], &[]);
+        assert!(result.is_err());
     }
 }

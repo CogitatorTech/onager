@@ -5,8 +5,11 @@ description: Predict missing or future edges in your graph.
 
 # Link Prediction
 
-Link prediction algorithms estimate the likelihood of edges that don't currently exist. These are useful for recommender
-systems, predicting future connections, or finding missing links in incomplete data.
+Link prediction algorithms estimate the likelihood of edges that don't currently exist.
+These are useful for recommender systems, predicting future connections, or finding missing links in incomplete data.
+
+!!! warning "Performance"
+    Link prediction functions compute scores for all node pairs. That can produce O(n²) rows in the result set. So, it's recommended to use them only on smaller graphs (like with fewer than 1,000 nodes) and filter the results aggressively.
 
 ## Setup
 
@@ -25,12 +28,12 @@ from (values (1::bigint, 2::bigint),
 
 ## Jaccard Coefficient
 
-The ratio of common neighbors to total neighbors of two nodes. Higher values indicate nodes are more similar and more
-likely to connect.
+The ratio of common neighbors to total neighbors of two nodes.
+Higher values indicate nodes are more similar and more likely to connect.
 
-$$
+\[
 Jaccard(u, v) = \frac{|N(u) \cap N(v)|}{|N(u) \cup N(v)|}
-$$
+\]
 
 ```sql
 select node1, node2, round(jaccard, 4) as jaccard
@@ -49,12 +52,12 @@ order by jaccard desc limit 10;
 
 ## Adamic-Adar Index
 
-Similar to common neighbors but gives more weight to rare neighbors. A common neighbor with few connections is more
-significant than one with many.
+Similar to common neighbors but gives more weight to rare neighbors.
+A common neighbor with few connections is more significant than one with many.
 
-$$
+\[
 AA(u, v) = \sum_{z \in N(u) \cap N(v)} \frac{1}{\log|N(z)|}
-$$
+\]
 
 ```sql
 select node1, node2, round(score, 4) as adamic_adar
@@ -67,12 +70,12 @@ order by score desc limit 10;
 
 ## Preferential Attachment
 
-Based on the idea that nodes with many connections are likely to get more (the "rich get richer"). Simply the product of
-the degrees of two nodes.
+Based on the idea that nodes with many connections are likely to get more (the "rich get richer").
+Simply the product of the degrees of two nodes.
 
-$$
+\[
 PA(u, v) = |N(u)| \times |N(v)|
-$$
+\]
 
 ```sql
 select node1, node2, score as pref_attach
@@ -84,12 +87,12 @@ order by score desc limit 10;
 
 ## Resource Allocation
 
-Similar to Adamic-Adar but uses inverse degree instead of inverse log-degree. Models resource flow through common
-neighbors.
+Similar to Adamic-Adar but uses inverse degree instead of inverse log-degree.
+Models resource flow through common neighbors.
 
-$$
+\[
 RA(u, v) = \sum_{z \in N(u) \cap N(v)} \frac{1}{|N(z)|}
-$$
+\]
 
 ```sql
 select node1, node2, round(score, 4) as resource_alloc

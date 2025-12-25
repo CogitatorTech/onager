@@ -50,6 +50,18 @@ int64_t onager_compute_vertex_cover(const int64_t *src_ptr,
                                     int64_t *out_nodes);
 
 /**
+ * Compute TSP Approximation.
+ * Returns tour length and writes tour nodes to out_tour and cost to out_cost.
+ */
+
+int64_t onager_compute_tsp(const int64_t *src_ptr,
+                           const int64_t *dst_ptr,
+                           const double *weight_ptr,
+                           uintptr_t edge_count,
+                           int64_t *out_tour,
+                           double *out_cost);
+
+/**
  * Compute PageRank on edge arrays.
  */
 
@@ -172,6 +184,27 @@ int64_t onager_compute_voterank(const int64_t *src_ptr,
                                 uintptr_t edge_count,
                                 uintptr_t num_seeds,
                                 int64_t *out_nodes);
+
+/**
+ * Compute Local Reaching Centrality.
+ */
+
+int64_t onager_compute_local_reaching(const int64_t *src_ptr,
+                                      const int64_t *dst_ptr,
+                                      uintptr_t edge_count,
+                                      uintptr_t distance,
+                                      int64_t *out_nodes,
+                                      double *out_centralities);
+
+/**
+ * Compute Laplacian Centrality.
+ */
+
+int64_t onager_compute_laplacian(const int64_t *src_ptr,
+                                 const int64_t *dst_ptr,
+                                 uintptr_t edge_count,
+                                 int64_t *out_nodes,
+                                 double *out_centralities);
 
 /**
  * Returns the last error message, or null if no error is set.
@@ -391,6 +424,17 @@ int64_t onager_compute_resource_allocation(const int64_t *src_ptr,
                                            int64_t *out_node1,
                                            int64_t *out_node2,
                                            double *out_scores);
+
+/**
+ * Compute common neighbors count.
+ */
+
+int64_t onager_compute_common_neighbors(const int64_t *src_ptr,
+                                        const int64_t *dst_ptr,
+                                        uintptr_t edge_count,
+                                        int64_t *out_node1,
+                                        int64_t *out_node2,
+                                        int64_t *out_counts);
 
 /**
  * Compute graph diameter.

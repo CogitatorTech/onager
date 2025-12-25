@@ -17,8 +17,8 @@ It outlines features to be implemented and their current status.
 * [x] Eigenvector centrality
 * [x] Katz centrality
 * [x] VoteRank (influential spreaders)
-* [ ] Local reaching centrality
-* [ ] Laplacian centrality
+* [x] Local reaching centrality
+* [x] Laplacian centrality
 
 ### 2. Community Detection
 
@@ -64,7 +64,7 @@ It outlines features to be implemented and their current status.
 * [x] Maximum clique approximation
 * [x] Maximum independent set approximation
 * [x] Minimum vertex cover approximation
-* [ ] Traveling salesman approximation
+* [x] Traveling salesman approximation
 * [ ] Graph coloring approximation
 
 ### 7. Parallel Algorithms
@@ -88,7 +88,6 @@ It outlines features to be implemented and their current status.
 
 * [x] Kruskal's algorithm
 * [x] Prim's algorithm
-* [ ] Borůvka's algorithm
 
 ### 10. Link Prediction
 
@@ -96,7 +95,7 @@ It outlines features to be implemented and their current status.
 * [x] Adamic-Adar index
 * [x] Preferential attachment
 * [x] Resource allocation
-* [ ] Common neighbors
+* [x] Common neighbors
 * [ ] Katz similarity
 
 ### 11. Documentation and Testing

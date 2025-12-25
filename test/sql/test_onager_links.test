@@ -25,6 +25,12 @@ select count(*) > 0 from onager_lnk_adamic_adar((select src, dst from test_edges
 ----
 1
 
+# Test Common Neighbors
+query I
+select count(*) > 0 from onager_lnk_common_neighbors((select src, dst from test_edges))
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

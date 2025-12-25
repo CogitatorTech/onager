@@ -99,6 +99,49 @@ static OperatorFinalizeResultType AdamicAdarFinal(ExecutionContext &ctx, TableFu
 }
 
 // =============================================================================
+// Common Neighbors
+// =============================================================================
+
+struct CommonNeighborsGlobalState : public GlobalTableFunctionState {
+  std::vector<int64_t> src_nodes, dst_nodes, result_n1, result_n2, result_counts;
+  idx_t output_idx = 0; bool computed = false;
+  idx_t MaxThreads() const override { return 1; }
+};
+
+static unique_ptr<FunctionData> CommonNeighborsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_common_neighbors requires 2 columns");
+  rt.push_back(LogicalType::BIGINT); nm.push_back("node1");
+  rt.push_back(LogicalType::BIGINT); nm.push_back("node2");
+  rt.push_back(LogicalType::BIGINT); nm.push_back("count");
+  return make_uniq<TableFunctionData>();
+}
+static unique_ptr<GlobalTableFunctionState> CommonNeighborsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<CommonNeighborsGlobalState>(); }
+static OperatorResultType CommonNeighborsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &gs = data.global_state->Cast<CommonNeighborsGlobalState>();
+  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
+  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+}
+static OperatorFinalizeResultType CommonNeighborsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &gs = data.global_state->Cast<CommonNeighborsGlobalState>();
+  if (!gs.computed) {
+    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    int64_t nc = ::onager::onager_compute_common_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
+    if (nc < 0) throw InvalidInputException("CommonNeighbors failed: " + GetOnagerError());
+    gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_counts.resize(nc);
+    ::onager::onager_compute_common_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_counts.data());
+    gs.computed = true;
+  }
+  idx_t rem = gs.result_n1.size() - gs.output_idx;
+  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
+  auto n1 = FlatVector::GetData<int64_t>(output.data[0]); auto n2 = FlatVector::GetData<int64_t>(output.data[1]); auto cnt = FlatVector::GetData<int64_t>(output.data[2]);
+  for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; cnt[i] = gs.result_counts[gs.output_idx+i]; }
+  gs.output_idx += to; output.SetCardinality(to);
+  return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
+}
+
+// =============================================================================
 // Registration
 // =============================================================================
 
@@ -114,6 +157,11 @@ void RegisterLinkFunctions(ExtensionLoader &loader) {
   adamic_adar.in_out_function = AdamicAdarInOut;
   adamic_adar.in_out_function_final = AdamicAdarFinal;
   loader.RegisterFunction(adamic_adar);
+
+  TableFunction common_neighbors("onager_lnk_common_neighbors", {LogicalType::TABLE}, nullptr, CommonNeighborsBind, CommonNeighborsInitGlobal);
+  common_neighbors.in_out_function = CommonNeighborsInOut;
+  common_neighbors.in_out_function_final = CommonNeighborsFinal;
+  loader.RegisterFunction(common_neighbors);
 }
 
 } // namespace onager

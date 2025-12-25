@@ -3,7 +3,7 @@ title: Analytics Examples
 description: Real-world graph analytics use cases with Onager.
 ---
 
-# Analytics Examples
+# Graph Analytics Examples
 
 ## Social Network Analysis
 

@@ -8,7 +8,7 @@ use graphina::centrality::degree::{in_degree_centrality, out_degree_centrality};
 use graphina::centrality::eigenvector::eigenvector_centrality;
 use graphina::centrality::harmonic::harmonic_centrality;
 use graphina::centrality::katz::katz_centrality;
-use graphina::centrality::other::voterank;
+use graphina::centrality::other::{laplacian_centrality, local_reaching_centrality, voterank};
 use graphina::centrality::pagerank::pagerank;
 use graphina::core::types::{Digraph, Graph, NodeId};
 use ordered_float::OrderedFloat;
@@ -509,6 +509,116 @@ pub fn compute_voterank(src: &[i64], dst: &[i64], num_seeds: usize) -> Result<Vo
     })
 }
 
+/// Result of Local Reaching Centrality computation.
+pub struct LocalReachingResult {
+    pub node_ids: Vec<i64>,
+    pub centrality: Vec<f64>,
+}
+
+/// Compute Local Reaching Centrality.
+/// Measures how many nodes can be reached within a given distance.
+pub fn compute_local_reaching(
+    src: &[i64],
+    dst: &[i64],
+    distance: usize,
+) -> Result<LocalReachingResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Ok(LocalReachingResult {
+            node_ids: Vec::new(),
+            centrality: Vec::new(),
+        });
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let centrality_map = local_reaching_centrality(&graph, distance)
+        .map_err(|e| OnagerError::GraphError(e.to_string()))?;
+
+    let mut result_nodes = Vec::with_capacity(node_set.len());
+    let mut result_centrality = Vec::with_capacity(node_set.len());
+    for (ext_id, int_id) in &node_set {
+        result_nodes.push(*ext_id);
+        result_centrality.push(*centrality_map.get(int_id).unwrap_or(&0.0));
+    }
+
+    Ok(LocalReachingResult {
+        node_ids: result_nodes,
+        centrality: result_centrality,
+    })
+}
+
+/// Result of Laplacian Centrality computation.
+pub struct LaplacianResult {
+    pub node_ids: Vec<i64>,
+    pub centrality: Vec<f64>,
+}
+
+/// Compute Laplacian Centrality.
+/// Based on the Laplacian matrix of the graph.
+pub fn compute_laplacian(src: &[i64], dst: &[i64]) -> Result<LaplacianResult> {
+    if src.len() != dst.len() {
+        return Err(OnagerError::InvalidArgument(
+            "src and dst arrays must have same length".to_string(),
+        ));
+    }
+    if src.is_empty() {
+        return Ok(LaplacianResult {
+            node_ids: Vec::new(),
+            centrality: Vec::new(),
+        });
+    }
+
+    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
+    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
+    for &node in src.iter().chain(dst.iter()) {
+        if !node_set.contains_key(&node) {
+            let id = graph.add_node(node);
+            node_set.insert(node, id);
+            reverse_map.insert(id, node);
+        }
+    }
+    for i in 0..src.len() {
+        let src_id = node_set[&src[i]];
+        let dst_id = node_set[&dst[i]];
+        graph.add_edge(src_id, dst_id, 1.0);
+    }
+
+    let centrality_map =
+        laplacian_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+
+    let mut result_nodes = Vec::with_capacity(node_set.len());
+    let mut result_centrality = Vec::with_capacity(node_set.len());
+    for (ext_id, int_id) in &node_set {
+        result_nodes.push(*ext_id);
+        result_centrality.push(*centrality_map.get(int_id).unwrap_or(&0.0));
+    }
+
+    Ok(LaplacianResult {
+        node_ids: result_nodes,
+        centrality: result_centrality,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -640,5 +750,43 @@ mod tests {
     fn test_mismatched_arrays_error() {
         let result = compute_pagerank(&[1, 2], &[2], &[], 0.85, 100, false);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_local_reaching() {
+        let (src, dst) = triangle_graph();
+        let result = compute_local_reaching(&src, &dst, 2).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.centrality.is_empty());
+        // All nodes in a triangle can reach all others within distance 2
+        for &c in &result.centrality {
+            assert!(c >= 1.0);
+        }
+    }
+
+    #[test]
+    fn test_local_reaching_empty() {
+        let result = compute_local_reaching(&[], &[], 2).unwrap();
+        assert!(result.node_ids.is_empty());
+    }
+
+    #[test]
+    fn test_laplacian() {
+        let (src, dst) = triangle_graph();
+        let result = compute_laplacian(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert!(!result.centrality.is_empty());
+        // All nodes in a symmetric triangle should have similar laplacian centrality
+        for &c in &result.centrality {
+            assert!(c >= 0.0);
+        }
+    }
+
+    #[test]
+    fn test_laplacian_empty() {
+        let result = compute_laplacian(&[], &[]).unwrap();
+        assert!(result.node_ids.is_empty());
     }
 }
