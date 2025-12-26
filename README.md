@@ -32,9 +32,11 @@ Users typically want something like DuckPGQ when they need to query graph patter
 
 ### Features
 
-- Adds over 30 popular graph algorithms as SQL functions
+- Adds over 30 graph algorithms as SQL table functions
+- Provides a simple and uniform API
 - Supports both directed and undirected graphs
-- Supports weighted and unweighted graphs
+- Supports weighted and unweighted edges
+- Includes multi-threaded algorithm implementations
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
