@@ -593,6 +593,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -619,7 +623,7 @@
   <span class="md-ellipsis">
     
   
-    SQL Functions
+    Function Categories
   
 
     
@@ -635,7 +639,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    SQL Functions
+    Function Categories
   
 
           </label>
@@ -1050,6 +1054,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approximation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approximation Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mst/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Minimum Spanning Tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1289,6 +1349,8 @@
       
         
       
+        
+      
     
     
     
@@ -1351,6 +1413,34 @@
     
   
     SQL Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/input-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Formats
   
 
     
@@ -1528,8 +1618,8 @@
 
 
 <h1 id="graph-metrics">Graph Metrics<a class="headerlink" href="#graph-metrics" title="Permanent link">&para;</a></h1>
-<p>Graph metrics provide summary statistics about the overall structure of a network. These help understand properties like
-how tightly connected the graph is, how clustered it is, and how node degrees are distributed.</p>
+<p>Graph metrics provide summary statistics about the overall structure of a network.
+These help understand properties like how tightly connected the graph is, how clustered it is, and how node degrees are distributed.</p>
 <h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
@@ -1544,8 +1634,9 @@ how tightly connected the graph is, how clustered it is, and how node degrees ar
 </code></pre></div>
 <hr />
 <h2 id="diameter">Diameter<a class="headerlink" href="#diameter" title="Permanent link">&para;</a></h2>
-<p>The diameter is the longest shortest path between any two nodes. It measures how "spread out" the graph is. A small
-diameter means information can travel quickly across the network.</p>
+<p>The diameter is the longest shortest path between any two nodes.
+It measures how "spread out" the graph is.
+A small diameter means information can travel quickly across the network.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="n">diameter</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_diameter</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
 </code></pre></div>
@@ -1590,8 +1681,12 @@ Nodes achieving the radius are called center nodes.</p>
 </table>
 <hr />
 <h2 id="average-clustering-coefficient">Average Clustering Coefficient<a class="headerlink" href="#average-clustering-coefficient" title="Permanent link">&para;</a></h2>
-<p>Measures how much nodes tend to cluster together. A clustering coefficient of 1.0 means every node's neighbors are all
-connected to each other (perfect cliques).</p>
+<p>Measures how much nodes tend to cluster together.
+A clustering coefficient of 1.0 means every node's neighbors are all connected to each other (perfect cliques).</p>
+<div class="arithmatex">\[
+C_i = \frac{2 \cdot |\{e_{jk}\}|}{k_i(k_i - 1)}
+\]</div>
+<p>where <span class="arithmatex">\(k_i\)</span> is the degree of node <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(|\{e_{jk}\}|\)</span> is the number of edges between its neighbors.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">avg_clustering</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">clustering</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_avg_clustering</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
 </code></pre></div>
@@ -1613,8 +1708,11 @@ connected to each other (perfect cliques).</p>
 </table>
 <hr />
 <h2 id="transitivity">Transitivity<a class="headerlink" href="#transitivity" title="Permanent link">&para;</a></h2>
-<p>Global clustering coefficient. The ratio of triangles to connected triples. Measures the overall tendency of the graph
-to form triangles.</p>
+<p>Global clustering coefficient. The ratio of triangles to connected triples.
+Measures the overall tendency of the graph to form triangles.</p>
+<div class="arithmatex">\[
+T = \frac{3 \times \text{triangles}}{\text{connected triples}}
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">select</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">transitivity</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">transitivity</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_transitivity</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
 </code></pre></div>
@@ -1636,8 +1734,8 @@ to form triangles.</p>
 </table>
 <hr />
 <h2 id="triangle-count">Triangle Count<a class="headerlink" href="#triangle-count" title="Permanent link">&para;</a></h2>
-<p>Counts the number of triangles each node participates in. Triangles indicate strong local connectivity and are the basis
-for clustering coefficients.</p>
+<p>Counts the number of triangles each node participates in.
+Triangles indicate strong local connectivity and are the basis for clustering coefficients.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">triangles</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_triangles</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">where</span><span class="w"> </span><span class="n">triangles</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
@@ -1666,9 +1764,9 @@ for clustering coefficients.</p>
 </table>
 <hr />
 <h2 id="assortativity">Assortativity<a class="headerlink" href="#assortativity" title="Permanent link">&para;</a></h2>
-<p>Degree assortativity measures whether nodes tend to connect to nodes with similar degree. Positive values mean
-high-degree nodes connect to other high-degree nodes (assortative). Negative values mean high-degree nodes connect to
-low-degree nodes (disassortative).</p>
+<p>Degree assortativity measures whether nodes tend to connect to nodes with similar degree.
+Positive values mean high-degree nodes connect to other high-degree nodes (assortative).
+Negative values mean high-degree nodes connect to low-degree nodes (disassortative).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">select</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">assortativity</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">assortativity</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_assortativity</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
 </code></pre></div>
@@ -1690,8 +1788,8 @@ low-degree nodes (disassortative).</p>
 </table>
 <hr />
 <h2 id="average-path-length">Average Path Length<a class="headerlink" href="#average-path-length" title="Permanent link">&para;</a></h2>
-<p>The average shortest path distance between all pairs of reachable nodes. Lower values indicate a more tightly connected
-network where information can spread quickly.</p>
+<p>The average shortest path distance between all pairs of reachable nodes.
+Lower values indicate a more tightly connected network where information can spread quickly.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">select</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">avg_path_length</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">avg_path</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_avg_path_length</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
 </code></pre></div>
@@ -1713,8 +1811,8 @@ network where information can spread quickly.</p>
 </table>
 <hr />
 <h2 id="graph-density">Graph Density<a class="headerlink" href="#graph-density" title="Permanent link">&para;</a></h2>
-<p>The fraction of possible edges that actually exist. A density of 1.0 means a complete graph (all possible edges exist),
-while 0.0 means no edges.</p>
+<p>The fraction of possible edges that actually exist.
+A density of 1.0 means a complete graph (all possible edges exist), while 0.0 means no edges.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">select</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">density</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">density</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_mtr_density</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">));</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
@@ -1851,6 +1949,12 @@ while 0.0 means no edges.</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../assets/js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -593,6 +593,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -619,7 +623,7 @@
   <span class="md-ellipsis">
     
   
-    SQL Functions
+    Function Categories
   
 
     
@@ -635,7 +639,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    SQL Functions
+    Function Categories
   
 
           </label>
@@ -1017,6 +1021,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approximation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approximation Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mst/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Minimum Spanning Tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1256,6 +1316,8 @@
       
         
       
+        
+      
     
     
     
@@ -1318,6 +1380,34 @@
     
   
     SQL Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/input-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Formats
   
 
     
@@ -1462,7 +1552,8 @@
 
 
 <h1 id="traversal-and-paths">Traversal and Paths<a class="headerlink" href="#traversal-and-paths" title="Permanent link">&para;</a></h1>
-<p>Traversal algorithms systematically visit nodes in a graph. Shortest path algorithms find optimal routes between nodes.
+<p>Traversal algorithms systematically visit nodes in a graph.
+Shortest path algorithms find optimal routes between nodes.
 These are fundamental operations for graph analysis.</p>
 <h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span>
@@ -1479,7 +1570,8 @@ These are fundamental operations for graph analysis.</p>
 </code></pre></div>
 <hr />
 <h2 id="breadth-first-search-bfs">Breadth-First Search (BFS)<a class="headerlink" href="#breadth-first-search-bfs" title="Permanent link">&para;</a></h2>
-<p>Explores nodes level by level, starting from a source. Visits all neighbors before moving to neighbors of neighbors.
+<p>Explores nodes level by level, starting from a source.
+Visits all neighbors before moving to neighbors of neighbors.
 Useful for finding shortest paths in unweighted graphs.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_num</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_trv_bfs</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
@@ -1508,16 +1600,17 @@ Useful for finding shortest paths in unweighted graphs.</p>
 </table>
 <hr />
 <h2 id="depth-first-search-dfs">Depth-First Search (DFS)<a class="headerlink" href="#depth-first-search-dfs" title="Permanent link">&para;</a></h2>
-<p>Explores as far as possible along each branch before backtracking. Visits a neighbor, then that neighbor's neighbor, and
-so on. Useful for topological sorting and cycle detection.</p>
+<p>Explores as far as possible along each branch before backtracking.
+Visits a neighbor, then that neighbor's neighbor, and so on.
+Useful for topological sorting and cycle detection.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_num</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_trv_dfs</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">order_num</span><span class="p">;</span>
 </code></pre></div>
 <hr />
 <h2 id="dijkstras-algorithm">Dijkstra's Algorithm<a class="headerlink" href="#dijkstras-algorithm" title="Permanent link">&para;</a></h2>
-<p>Finds shortest paths from a source to all reachable nodes. Assumes non-negative edge weights. The classic algorithm for
-shortest paths.</p>
+<p>Finds shortest paths from a source to all reachable nodes.
+Assumes non-negative edge weights. The classic algorithm for shortest paths.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">distance</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_pth_dijkstra</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="k">source</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">distance</span><span class="p">;</span>
@@ -1545,7 +1638,8 @@ shortest paths.</p>
 </table>
 <hr />
 <h2 id="bellman-ford-algorithm">Bellman-Ford Algorithm<a class="headerlink" href="#bellman-ford-algorithm" title="Permanent link">&para;</a></h2>
-<p>Finds shortest paths even with negative edge weights. Slower than Dijkstra but more general. Can detect negative cycles.</p>
+<p>Finds shortest paths even with negative edge weights.
+Slower than Dijkstra but more general. Can detect negative cycles.</p>
 <p>For weighted edges, provide a third column:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">weighted_edges</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
@@ -1561,8 +1655,12 @@ shortest paths.</p>
 </code></pre></div>
 <hr />
 <h2 id="floyd-warshall-algorithm">Floyd-Warshall Algorithm<a class="headerlink" href="#floyd-warshall-algorithm" title="Permanent link">&para;</a></h2>
-<p>Computes shortest paths between all pairs of nodes. Returns a row for every (source, destination) pair. Useful when you
-need distances between many node pairs.</p>
+<p>Computes shortest paths between all pairs of nodes.
+Returns a row for every (source, destination) pair. Useful when you need distances between many node pairs.</p>
+<div class="admonition warning">
+<p class="admonition-title">Performance</p>
+<p>This algorithm has O(n³) time and O(n²) space complexity. So, it's recommended to use it only on smaller graphs (like with fewer than 1,000 nodes).</p>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">distance</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_pth_floyd_warshall</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">weight</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">where</span><span class="w"> </span><span class="n">distance</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">1000</span>
@@ -1702,6 +1800,12 @@ need distances between many node pairs.</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../assets/js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

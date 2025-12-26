@@ -2,70 +2,82 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://cogitatortech.github.io/onager/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/examples/analytics/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/examples/basic/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/examples/centrality/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/examples/community/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/examples/links/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/getting-started/quickstart/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
+    </url>
+    <url>
+         <loc>https://cogitatortech.github.io/onager/guide/approximation/</loc>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/centrality/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/community/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/generators/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/graph-registry/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/links/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/metrics/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
+    </url>
+    <url>
+         <loc>https://cogitatortech.github.io/onager/guide/mst/</loc>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/parallel/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/subgraphs/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/guide/traversal/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
+    </url>
+    <url>
+         <loc>https://cogitatortech.github.io/onager/reference/input-formats/</loc>
+         <lastmod>2025-12-26</lastmod>
     </url>
     <url>
          <loc>https://cogitatortech.github.io/onager/reference/sql-functions/</loc>
-         <lastmod>2025-12-25</lastmod>
+         <lastmod>2025-12-26</lastmod>
     </url>
 </urlset>

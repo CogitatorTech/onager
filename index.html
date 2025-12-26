@@ -675,6 +675,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -700,7 +704,7 @@
   <span class="md-ellipsis">
     
   
-    SQL Functions
+    Function Categories
   
 
     
@@ -716,7 +720,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    SQL Functions
+    Function Categories
   
 
           </label>
@@ -974,6 +978,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/approximation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approximation Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/mst/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Minimum Spanning Tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1213,6 +1273,8 @@
       
         
       
+        
+      
     
     
     
@@ -1275,6 +1337,34 @@
     
   
     SQL Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/input-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Formats
   
 
     
@@ -1392,10 +1482,16 @@
 
 <p>Onager is a DuckDB extension that adds a large number of graph analytics functions to DuckDB,
 including centrality measures, community detection algorithms, pathfinding algorithms, graph metrics,
-and graph generators.</p>
-<p>Onager is written in Rust 🦀 and uses <a href="https://github.com/habedi/graphina">Graphina</a> graph library under the hood.</p>
+and graph generators.
+Onager is written in Rust and uses <a href="https://github.com/habedi/graphina">Graphina</a> graph library under the hood.</p>
+<p>Compared to <a href="https://github.com/cwida/duckpgq-extension">DuckPGQ</a>, Onager is focused on graph analytics instead of graph querying.
+More specifically, DuckPGQ implements SQL/PGQ (the SQL:2023 standard) for graph pattern matching and path-finding queries with a property graph model.
+Onager instead provides a collection of ready-to-use graph algorithms (like PageRank, Louvain community detection, Dijkstra's shortest path, etc.)
+as simple table functions.
+Users typically want something like DuckPGQ when they need to query graph patterns,
+and use Onager when they need to run graph algorithms on their graph data.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">install</span><span class="w"> </span><span class="n">nager</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">community</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">install</span><span class="w"> </span><span class="n">onager</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">community</span><span class="p">;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">load</span><span class="w"> </span><span class="n">onager</span><span class="p">;</span>
 </code></pre></div>
 <h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
@@ -1466,7 +1562,6 @@ and graph generators.</p>
 </table>
 <h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="getting-started/installation.md">Installation</a></li>
 <li><a href="getting-started/quickstart/">Quick Start</a></li>
 <li><a href="reference/sql-functions/">SQL Function Reference</a></li>
 </ul>
@@ -1548,6 +1643,12 @@ and graph generators.</p>
     
     
       <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="assets/js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -593,6 +593,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -619,7 +623,7 @@
   <span class="md-ellipsis">
     
   
-    SQL Functions
+    Function Categories
   
 
     
@@ -635,7 +639,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    SQL Functions
+    Function Categories
   
 
           </label>
@@ -1006,6 +1010,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approximation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approximation Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mst/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Minimum Spanning Tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1245,6 +1305,8 @@
       
         
       
+        
+      
     
     
     
@@ -1307,6 +1369,34 @@
     
   
     SQL Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/input-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Formats
   
 
     
@@ -1440,8 +1530,12 @@
 
 
 <h1 id="link-prediction">Link Prediction<a class="headerlink" href="#link-prediction" title="Permanent link">&para;</a></h1>
-<p>Link prediction algorithms estimate the likelihood of edges that don't currently exist. These are useful for recommender
-systems, predicting future connections, or finding missing links in incomplete data.</p>
+<p>Link prediction algorithms estimate the likelihood of edges that don't currently exist.
+These are useful for recommender systems, predicting future connections, or finding missing links in incomplete data.</p>
+<div class="admonition warning">
+<p class="admonition-title">Performance</p>
+<p>Link prediction functions compute scores for all node pairs. That can produce O(n²) rows in the result set. So, it's recommended to use them only on smaller graphs (like with fewer than 1,000 nodes) and filter the results aggressively.</p>
+</div>
 <h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">edges</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
@@ -1454,11 +1548,11 @@ systems, predicting future connections, or finding missing links in incomplete d
 </code></pre></div>
 <hr />
 <h2 id="jaccard-coefficient">Jaccard Coefficient<a class="headerlink" href="#jaccard-coefficient" title="Permanent link">&para;</a></h2>
-<p>The ratio of common neighbors to total neighbors of two nodes. Higher values indicate nodes are more similar and more
-likely to connect.</p>
-<p>$$
+<p>The ratio of common neighbors to total neighbors of two nodes.
+Higher values indicate nodes are more similar and more likely to connect.</p>
+<div class="arithmatex">\[
 Jaccard(u, v) = \frac{|N(u) \cap N(v)|}{|N(u) \cup N(v)|}
-$$</p>
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node1</span><span class="p">,</span><span class="w"> </span><span class="n">node2</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">jaccard</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">jaccard</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_lnk_jaccard</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">where</span><span class="w"> </span><span class="n">jaccard</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
@@ -1492,11 +1586,11 @@ $$</p>
 </table>
 <hr />
 <h2 id="adamic-adar-index">Adamic-Adar Index<a class="headerlink" href="#adamic-adar-index" title="Permanent link">&para;</a></h2>
-<p>Similar to common neighbors but gives more weight to rare neighbors. A common neighbor with few connections is more
-significant than one with many.</p>
-<p>$$
+<p>Similar to common neighbors but gives more weight to rare neighbors.
+A common neighbor with few connections is more significant than one with many.</p>
+<div class="arithmatex">\[
 AA(u, v) = \sum_{z \in N(u) \cap N(v)} \frac{1}{\log|N(z)|}
-$$</p>
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node1</span><span class="p">,</span><span class="w"> </span><span class="n">node2</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">score</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">adamic_adar</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_lnk_adamic_adar</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">where</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
@@ -1504,22 +1598,22 @@ $$</p>
 </code></pre></div>
 <hr />
 <h2 id="preferential-attachment">Preferential Attachment<a class="headerlink" href="#preferential-attachment" title="Permanent link">&para;</a></h2>
-<p>Based on the idea that nodes with many connections are likely to get more (the "rich get richer"). Simply the product of
-the degrees of two nodes.</p>
-<p>$$
+<p>Based on the idea that nodes with many connections are likely to get more (the "rich get richer").
+Simply the product of the degrees of two nodes.</p>
+<div class="arithmatex">\[
 PA(u, v) = |N(u)| \times |N(v)|
-$$</p>
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node1</span><span class="p">,</span><span class="w"> </span><span class="n">node2</span><span class="p">,</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">pref_attach</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_lnk_pref_attach</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="k">desc</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
 </code></pre></div>
 <hr />
 <h2 id="resource-allocation">Resource Allocation<a class="headerlink" href="#resource-allocation" title="Permanent link">&para;</a></h2>
-<p>Similar to Adamic-Adar but uses inverse degree instead of inverse log-degree. Models resource flow through common
-neighbors.</p>
-<p>$$
+<p>Similar to Adamic-Adar but uses inverse degree instead of inverse log-degree.
+Models resource flow through common neighbors.</p>
+<div class="arithmatex">\[
 RA(u, v) = \sum_{z \in N(u) \cap N(v)} \frac{1}{|N(z)|}
-$$</p>
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node1</span><span class="p">,</span><span class="w"> </span><span class="n">node2</span><span class="p">,</span><span class="w"> </span><span class="n">round</span><span class="p">(</span><span class="n">score</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">resource_alloc</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_lnk_resource_alloc</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">where</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
@@ -1641,6 +1735,12 @@ $$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../assets/js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

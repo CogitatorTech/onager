@@ -593,6 +593,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -619,7 +623,7 @@
   <span class="md-ellipsis">
     
   
-    SQL Functions
+    Function Categories
   
 
     
@@ -635,7 +639,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    SQL Functions
+    Function Categories
   
 
           </label>
@@ -1017,6 +1021,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approximation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approximation Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mst/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Minimum Spanning Tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1256,6 +1316,8 @@
       
         
       
+        
+      
     
     
     
@@ -1318,6 +1380,34 @@
     
   
     SQL Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/input-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Formats
   
 
     
@@ -1465,9 +1555,9 @@
 <p>Onager provides an in-memory graph registry that stores named graphs for efficient repeated queries.</p>
 <h2 id="when-to-use-the-registry">When to Use the Registry<a class="headerlink" href="#when-to-use-the-registry" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Multiple queries on same data</strong>: Store once, query many times</li>
-<li><strong>Scalar node queries</strong>: Get degree, check existence</li>
-<li><strong>Session-persistent graphs</strong>: Graphs persist for database session lifetime</li>
+<li>When querying the same graph multiple times</li>
+<li>When querying node or graph statistics</li>
+<li>When you want to run different queries or algorithms on the same graph</li>
 </ul>
 <h2 id="creating-graphs">Creating Graphs<a class="headerlink" href="#creating-graphs" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">-- Create a directed graph</span>
@@ -1630,6 +1720,12 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../assets/js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
