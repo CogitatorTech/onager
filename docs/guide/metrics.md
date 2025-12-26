@@ -183,7 +183,7 @@ Generate a comprehensive report of network properties:
 ```sql
 create table network as
 select *
-from (values (1, 2),
+from (values (1::bigint, 2::bigint),
              (1, 3),
              (2, 3),
              (2, 4),

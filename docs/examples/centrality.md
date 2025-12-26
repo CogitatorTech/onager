@@ -1,3 +1,8 @@
+---
+title: Centrality Analysis Example
+description: Finding influential nodes in a network.
+---
+
 # Centrality Analysis Example
 
 ## Finding Influential Nodes in a Network

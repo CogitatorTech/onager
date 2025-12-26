@@ -36,7 +36,7 @@ The ego graph includes the center node, all nodes within the specified number of
 
 ```sql
 select src, dst
-from onager_sub_ego_graph((select src, dst from edges), center := 4, radius := 2);
+from onager_sub_ego_graph((select src, dst from edges), center := 4::bigint, radius := 2);
 ```
 
 | Column | Type   | Description         |
@@ -52,13 +52,13 @@ Parameters:
 ```sql
 -- Compare ego graphs at different radii
 select 'radius=1' as scope, count(*) as edges
-from onager_sub_ego_graph((select src, dst from edges), center := 4, radius := 1)
+from onager_sub_ego_graph((select src, dst from edges), center := 4::bigint, radius := 1)
 union all
 select 'radius=2', count(*)
-from onager_sub_ego_graph((select src, dst from edges), center := 4, radius := 2)
+from onager_sub_ego_graph((select src, dst from edges), center := 4::bigint, radius := 2)
 union all
 select 'radius=3', count(*)
-from onager_sub_ego_graph((select src, dst from edges), center := 4, radius := 3);
+from onager_sub_ego_graph((select src, dst from edges), center := 4::bigint, radius := 3);
 ```
 
 ---
@@ -70,7 +70,7 @@ Unlike ego graph, this returns only node IDs, not edges.
 
 ```sql
 select node_id
-from onager_sub_k_hop((select src, dst from edges), start := 1, k := 2)
+from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 2)
 order by node_id;
 ```
 
@@ -85,8 +85,8 @@ Parameters:
 
 ```sql
 -- Find nodes at exactly distance 2 (in 2-hop but not in 1-hop)
-with hop1 as (select node_id from onager_sub_k_hop((select src, dst from edges), start := 1, k := 1)),
-     hop2 as (select node_id from onager_sub_k_hop((select src, dst from edges), start := 1, k := 2))
+with hop1 as (select node_id from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 1)),
+     hop2 as (select node_id from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 2))
 select h2.node_id
 from hop2 h2
          left join hop1 h1 on h2.node_id = h1.node_id
@@ -101,9 +101,13 @@ Given a set of nodes, returns the subgraph containing only those nodes and the e
 The induced subgraph preserves the original graph structure within the specified node set.
 
 ```sql
--- Extract subgraph for specific nodes using array syntax
+-- Extract subgraph for specific nodes
 select src, dst
-from onager_sub_induced((select src, dst from edges), nodes := [2, 3, 4, 5]);
+from onager_sub_induced((
+  select e.src, e.dst, n.node as filter_node
+  from edges e
+  cross join (values (2::bigint), (3), (4), (5)) n(node)
+));
 ```
 
 | Column | Type   | Description         |
@@ -112,7 +116,7 @@ from onager_sub_induced((select src, dst from edges), nodes := [2, 3, 4, 5]);
 | dst    | bigint | Destination node    |
 
 > [!NOTE]
-> DuckDB table functions support only one subquery parameter, so use the array syntax shown above.
+> The induced subgraph function requires a table with (src, dst, filter_node) columns.
 
 ---
 
@@ -123,7 +127,7 @@ Analyze the local structure around a node of interest:
 ```sql
 create table social as
 select *
-from (values (1, 2),
+from (values (1::bigint, 2::bigint),
              (1, 3),
              (2, 3),
              (2, 4),
@@ -142,20 +146,20 @@ from (values (1, 2),
 
 -- Find nodes near user 5
 select node_id as nearby_user
-from onager_sub_k_hop((select src, dst from social), start := 5, k := 2)
+from onager_sub_k_hop((select src, dst from social), start := 5::bigint, k := 2)
 order by node_id;
 
 -- Get the ego network and analyze it
 with ego as (select src, dst
-             from onager_sub_ego_graph((select src, dst from social), center := 5, radius := 2))
-select (select count(distinct src) + count(distinct dst) from (select src from ego union select dst from ego)) as nodes,
+             from onager_sub_ego_graph((select src, dst from social), center := 5::bigint, radius := 2))
+select (select count(*) from (select src from ego union select dst from ego)) as nodes,
        (select count(*) from ego)                                                                              as edges,
        (select round(avg_clustering, 3)
         from onager_mtr_avg_clustering((select * from ego)))                                                   as clustering;
 
 -- Compute centrality within the neighborhood
 with ego as (select src, dst
-             from onager_sub_ego_graph((select src, dst from social), center := 5, radius := 2))
+             from onager_sub_ego_graph((select src, dst from social), center := 5::bigint, radius := 2))
 select node_id, round(rank, 4) as local_importance
 from onager_ctr_pagerank((select * from ego))
 order by rank desc limit 5;

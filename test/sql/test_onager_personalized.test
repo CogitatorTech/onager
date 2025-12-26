@@ -21,6 +21,17 @@ select count(*) > 0 from onager_ctr_pagerank((select src, dst from test_edges))
 ----
 1
 
+# Test personalized PageRank with a personalization vector
+# The function expects (src, dst, personalization_node, personalization_weight)
+query I
+select count(*) > 0 from onager_ctr_personalized_pagerank((
+  select e.src, e.dst, p.node as pers_node, p.weight::double as pers_weight
+  from test_edges e
+  cross join (values (1::bigint, 1.0::double)) p(node, weight)
+))
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

@@ -175,4 +175,5 @@ Parallel algorithms provide benefits for:
 - Analysis pipelines running multiple algorithms
 - Batch processing of multiple graphs
 
-For small graphs (under 1000 nodes), sequential algorithms may be faster due to parallelization overhead.
+!!! warning "Performance"
+    For small graphs (like under 1,000 nodes), sequential algorithms may be faster due to parallelization overhead.

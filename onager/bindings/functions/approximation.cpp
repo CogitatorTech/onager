@@ -21,7 +21,7 @@ struct MaxCliqueGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> MaxCliqueBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_max_clique requires 2 columns");
+  CheckInt64Input(input, "onager_apx_max_clique");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();
 }
@@ -62,7 +62,7 @@ struct IndependentSetGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> IndependentSetBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_independent_set requires 2 columns");
+  CheckInt64Input(input, "onager_apx_independent_set");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();
 }
@@ -103,7 +103,7 @@ struct VertexCoverGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> VertexCoverBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_vertex_cover requires 2 columns");
+  CheckInt64Input(input, "onager_apx_vertex_cover");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();
 }
@@ -146,7 +146,7 @@ struct TspGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 3) throw InvalidInputException("onager_tsp requires 3 columns: (src, dst, weight)");
+  CheckInt64Input(input, "onager_apx_tsp", 3);
   rt.push_back(LogicalType::BIGINT); nm.push_back("order");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();

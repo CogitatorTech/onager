@@ -36,6 +36,17 @@ select count(*) >= 3 from onager_sub_k_hop((select src, dst from test_edges), st
 ----
 1
 
+# Test induced subgraph returns edges for specified nodes
+# The function expects (src, dst, filter_node) columns
+query I
+select count(*) > 0 from onager_sub_induced((
+  select e.src, e.dst, f.node as filter_node
+  from test_edges e
+  cross join (values (1::bigint), (2::bigint), (3::bigint)) f(node)
+))
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

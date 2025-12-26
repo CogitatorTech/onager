@@ -30,6 +30,22 @@ inline std::string GetOnagerError() {
   return err ? std::string(err) : std::string("unknown error");
 }
 
+/**
+ * @brief Validates that input table has BIGINT columns for (src, dst).
+ * @param input The table function bind input
+ * @param name The function name for error messages
+ * @param min_cols Minimum required columns (default 2)
+ * @throws InvalidInputException if validation fails
+ */
+inline void CheckInt64Input(TableFunctionBindInput &input, const std::string &name, size_t min_cols = 2) {
+  if (input.input_table_types.size() < min_cols) {
+    throw InvalidInputException(name + " requires a table with at least " + std::to_string(min_cols) + " columns");
+  }
+  if (input.input_table_types[0] != LogicalType::BIGINT || input.input_table_types[1] != LogicalType::BIGINT) {
+    throw InvalidInputException(name + " requires (src, dst) columns to be BIGINT. Please cast inputs to BIGINT (e.g. column::bigint). Found: " + input.input_table_types[0].ToString() + ", " + input.input_table_types[1].ToString());
+  }
+}
+
 // Forward declarations for modular function registration
 void RegisterScalarFunctions(ExtensionLoader &loader);
 void RegisterCentralityFunctions(ExtensionLoader &loader);

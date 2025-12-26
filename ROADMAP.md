@@ -10,7 +10,7 @@ It outlines features to be implemented and their current status.
 
 * [x] PageRank centrality
 * [x] Personalized PageRank
-* [x] Degree centrality (in/out)
+* [x] Degree centrality (in and out)
 * [x] Betweenness centrality
 * [x] Closeness centrality
 * [x] Harmonic centrality
@@ -87,7 +87,7 @@ It outlines features to be implemented and their current status.
 ### 9. Minimum Spanning Tree
 
 * [x] Kruskal's algorithm
-* [x] Prim's algorithm
+* [ ] Prim's algorithm
 
 ### 10. Link Prediction
 

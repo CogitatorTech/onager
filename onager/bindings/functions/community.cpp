@@ -23,7 +23,7 @@ struct LouvainGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> LouvainBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<LouvainBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_louvain requires 2 columns");
+  CheckInt64Input(input, "onager_cmm_louvain");
   for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
@@ -66,7 +66,7 @@ struct ComponentsGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> ComponentsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_components requires 2 columns");
+  CheckInt64Input(input, "onager_cmm_components");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("component");
   return make_uniq<TableFunctionData>();
@@ -108,7 +108,7 @@ struct LabelPropGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> LabelPropBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_label_prop requires 2 columns");
+  CheckInt64Input(input, "onager_cmm_label_prop");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("label");
   return make_uniq<TableFunctionData>();
@@ -152,7 +152,7 @@ struct GirvanNewmanGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> GirvanNewmanBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<GirvanNewmanBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_girvan_newman requires 2 columns");
+  CheckInt64Input(input, "onager_cmm_girvan_newman");
   for (auto &kv : input.named_parameters) if (kv.first == "communities") bd->target_communities = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
@@ -197,7 +197,7 @@ struct SpectralGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> SpectralBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<SpectralBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_spectral requires 2 columns");
+  CheckInt64Input(input, "onager_cmm_spectral");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "k") bd->k = kv.second.GetValue<int64_t>();
     if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
@@ -245,7 +245,7 @@ struct InfomapGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> InfomapBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<InfomapBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_infomap requires 2 columns");
+  CheckInt64Input(input, "onager_cmm_infomap");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
     if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();

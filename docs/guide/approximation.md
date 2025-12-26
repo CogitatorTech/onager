@@ -74,12 +74,13 @@ create table weighted_edges as select * from (values
   (2, 3, 2.0), (3, 4, 1.5), (4, 1, 2.5)
 ) t(src, dst, weight);
 
-select order_idx, node_id
+select "order", node_id
 from onager_apx_tsp((select src, dst, weight from weighted_edges))
-order by order_idx;
+order by "order";
+
 ```
 
-| Column    | Type   | Description              |
-|-----------|--------|--------------------------|
-| order_idx | bigint | Position in the tour     |
-| node_id   | bigint | Node at this position    |
+| Column  | Type   | Description              |
+|---------|--------|--------------------------|
+| order   | bigint | Position in the tour     |
+| node_id | bigint | Node at this position    |

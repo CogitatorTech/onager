@@ -395,4 +395,75 @@ mod tests {
 
         assert!(!result.node_ids.is_empty());
     }
+
+    #[test]
+    fn test_floyd_warshall_simple() {
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 4];
+        let weights = vec![1.0, 2.0, 3.0];
+
+        let result = compute_floyd_warshall(&src, &dst, &weights).unwrap();
+
+        // Should have all-pairs distances (excluding self-loops)
+        assert!(!result.src_nodes.is_empty());
+        assert_eq!(result.src_nodes.len(), result.dst_nodes.len());
+        assert_eq!(result.src_nodes.len(), result.distances.len());
+    }
+
+    #[test]
+    fn test_floyd_warshall_triangle() {
+        // Triangle: 1-2-3 with weights
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 1];
+        let weights = vec![1.0, 1.0, 1.0];
+
+        let result = compute_floyd_warshall(&src, &dst, &weights).unwrap();
+
+        // All nodes can reach all others
+        assert!(!result.distances.is_empty());
+        // All distances should be finite
+        for &d in &result.distances {
+            assert!(d.is_finite());
+        }
+    }
+
+    #[test]
+    fn test_shortest_distance() {
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 4];
+
+        let dist = compute_shortest_distance(&src, &dst, 1, 4).unwrap();
+
+        // Path 1 -> 2 -> 3 -> 4 = 3 hops
+        assert_eq!(dist, 3.0);
+    }
+
+    #[test]
+    fn test_shortest_distance_unreachable() {
+        // Two disconnected components
+        let src = vec![1, 3];
+        let dst = vec![2, 4];
+
+        let dist = compute_shortest_distance(&src, &dst, 1, 3).unwrap();
+
+        // Node 3 is unreachable from node 1
+        assert!(dist.is_infinite());
+    }
+
+    #[test]
+    fn test_empty_graph_errors() {
+        assert!(compute_dijkstra(&[], &[], 1).is_err());
+        assert!(compute_bfs(&[], &[], 1).is_err());
+        assert!(compute_dfs(&[], &[], 1).is_err());
+        assert!(compute_bellman_ford(&[], &[], &[], 1).is_err());
+        assert!(compute_floyd_warshall(&[], &[], &[]).is_err());
+        assert!(compute_shortest_distance(&[], &[], 1, 2).is_err());
+    }
+
+    #[test]
+    fn test_mismatched_arrays_error() {
+        assert!(compute_dijkstra(&[1, 2], &[2], 1).is_err());
+        assert!(compute_bellman_ford(&[1, 2], &[2, 3], &[1.0], 1).is_err());
+        assert!(compute_floyd_warshall(&[1, 2], &[2, 3], &[1.0]).is_err());
+    }
 }

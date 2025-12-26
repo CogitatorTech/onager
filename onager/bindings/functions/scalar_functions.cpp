@@ -34,17 +34,18 @@ static void GetLastError(DataChunk &args, ExpressionState &state, Vector &result
 }
 
 static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &result) {
-  auto &graph_name_vec = args.data[0];
-  auto &node_vec = args.data[1];
   auto count = args.size();
+  UnifiedVectorFormat name_data, node_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+  args.data[1].ToUnifiedFormat(count, node_data);
 
   auto result_data = FlatVector::GetData<int64_t>(result);
   auto &result_validity = FlatVector::Validity(result);
 
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(graph_name_vec)[i].GetString();
-    auto node = FlatVector::GetData<int64_t>(node_vec)[i];
-    int64_t degree = ::onager::onager_graph_node_in_degree(graph_name.c_str(), node);
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
+    int64_t degree = ::onager::onager_graph_node_in_degree(name.GetString().c_str(), node);
     if (degree < 0) {
       result_validity.SetInvalid(i);
     } else {
@@ -54,17 +55,18 @@ static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &res
 }
 
 static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &result) {
-  auto &graph_name_vec = args.data[0];
-  auto &node_vec = args.data[1];
   auto count = args.size();
+  UnifiedVectorFormat name_data, node_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+  args.data[1].ToUnifiedFormat(count, node_data);
 
   auto result_data = FlatVector::GetData<int64_t>(result);
   auto &result_validity = FlatVector::Validity(result);
 
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(graph_name_vec)[i].GetString();
-    auto node = FlatVector::GetData<int64_t>(node_vec)[i];
-    int64_t degree = ::onager::onager_graph_node_out_degree(graph_name.c_str(), node);
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
+    int64_t degree = ::onager::onager_graph_node_out_degree(name.GetString().c_str(), node);
     if (degree < 0) {
       result_validity.SetInvalid(i);
     } else {
@@ -79,42 +81,59 @@ static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &re
 
 static void CreateGraph(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
+  UnifiedVectorFormat name_data, dir_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+  args.data[1].ToUnifiedFormat(count, dir_data);
+
   auto result_data = FlatVector::GetData<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(args.data[0])[i].GetString();
-    auto directed = FlatVector::GetData<bool>(args.data[1])[i];
-    result_data[i] = ::onager::onager_create_graph(graph_name.c_str(), directed);
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto dir = ((bool*)dir_data.data)[dir_data.sel->get_index(i)];
+    result_data[i] = ::onager::onager_create_graph(name.GetString().c_str(), dir);
   }
 }
 
 static void DropGraph(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
+  UnifiedVectorFormat name_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+
   auto result_data = FlatVector::GetData<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(args.data[0])[i].GetString();
-    result_data[i] = ::onager::onager_drop_graph(graph_name.c_str());
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    result_data[i] = ::onager::onager_drop_graph(name.GetString().c_str());
   }
 }
 
 static void AddNode(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
+  UnifiedVectorFormat name_data, node_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+  args.data[1].ToUnifiedFormat(count, node_data);
+
   auto result_data = FlatVector::GetData<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(args.data[0])[i].GetString();
-    auto node_id = FlatVector::GetData<int64_t>(args.data[1])[i];
-    result_data[i] = ::onager::onager_add_node(graph_name.c_str(), node_id);
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
+    result_data[i] = ::onager::onager_add_node(name.GetString().c_str(), node);
   }
 }
 
 static void AddEdge(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
+  UnifiedVectorFormat name_data, src_data, dst_data, w_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+  args.data[1].ToUnifiedFormat(count, src_data);
+  args.data[2].ToUnifiedFormat(count, dst_data);
+  args.data[3].ToUnifiedFormat(count, w_data);
+
   auto result_data = FlatVector::GetData<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(args.data[0])[i].GetString();
-    auto src = FlatVector::GetData<int64_t>(args.data[1])[i];
-    auto dst = FlatVector::GetData<int64_t>(args.data[2])[i];
-    auto weight = FlatVector::GetData<double>(args.data[3])[i];
-    result_data[i] = ::onager::onager_add_edge(graph_name.c_str(), src, dst, weight);
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto src = ((int64_t*)src_data.data)[src_data.sel->get_index(i)];
+    auto dst = ((int64_t*)dst_data.data)[dst_data.sel->get_index(i)];
+    auto w = ((double*)w_data.data)[w_data.sel->get_index(i)];
+    result_data[i] = ::onager::onager_add_edge(name.GetString().c_str(), src, dst, w);
   }
 }
 
@@ -132,11 +151,14 @@ static void ListGraphs(DataChunk &args, ExpressionState &state, Vector &result) 
 
 static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
+  UnifiedVectorFormat name_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+
   auto result_data = FlatVector::GetData<int64_t>(result);
   auto &result_validity = FlatVector::Validity(result);
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(args.data[0])[i].GetString();
-    int64_t node_count = ::onager::onager_node_count(graph_name.c_str());
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    int64_t node_count = ::onager::onager_node_count(name.GetString().c_str());
     if (node_count < 0) {
       result_validity.SetInvalid(i);
     } else {
@@ -147,11 +169,14 @@ static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result
 
 static void GetEdgeCount(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
+  UnifiedVectorFormat name_data;
+  args.data[0].ToUnifiedFormat(count, name_data);
+
   auto result_data = FlatVector::GetData<int64_t>(result);
   auto &result_validity = FlatVector::Validity(result);
   for (idx_t i = 0; i < count; i++) {
-    auto graph_name = FlatVector::GetData<string_t>(args.data[0])[i].GetString();
-    int64_t edge_count = ::onager::onager_edge_count(graph_name.c_str());
+    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    int64_t edge_count = ::onager::onager_edge_count(name.GetString().c_str());
     if (edge_count < 0) {
       result_validity.SetInvalid(i);
     } else {

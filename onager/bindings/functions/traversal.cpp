@@ -24,7 +24,7 @@ struct DijkstraGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DijkstraBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_dijkstra requires 2 columns");
+  CheckInt64Input(input, "onager_pth_dijkstra");
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
@@ -69,7 +69,7 @@ struct BfsGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> BfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BfsBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_bfs requires 2 columns");
+  CheckInt64Input(input, "onager_trv_bfs");
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -113,7 +113,7 @@ struct DfsGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> DfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DfsBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_dfs requires 2 columns");
+  CheckInt64Input(input, "onager_trv_dfs");
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -158,7 +158,7 @@ struct BellmanFordGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> BellmanFordBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BellmanFordBindData>();
-  if (input.input_table_types.size() < 3) throw InvalidInputException("onager_bellman_ford requires 3 columns (src, dst, weight)");
+  CheckInt64Input(input, "onager_pth_bellman_ford", 3);
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
@@ -203,7 +203,7 @@ struct FloydWarshallGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> FloydWarshallBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 3) throw InvalidInputException("onager_floyd_warshall requires 3 columns");
+  CheckInt64Input(input, "onager_pth_floyd_warshall", 3);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");

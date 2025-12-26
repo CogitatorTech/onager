@@ -144,14 +144,6 @@ clean-all: clean rust-clean ## Clean everything
 check: rust-lint rust-test ## Run all checks (linting and tests)
 	@echo "All checks passed!"
 
-.PHONY: examples
-examples: ## Run SQL examples for Onager extension
-	@echo "Running the examples in the ${EXAMPLES_DIR} directory..."
-	@for sql_file in $(EXAMPLES_DIR)/*.sql; do \
-		echo "Running example: $$sql_file"; \
-		./build/release/duckdb < $$sql_file; \
-		echo "============================================================================"; \
-	done
 
 .PHONY: docs
 docs: ## Generate Onager MkDocs documentation

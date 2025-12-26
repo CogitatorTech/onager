@@ -14,14 +14,14 @@ use crate::error::{OnagerError, Result};
 
 /// Wrapper for an undirected graph with external ID mapping.
 pub struct UndirectedGraphWrapper {
-    graph: Graph<i32, f64>,
+    graph: Graph<i64, f64>,
     /// Maps external node IDs (provided by user) to internal graphina NodeIds
     node_mapping: HashMap<i64, NodeId>,
 }
 
 /// Wrapper for a directed graph with external ID mapping.
 pub struct DirectedGraphWrapper {
-    graph: Digraph<i32, f64>,
+    graph: Digraph<i64, f64>,
     /// Maps external node IDs (provided by user) to internal graphina NodeIds
     node_mapping: HashMap<i64, NodeId>,
 }
@@ -80,7 +80,7 @@ impl GraphType {
                         node_id
                     )));
                 }
-                let internal_id = w.graph.add_node(node_id as i32);
+                let internal_id = w.graph.add_node(node_id);
                 w.node_mapping.insert(node_id, internal_id);
                 Ok(())
             }
@@ -91,7 +91,7 @@ impl GraphType {
                         node_id
                     )));
                 }
-                let internal_id = w.graph.add_node(node_id as i32);
+                let internal_id = w.graph.add_node(node_id);
                 w.node_mapping.insert(node_id, internal_id);
                 Ok(())
             }

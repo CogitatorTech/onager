@@ -26,7 +26,7 @@ struct PersonalizedPageRankGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> PersonalizedPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<PersonalizedPageRankBindData>();
-  if (input.input_table_types.size() < 4) throw InvalidInputException("onager_personalized_pagerank requires 4 columns: src, dst, pers_node, pers_weight");
+  CheckInt64Input(input, "onager_ctr_personalized_pagerank", 4);
   for (auto &kv : input.named_parameters) {
     if (kv.first == "damping") bd->damping = kv.second.GetValue<double>();
     if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();

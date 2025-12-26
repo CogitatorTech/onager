@@ -30,14 +30,13 @@ struct PageRankGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+
 static unique_ptr<FunctionData> PageRankBind(ClientContext &context,
                                               TableFunctionBindInput &input,
                                               vector<LogicalType> &return_types,
                                               vector<string> &names) {
   auto bind_data = make_uniq<PageRankBindData>();
-  if (input.input_table_types.size() < 2) {
-    throw InvalidInputException("onager_pagerank requires a table with at least 2 columns: (src, dst)");
-  }
+  CheckInt64Input(input, "onager_pagerank");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "damping") bind_data->damping = kv.second.GetValue<double>();
     else if (kv.first == "iterations") bind_data->iterations = kv.second.GetValue<int64_t>();
@@ -103,7 +102,7 @@ struct DegreeGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> DegreeBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DegreeBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_degree requires 2 columns");
+  CheckInt64Input(input, "onager_degree");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("in_degree");
@@ -150,7 +149,7 @@ struct BetweennessGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> BetweennessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BetweennessBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_betweenness requires 2 columns");
+  CheckInt64Input(input, "onager_betweenness");
   for (auto &kv : input.named_parameters) if (kv.first == "normalized") bd->normalized = kv.second.GetValue<bool>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("betweenness");
@@ -194,7 +193,7 @@ struct ClosenessGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> ClosenessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_closeness requires 2 columns");
+  CheckInt64Input(input, "onager_closeness");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("closeness");
   return make_uniq<TableFunctionData>();
@@ -237,7 +236,7 @@ struct HarmonicGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> HarmonicBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_harmonic requires 2 columns");
+  CheckInt64Input(input, "onager_harmonic");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("harmonic");
   return make_uniq<TableFunctionData>();
@@ -282,7 +281,7 @@ struct KatzGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<KatzBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_katz requires 2 columns");
+  CheckInt64Input(input, "onager_katz");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "alpha") bd->alpha = kv.second.GetValue<double>();
     if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
@@ -332,7 +331,7 @@ struct EigenvectorGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> EigenvectorBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<EigenvectorBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_eigenvector requires 2 columns");
+  CheckInt64Input(input, "onager_eigenvector");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
     if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
@@ -448,7 +447,7 @@ struct VoteRankGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> VoteRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<VoteRankBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_voterank requires 2 columns");
+  CheckInt64Input(input, "onager_voterank");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "num_seeds") bd->num_seeds = kv.second.GetValue<int64_t>();
   }
@@ -510,7 +509,7 @@ struct LocalReachingGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<LocalReachingBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_local_reaching requires 2 columns");
+  CheckInt64Input(input, "onager_local_reaching");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "distance") bd->distance = kv.second.GetValue<int64_t>();
   }
@@ -556,7 +555,7 @@ struct LaplacianGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_laplacian requires 2 columns");
+  CheckInt64Input(input, "onager_laplacian");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
   return make_uniq<TableFunctionData>();

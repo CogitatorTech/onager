@@ -260,7 +260,7 @@ Find the top influencers using multiple centrality metrics:
 ```sql
 -- Create a social network
 create table follows as select * from (values
-  (1, 2), (1, 3), (2, 3), (2, 4), (3, 4), (3, 5),
+  (1::bigint, 2::bigint), (1, 3), (2, 3), (2, 4), (3, 4), (3, 5),
   (4, 5), (4, 6), (5, 6), (5, 7), (6, 7), (6, 8),
   (7, 8), (7, 9), (8, 9), (8, 10), (9, 10)
 ) t(follower, followed);

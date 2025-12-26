@@ -1,3 +1,8 @@
+---
+title: Community Detection Example
+description: Segmenting users into groups.
+---
+
 # Community Detection Example
 
 ## Segmenting Users

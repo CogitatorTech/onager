@@ -31,6 +31,18 @@ select count(*) > 0 from onager_lnk_common_neighbors((select src, dst from test_
 ----
 1
 
+# Test Preferential Attachment
+query I
+select count(*) > 0 from onager_lnk_pref_attach((select src, dst from test_edges))
+----
+1
+
+# Test Resource Allocation
+query I
+select count(*) > 0 from onager_lnk_resource_alloc((select src, dst from test_edges))
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

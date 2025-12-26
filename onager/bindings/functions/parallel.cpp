@@ -28,7 +28,7 @@ struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<ParallelPageRankBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_pagerank requires 2 columns");
+  CheckInt64Input(input, "onager_par_pagerank");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "damping") bd->damping = kv.second.GetValue<double>();
     if (kv.first == "iterations") bd->iterations = kv.second.GetValue<int64_t>();
@@ -77,7 +77,7 @@ struct ParallelBfsGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<ParallelBfsBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_bfs requires 2 columns");
+  CheckInt64Input(input, "onager_par_bfs");
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -122,7 +122,7 @@ struct ParallelPathsGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<ParallelPathsBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_shortest_paths requires 2 columns");
+  CheckInt64Input(input, "onager_par_shortest_paths");
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
@@ -165,7 +165,7 @@ struct ParallelComponentsGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> ParallelComponentsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_components requires 2 columns");
+  CheckInt64Input(input, "onager_par_components");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("component");
   return make_uniq<TableFunctionData>();
@@ -208,7 +208,7 @@ struct ParallelClusteringGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> ParallelClusteringBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_clustering requires 2 columns");
+  CheckInt64Input(input, "onager_par_clustering");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("coefficient");
   return make_uniq<TableFunctionData>();
@@ -250,7 +250,7 @@ struct ParallelTrianglesGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> ParallelTrianglesBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_par_triangles requires 2 columns");
+  CheckInt64Input(input, "onager_par_triangles");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("triangles");
   return make_uniq<TableFunctionData>();

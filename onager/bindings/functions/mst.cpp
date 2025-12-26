@@ -23,7 +23,7 @@ struct KruskalMstGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> KruskalMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 3) throw InvalidInputException("onager_mst_kruskal requires 3 columns (src, dst, weight)");
+  CheckInt64Input(input, "onager_mst_kruskal", 3);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("weight");

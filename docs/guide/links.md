@@ -36,17 +36,17 @@ Jaccard(u, v) = \frac{|N(u) \cap N(v)|}{|N(u) \cup N(v)|}
 \]
 
 ```sql
-select node1, node2, round(jaccard, 4) as jaccard
+select node1, node2, round(coefficient, 4) as jaccard
 from onager_lnk_jaccard((select src, dst from edges))
-where jaccard > 0
-order by jaccard desc limit 10;
+where coefficient > 0
+order by coefficient desc limit 10;
 ```
 
-| Column  | Type   | Description                 |
-|---------|--------|-----------------------------|
-| node1   | bigint | First node                  |
-| node2   | bigint | Second node                 |
-| jaccard | double | Jaccard similarity (0 to 1) |
+| Column      | Type   | Description                 |
+|-------------|--------|-----------------------------|
+| node1       | bigint | First node                  |
+| node2       | bigint | Second node                 |
+| coefficient | double | Jaccard similarity (0 to 1) |
 
 ---
 
@@ -111,7 +111,7 @@ Find potential connections in a social network:
 -- Sample social network
 create table friends as
 select *
-from (values (1, 2),
+from (values (1::bigint, 2::bigint),
              (1, 3),
              (1, 4),
              (2, 3),

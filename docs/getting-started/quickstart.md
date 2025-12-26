@@ -71,7 +71,7 @@ Calculate distances from a starting node:
 
 ```sql
 select node_id, distance
-from onager_pth_dijkstra((select src, dst from edges), source := 1)
+from onager_pth_dijkstra((select src, dst from edges), source := 1::bigint)
 order by distance;
 ```
 
@@ -80,15 +80,10 @@ order by distance;
 Import your edge data from any source DuckDB supports:
 
 ```sql
--- From a CSV file
-create table my_edges as
-select *
-from read_csv('edges.csv');
-
--- From a Parquet file
-create table my_edges as
-select *
-from read_parquet('edges.parquet');
+-- From an existing table (ensure bigint columns)
+create table my_edges as select * from (values
+  (1::bigint, 2::bigint), (2, 3), (3, 4)
+) t(source_id, target_id);
 
 -- Run PageRank on your data
 select *
@@ -101,9 +96,12 @@ from onager_ctr_pagerank((select source_id as src, target_id as dst
 All functions expect edges as a subquery with two `bigint` columns:
 
 ```sql
+create table your_table as select * from (values (1::bigint, 2::bigint), (2, 3)) t(source_column, target_column);
+
 select *
-from onager_function_name((select source_column as src, target_column as dst
+from onager_ctr_pagerank((select source_column as src, target_column as dst
                            from your_table));
+-- Replace your_table and column names with your actual table and columns
 ```
 
 See the [Input Formats](../reference/input-formats.md) reference for details on node IDs, weighted functions, and directed graphs.

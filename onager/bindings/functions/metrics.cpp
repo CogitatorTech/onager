@@ -22,7 +22,7 @@ struct DiameterGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_diameter requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_diameter");
   rt.push_back(LogicalType::BIGINT); nm.push_back("diameter");
   return make_uniq<TableFunctionData>();
 }
@@ -59,7 +59,7 @@ struct RadiusGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_radius requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_radius");
   rt.push_back(LogicalType::BIGINT); nm.push_back("radius");
   return make_uniq<TableFunctionData>();
 }
@@ -96,7 +96,7 @@ struct AvgClusteringGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> AvgClusteringBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_avg_clustering requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_avg_clustering");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("avg_clustering");
   return make_uniq<TableFunctionData>();
 }
@@ -131,7 +131,7 @@ struct TriangleCountGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> TriangleCountBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_triangles requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_triangles");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("triangles");
   return make_uniq<TableFunctionData>();
@@ -174,7 +174,7 @@ struct TransitivityGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> TransitivityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_transitivity requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_transitivity");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("transitivity");
   return make_uniq<TableFunctionData>();
 }
@@ -210,7 +210,7 @@ struct AvgPathLengthGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_avg_path_length requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_avg_path_length");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("avg_path_length");
   return make_uniq<TableFunctionData>();
 }
@@ -246,7 +246,7 @@ struct AssortativityGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_assortativity requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_assortativity");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("assortativity");
   return make_uniq<TableFunctionData>();
 }
@@ -283,7 +283,7 @@ struct DensityGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_density requires 2 columns");
+  CheckInt64Input(input, "onager_mtr_density");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("density");
   auto bd = make_uniq<DensityBindData>();
   for (auto &kv : input.named_parameters) {

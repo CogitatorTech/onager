@@ -9,12 +9,10 @@ description: Real-world graph analytics use cases with Onager.
 
 ### Finding Influencers
 
-Use PageRank and degree centrality to identify influential users:
-
 ```sql
 -- Create social network edges
 create table follows as select * from (values
-  (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (5, 1), (2, 4), (3, 5)
+  (1::bigint, 2::bigint), (1, 3), (2, 3), (3, 4), (4, 5), (5, 1), (2, 4), (3, 5)
 ) t(follower, followed);
 
 -- Find top influencers by PageRank
@@ -37,8 +35,6 @@ order by combined_score desc;
 
 ### Community Detection
 
-Find groups of tightly-connected users:
-
 ```sql
 -- Detect communities with Louvain
 select node_id as user_id, community
@@ -57,12 +53,10 @@ order by size desc;
 
 ### Ring Detection with Clustering
 
-High local clustering may indicate coordinated behavior:
-
 ```sql
 create table transactions as select * from (values
-  (100, 200), (200, 300), (300, 100), -- Triangle (suspicious)
-  (400, 500), (500, 600)               -- Normal chain
+  (100::bigint, 200::bigint), (200, 300), (300, 100), -- Triangle (suspicious)
+  (400, 500), (500, 600)                              -- Normal chain
 ) t(sender, receiver);
 
 -- Find nodes with high clustering (potential fraud rings)
@@ -85,7 +79,7 @@ where triangles > 0;
 ```sql
 -- User interaction graph
 create table interactions as select * from (values
-  (1, 10), (1, 20), (2, 10), (2, 30), (3, 20), (3, 30)
+  (1::bigint, 10::bigint), (1, 20), (2, 10), (2, 30), (3, 20), (3, 30)
 ) t(user_id, item_id);
 
 -- Create edges (user-item bipartite graph)
@@ -95,7 +89,7 @@ create table edges as
 -- Recommend items for user 1 based on their interactions
 -- Using ego graph to explore local neighborhood
 select *
-from onager_sub_k_hop_neighbors(edges, start := 1, k := 2)
+from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 2)
 where node_id > 1000;  -- Filter to items only
 ```
 

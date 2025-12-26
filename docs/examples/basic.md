@@ -1,6 +1,9 @@
-# Basic Usage
+---
+title: Basic Usage
+description: Basic graph analytics workflows using Onager.
+---
 
-This example shows basic graph analytics workflows using the Onager.
+# Basic Usage
 
 ## Setup
 

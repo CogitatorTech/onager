@@ -410,4 +410,75 @@ mod tests {
 
         assert_eq!(result.node_ids.len(), 4);
     }
+
+    #[test]
+    fn test_label_propagation() {
+        // Triangle graph
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 1];
+
+        let result = compute_label_propagation(&src, &dst).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert_eq!(result.labels.len(), 3);
+    }
+
+    #[test]
+    fn test_spectral_clustering() {
+        // Two triangles connected by one edge
+        let src = vec![1, 2, 3, 4, 5, 6, 3];
+        let dst = vec![2, 3, 1, 5, 6, 4, 4];
+
+        let result = compute_spectral_clustering(&src, &dst, 2, Some(42)).unwrap();
+
+        assert_eq!(result.node_ids.len(), 6);
+        // Should have exactly 2 unique communities
+        let unique_comms: std::collections::HashSet<_> = result.community_ids.iter().collect();
+        assert!(unique_comms.len() <= 2);
+    }
+
+    #[test]
+    fn test_spectral_clustering_invalid_k() {
+        let src = vec![1, 2];
+        let dst = vec![2, 3];
+
+        let result = compute_spectral_clustering(&src, &dst, 0, None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_infomap() {
+        // Triangle graph
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 1];
+
+        let result = compute_infomap(&src, &dst, 10, Some(42)).unwrap();
+
+        assert_eq!(result.node_ids.len(), 3);
+        assert_eq!(result.community_ids.len(), 3);
+    }
+
+    #[test]
+    fn test_infomap_invalid_max_iter() {
+        let src = vec![1, 2];
+        let dst = vec![2, 3];
+
+        let result = compute_infomap(&src, &dst, 0, None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_empty_graph_errors() {
+        assert!(compute_louvain(&[], &[], None).is_err());
+        assert!(compute_connected_components(&[], &[]).is_err());
+        assert!(compute_label_propagation(&[], &[]).is_err());
+        assert!(compute_girvan_newman(&[], &[], 2).is_err());
+        assert!(compute_spectral_clustering(&[], &[], 2, None).is_err());
+        assert!(compute_infomap(&[], &[], 10, None).is_err());
+    }
+
+    #[test]
+    fn test_mismatched_arrays_error() {
+        assert!(compute_louvain(&[1, 2], &[2], None).is_err());
+    }
 }

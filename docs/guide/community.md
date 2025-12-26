@@ -69,7 +69,7 @@ from onager_cmm_louvain((select src, dst from edges), seed := 42);
 ## Connected Components
 
 Finds groups of nodes where every node is reachable from every other node in the group.
-Unlike community detection, this is a topological property - nodes are in the same component if any path connects them.
+Unlike community detection, this is a topological property which indicates that nodes are in the same component if any path connects them.
 
 ```sql
 select node_id, component
@@ -125,12 +125,12 @@ Uses eigenvalues of the graph Laplacian to partition nodes.
 Works well when communities have similar sizes.
 
 !!! warning "Performance"
-    This algorithm requires eigendecomposition with O(n³) complexity. Use only on graphs with fewer than 5,000 nodes.
+    This algorithm requires eigendecomposition with O(n³) complexity. So, it's recommended to use it only on smaller graphs (like with fewer than 5,000 nodes).
 
 ```sql
-select node_id, cluster
+select node_id, community
 from onager_cmm_spectral((select src, dst from edges), k := 2)
-order by cluster, node_id;
+order by community, node_id;
 ```
 
 ---
@@ -156,7 +156,7 @@ Analyze community structure and find bridge nodes:
 -- Create a network
 create table social as
 select *
-from (values (1, 2),
+from (values (1::bigint, 2::bigint),
              (1, 3),
              (2, 3),
              (2, 4),

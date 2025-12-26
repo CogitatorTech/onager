@@ -5,13 +5,13 @@ description: How to pass graph data to Onager functions.
 
 # Input Formats
 
-This page describes how to pass graph data to Onager functions.
-
 ## Table Functions
 
 Table functions expect edges as a subquery with two `bigint` columns:
 
 ```sql
+create table my_edges as select * from (values (1::bigint, 2::bigint), (2, 3)) t(src, dst);
+
 select *
 from onager_ctr_pagerank((select src, dst from my_edges));
 ```
@@ -43,10 +43,13 @@ select onager_node_in_degree('social', 1);
     - `onager_pth_bellman_ford` — shortest paths with negative weights
     - `onager_pth_floyd_warshall` — all-pairs shortest paths
     - `onager_mst_kruskal` — minimum spanning tree
-    - `onager_mst_prim` — minimum spanning tree
     - `onager_apx_tsp` — traveling salesman approximation
 
     Pass weights like this:
     ```sql
+    create table edges as select * from (values
+      (1::bigint, 2::bigint, 1.0::double), (2, 3, 2.0), (3, 4, 1.5)
+    ) t(src, dst, weight);
+
     select * from onager_mst_kruskal((select src, dst, weight from edges));
     ```

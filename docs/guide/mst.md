@@ -34,21 +34,3 @@ order by weight;
 | src    | bigint | Source node       |
 | dst    | bigint | Destination node  |
 | weight | double | Edge weight       |
-
----
-
-## Prim's Algorithm
-
-MST algorithm that grows the tree from a starting node.
-
-```sql
-select src, dst, weight
-from onager_mst_prim((select src, dst, weight from weighted_edges))
-order by weight;
-```
-
-| Column | Type   | Description       |
-|--------|--------|-------------------|
-| src    | bigint | Source node       |
-| dst    | bigint | Destination node  |
-| weight | double | Edge weight       |

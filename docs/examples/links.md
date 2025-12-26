@@ -1,3 +1,8 @@
+---
+title: Link Prediction Example
+description: Friend recommendations using link prediction.
+---
+
 # Link Prediction Example
 
 ## Friend Recommendations
@@ -22,7 +27,7 @@ limit 10;
 ```sql
 with
   aa as (select node1, node2, score as adamic_adar from onager_lnk_adamic_adar((select user1, user2 from current_friends))),
-  jc as (select node1, node2, jaccard from onager_lnk_jaccard((select user1, user2 from current_friends))),
+  jc as (select node1, node2, coefficient as jaccard from onager_lnk_jaccard((select user1, user2 from current_friends))),
   pa as (select node1, node2, score as pref_attach from onager_lnk_pref_attach((select user1, user2 from current_friends)))
 select aa.node1, aa.node2, aa.adamic_adar, jc.jaccard, pa.pref_attach
 from aa

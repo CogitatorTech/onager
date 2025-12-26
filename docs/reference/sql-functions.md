@@ -1,3 +1,8 @@
+---
+title: SQL Function Reference
+description: Complete reference for all Onager SQL functions.
+---
+
 # SQL Function Reference
 
 Complete reference for all Onager SQL functions.
@@ -32,7 +37,7 @@ Complete reference for all Onager SQL functions.
 | `onager_ctr_eigenvector(edges)`              | `node_id, eigenvector`           | Eigenvector centrality         |
 | `onager_ctr_katz(edges, alpha)`              | `node_id, katz`                  | Katz centrality                |
 | `onager_ctr_harmonic(edges)`                 | `node_id, harmonic`              | Harmonic centrality            |
-| `onager_ctr_personalized_pagerank(...)`      | `node_id, rank`                  | Personalized PageRank          |
+| `onager_ctr_personalized_pagerank(...)`      | `node_id, score`                 | Personalized PageRank          |
 | `onager_ctr_voterank(edges, num_seeds)`      | `node_id`                        | VoteRank influential spreaders |
 | `onager_ctr_local_reaching(edges, distance)` | `node_id, centrality`            | Local reaching centrality      |
 | `onager_ctr_laplacian(edges)`                | `node_id, centrality`            | Laplacian centrality           |
@@ -45,14 +50,14 @@ Complete reference for all Onager SQL functions.
 | `onager_cmm_components(edges)`                 | `node_id, component` | Connected components            |
 | `onager_cmm_label_prop(edges)`                 | `node_id, label`     | Label propagation               |
 | `onager_cmm_girvan_newman(edges, communities)` | `node_id, community` | Girvan-Newman edge betweenness  |
-| `onager_cmm_spectral(edges, k)`                | `node_id, cluster`   | Spectral clustering             |
+| `onager_cmm_spectral(edges, k)`                | `node_id, community` | Spectral clustering             |
 | `onager_cmm_infomap(edges)`                    | `node_id, community` | Infomap community detection     |
 
 ## Link Prediction Functions
 
 | Function                             | Returns                 | Description             |
 |--------------------------------------|-------------------------|-------------------------|
-| `onager_lnk_jaccard(edges)`          | `node1, node2, jaccard` | Jaccard coefficient     |
+| `onager_lnk_jaccard(edges)`          | `node1, node2, coefficient` | Jaccard coefficient     |
 | `onager_lnk_adamic_adar(edges)`      | `node1, node2, score`   | Adamic-Adar index       |
 | `onager_lnk_pref_attach(edges)`      | `node1, node2, score`   | Preferential attachment |
 | `onager_lnk_resource_alloc(edges)`   | `node1, node2, score`   | Resource allocation     |
@@ -78,8 +83,8 @@ Complete reference for all Onager SQL functions.
 | `onager_pth_dijkstra(edges, source)`              | `node_id, distance`  | Shortest paths from source        |
 | `onager_pth_bellman_ford(weighted_edges, source)` | `node_id, distance`  | Shortest paths (negative weights) |
 | `onager_pth_floyd_warshall(weighted_edges)`       | `src, dst, distance` | All-pairs shortest paths          |
-| `onager_trv_bfs(edges, source)`                   | `node_id, order`     | Breadth-first traversal           |
-| `onager_trv_dfs(edges, source)`                   | `node_id, order`     | Depth-first traversal             |
+| `onager_trv_bfs(edges, source)`                   | `node_id`            | Breadth-first traversal           |
+| `onager_trv_dfs(edges, source)`                   | `node_id`            | Depth-first traversal             |
 
 ## Approximation Functions
 

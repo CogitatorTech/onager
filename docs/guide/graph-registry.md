@@ -1,3 +1,8 @@
+---
+title: Graph Registry
+description: Store named graphs for efficient repeated queries.
+---
+
 # Graph Registry
 
 Onager provides an in-memory graph registry that stores named graphs for efficient repeated queries.
@@ -70,6 +75,12 @@ select onager_drop_graph('social');
 ```sql
 -- Setup
 select onager_create_graph('friends', true);
+
+-- Create sample user data
+create table users as select * from (values (1::bigint), (2), (3), (4), (5)) t(user_id);
+create table follows as select * from (values
+  (1::bigint, 2::bigint), (1, 3), (2, 3), (2, 4), (3, 4), (3, 5)
+) t(follower_id, followed_id);
 
 -- Bulk load from table
 select onager_add_node('friends', user_id)

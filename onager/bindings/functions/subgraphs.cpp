@@ -23,7 +23,7 @@ struct EgoGraphGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> EgoGraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<EgoGraphBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_ego_graph requires 2 columns");
+  CheckInt64Input(input, "onager_sub_ego_graph");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "center") bd->center = kv.second.GetValue<int64_t>();
     if (kv.first == "radius") bd->radius = kv.second.GetValue<int64_t>();
@@ -71,7 +71,7 @@ struct KHopGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> KHopBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<KHopBindData>();
-  if (input.input_table_types.size() < 2) throw InvalidInputException("onager_k_hop_neighbors requires 2 columns");
+  CheckInt64Input(input, "onager_sub_k_hop");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "start") bd->start = kv.second.GetValue<int64_t>();
     if (kv.first == "k") bd->k = kv.second.GetValue<int64_t>();
@@ -116,7 +116,7 @@ struct InducedSubgraphGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> InducedSubgraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  if (input.input_table_types.size() < 3) throw InvalidInputException("onager_induced_subgraph requires 3 columns: src, dst, filter_node");
+  CheckInt64Input(input, "onager_sub_induced", 3);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return make_uniq<TableFunctionData>();
