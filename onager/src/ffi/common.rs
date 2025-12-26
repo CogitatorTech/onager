@@ -2,50 +2,51 @@
 //!
 //! Error handling and utility functions shared across FFI modules.
 
+use std::cell::RefCell;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::atomic::{AtomicPtr, Ordering};
-
-use once_cell::sync::Lazy;
 
 use crate::graph;
 
 /// Version string for the extension.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Thread-local last error message.
-pub static LAST_ERROR: Lazy<AtomicPtr<c_char>> = Lazy::new(|| AtomicPtr::new(std::ptr::null_mut()));
+// Thread-local last error message.
+// Each thread has its own error state, preventing concurrent queries from
+// overwriting each other's errors.
+thread_local! {
+    static LAST_ERROR: RefCell<Option<CString>> = const { RefCell::new(None) };
+}
 
 /// Sets the last error message.
 pub fn set_last_error(msg: &str) {
-    // Use from_vec_unchecked for fallback since "unknown error" has no NUL bytes
     let c_string = CString::new(msg).unwrap_or_else(|_| {
         // Safety: "unknown error" contains no NUL bytes
         unsafe { CString::from_vec_unchecked(b"unknown error".to_vec()) }
     });
-    let ptr = c_string.into_raw();
-    let old = LAST_ERROR.swap(ptr, Ordering::SeqCst);
-    if !old.is_null() {
-        unsafe {
-            drop(CString::from_raw(old));
-        }
-    }
+    LAST_ERROR.with(|cell| {
+        *cell.borrow_mut() = Some(c_string);
+    });
 }
 
 /// Clears the last error message.
 pub fn clear_last_error() {
-    let old = LAST_ERROR.swap(std::ptr::null_mut(), Ordering::SeqCst);
-    if !old.is_null() {
-        unsafe {
-            drop(CString::from_raw(old));
-        }
-    }
+    LAST_ERROR.with(|cell| {
+        *cell.borrow_mut() = None;
+    });
 }
 
 /// Returns the last error message, or null if no error is set.
+/// Note: The returned pointer is only valid until the next call to
+/// set_last_error or clear_last_error on the same thread.
 #[no_mangle]
 pub extern "C" fn onager_last_error() -> *const c_char {
-    LAST_ERROR.load(Ordering::SeqCst) as *const c_char
+    LAST_ERROR.with(|cell| {
+        cell.borrow()
+            .as_ref()
+            .map(|s| s.as_ptr())
+            .unwrap_or(std::ptr::null())
+    })
 }
 
 /// Frees a string allocated by Onager.

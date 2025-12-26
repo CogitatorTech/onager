@@ -114,7 +114,7 @@ select * from onager_gen_erdos_renyi(100, 0.1, seed := 42);
 
 ### Documentation
 
-Check out the [docs](https://cogitatortech.github.io/onager/) directory for the API documentation and examples.
+Check out the [Onager documentation](https://cogitatortech.github.io/onager/) for the API documentation and examples.
 
 ---
 

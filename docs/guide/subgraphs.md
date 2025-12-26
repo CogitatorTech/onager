@@ -5,8 +5,8 @@ description: Extract portions of a graph around specific nodes.
 
 # Subgraph Operations
 
-Subgraph operations extract portions of a larger graph based on structural proximity or node membership.
-Useful for analyzing local neighborhoods or focusing on specific regions.
+Subgraph operations extract portions of a larger graph based on structural proximity, node membership, some other criteria.
+They are normally useful for analyzing local neighborhoods or focusing on specific regions.
 
 ## Setup
 
@@ -65,7 +65,8 @@ from onager_sub_ego_graph((select src, dst from edges), center := 4, radius := 3
 
 ## K-Hop Neighbors
 
-Returns all nodes within k hops of a starting node. Unlike ego graph, this returns only node IDs, not edges.
+Returns all nodes within k hops of a starting node.
+Unlike ego graph, this returns only node IDs, not edges.
 
 ```sql
 select node_id

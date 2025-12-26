@@ -208,6 +208,8 @@ int64_t onager_compute_laplacian(const int64_t *src_ptr,
 
 /**
  * Returns the last error message, or null if no error is set.
+ * Note: The returned pointer is only valid until the next call to
+ * set_last_error or clear_last_error on the same thread.
  */
  const char *onager_last_error(void);
 
