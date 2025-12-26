@@ -1637,7 +1637,7 @@ Q = \frac{1}{2m} \sum_{ij} \left[ A_{ij} - \frac{k_i k_j}{2m} \right] \delta(c_i
 <hr />
 <h2 id="connected-components">Connected Components<a class="headerlink" href="#connected-components" title="Permanent link">&para;</a></h2>
 <p>Finds groups of nodes where every node is reachable from every other node in the group.
-Unlike community detection, this is a topological property - nodes are in the same component if any path connects them.</p>
+Unlike community detection, this is a topological property which indicates that nodes are in the same component if any path connects them.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">component</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_cmm_components</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">))</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">component</span><span class="p">,</span><span class="w"> </span><span class="n">node_id</span><span class="p">;</span>
@@ -1711,11 +1711,11 @@ Specify the desired number of communities.</p>
 Works well when communities have similar sizes.</p>
 <div class="admonition warning">
 <p class="admonition-title">Performance</p>
-<p>This algorithm requires eigendecomposition with O(n³) complexity. Use only on graphs with fewer than 5,000 nodes.</p>
+<p>This algorithm requires eigendecomposition with O(n³) complexity. So, it's recommended to use it only on smaller graphs (like with fewer than 5,000 nodes).</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="k">cluster</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">select</span><span class="w"> </span><span class="n">node_id</span><span class="p">,</span><span class="w"> </span><span class="n">community</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">from</span><span class="w"> </span><span class="n">onager_cmm_spectral</span><span class="p">((</span><span class="k">select</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">edges</span><span class="p">),</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="k">cluster</span><span class="p">,</span><span class="w"> </span><span class="n">node_id</span><span class="p">;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">community</span><span class="p">,</span><span class="w"> </span><span class="n">node_id</span><span class="p">;</span>
 </code></pre></div>
 <hr />
 <h2 id="infomap">Infomap<a class="headerlink" href="#infomap" title="Permanent link">&para;</a></h2>
@@ -1731,7 +1731,7 @@ Particularly good at finding flow-based communities.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">-- Create a network</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">social</span><span class="w"> </span><span class="k">as</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">::</span><span class="nb">bigint</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">::</span><span class="nb">bigint</span><span class="p">),</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">             </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">             </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">             </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span>

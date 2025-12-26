@@ -1485,11 +1485,12 @@ including centrality measures, community detection algorithms, pathfinding algor
 and graph generators.
 Onager is written in Rust and uses <a href="https://github.com/habedi/graphina">Graphina</a> graph library under the hood.</p>
 <p>Compared to <a href="https://github.com/cwida/duckpgq-extension">DuckPGQ</a>, Onager is focused on graph analytics instead of graph querying.
-More specifically, DuckPGQ implements SQL/PGQ (the SQL:2023 standard) for graph pattern matching and path-finding queries with a property graph model.
+More specifically, DuckPGQ tries to implement <a href="https://pgql-lang.org/">SQL/PGQ</a> (the SQL:2023 standard)
+for graph pattern matching and path-finding queries with a property graph model.
 Onager instead provides a collection of ready-to-use graph algorithms (like PageRank, Louvain community detection, Dijkstra's shortest path, etc.)
 as simple table functions.
-Users typically want something like DuckPGQ when they need to query graph patterns,
-and use Onager when they need to run graph algorithms on their graph data.</p>
+Users typically want something like DuckPGQ when they need to query graph patterns or model the data in a property graph model
+(like a graph database), and use Onager when they need to run specific graph algorithms on their graph data for a specific application.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">install</span><span class="w"> </span><span class="n">onager</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">community</span><span class="p">;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">load</span><span class="w"> </span><span class="n">onager</span><span class="p">;</span>
@@ -1528,7 +1529,7 @@ and use Onager when they need to run graph algorithms on their graph data.</p>
 <tbody>
 <tr>
 <td>Centrality</td>
-<td>PageRank, degree, betweenness, closeness, eigenvector, Katz, harmonic, VoteRank, local reaching, and Laplacian</td>
+<td>PageRank, personalized PageRank, degree, betweenness, closeness, eigenvector, Katz, harmonic, VoteRank, local reaching, and Laplacian</td>
 </tr>
 <tr>
 <td>Community</td>
@@ -1557,6 +1558,14 @@ and use Onager when they need to run graph algorithms on their graph data.</p>
 <tr>
 <td>Approximation</td>
 <td>max clique, independent set, vertex cover, and TSP</td>
+</tr>
+<tr>
+<td>MST</td>
+<td>Kruskal's algorithm</td>
+</tr>
+<tr>
+<td>Parallel</td>
+<td>PageRank, BFS, shortest paths, connected components, clustering, and triangle counting</td>
 </tr>
 </tbody>
 </table>

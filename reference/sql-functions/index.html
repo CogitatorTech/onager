@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A Graph Analytics Toolbox for DuckDB">
+        <meta name="description" content="Complete reference for all Onager SQL functions.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>SQL Functions - Onager Documentation</title>
+        <title>SQL Function Reference - Onager Documentation</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              SQL Functions
+              SQL Function Reference
             
           </span>
         </div>
@@ -1796,7 +1796,7 @@
 </tr>
 <tr>
 <td><code>onager_ctr_personalized_pagerank(...)</code></td>
-<td><code>node_id, rank</code></td>
+<td><code>node_id, score</code></td>
 <td>Personalized PageRank</td>
 </tr>
 <tr>
@@ -1848,7 +1848,7 @@
 </tr>
 <tr>
 <td><code>onager_cmm_spectral(edges, k)</code></td>
-<td><code>node_id, cluster</code></td>
+<td><code>node_id, community</code></td>
 <td>Spectral clustering</td>
 </tr>
 <tr>
@@ -1870,7 +1870,7 @@
 <tbody>
 <tr>
 <td><code>onager_lnk_jaccard(edges)</code></td>
-<td><code>node1, node2, jaccard</code></td>
+<td><code>node1, node2, coefficient</code></td>
 <td>Jaccard coefficient</td>
 </tr>
 <tr>
@@ -1974,12 +1974,12 @@
 </tr>
 <tr>
 <td><code>onager_trv_bfs(edges, source)</code></td>
-<td><code>node_id, order</code></td>
+<td><code>node_id</code></td>
 <td>Breadth-first traversal</td>
 </tr>
 <tr>
 <td><code>onager_trv_dfs(edges, source)</code></td>
-<td><code>node_id, order</code></td>
+<td><code>node_id</code></td>
 <td>Depth-first traversal</td>
 </tr>
 </tbody>
@@ -2158,6 +2158,9 @@
 
 
 
+
+  
+  
 
 
 
