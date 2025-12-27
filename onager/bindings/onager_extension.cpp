@@ -53,9 +53,9 @@ std::string OnagerExtension::Version() const {
 
 extern "C" {
 
-DUCKDB_EXTENSION_API void onager_duckdb_cpp_init(duckdb::DatabaseInstance &db) {
-  duckdb::DuckDB db_wrapper(db);
-  db_wrapper.LoadStaticExtension<duckdb::OnagerExtension>();
+DUCKDB_CPP_EXTENSION_ENTRY(onager, loader) {
+  duckdb::OnagerExtension extension;
+  extension.Load(loader);
 }
 
 DUCKDB_EXTENSION_API const char *onager_duckdb_cpp_version() {
