@@ -63,11 +63,11 @@ Onager currently includes the following graph algorithms:
 | Centrality      | PageRank, personalized PageRank, degree, betweenness, closeness, eigenvector, Katz, harmonic, VoteRank, local reaching, and Laplacian |
 | Community       | Louvain, connected components, label propagation, Girvan-Newman, spectral, and Infomap                                                |
 | Paths           | Dijkstra, Bellman-Ford, Floyd-Warshall, BFS, and DFS                                                                                  |
-| Metrics         | diameter, radius, clustering, transitivity, triangles, assortativity, density, and average path length                                |
+| Metrics         | Diameter, radius, clustering, transitivity, triangles, assortativity, density, and average path length                                |
 | Link Prediction | Jaccard, Adamic-Adar, preferential attachment, resource allocation, and common neighbors                                              |
-| Subgraphs       | ego graph, k-hop neighbors, and induced subgraph                                                                                      |
+| Subgraphs       | Ego graph, k-hop neighbors, and induced subgraph                                                                                      |
 | Generators      | Erdős-Rényi, Barabási-Albert, and Watts-Strogatz                                                                                      |
-| Approximation   | max clique, independent set, vertex cover, and TSP                                                                                    |
+| Approximation   | Max clique, independent set, vertex cover, and TSP                                                                                    |
 | MST             | Kruskal's algorithm                                                                                                                   |
 | Parallel        | PageRank, BFS, shortest paths, connected components, clustering, and triangle counting                                                |
 
