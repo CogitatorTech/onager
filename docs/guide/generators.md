@@ -6,14 +6,18 @@ description: Create synthetic graphs with known properties.
 # Graph Generators
 
 Graph generators create synthetic networks with specific structural properties.
-Useful for testing algorithms, simulating networks, or creating benchmark datasets.
+They are usually useful for testing algorithms, simulating networks, or creating benchmark datasets.
+
+!!! note "Return format"
+    Generators return the generated graph in edge list format so nodes with no edges are omitted.
+    Nodes will be assigned sequential IDs starting from 0 to n-1.
 
 ---
 
 ## Erdős-Rényi Random Graphs
 
-Creates a random graph where each possible edge exists with probability p.
-This is the simplest random graph model, useful as a null model or for testing.
+This function creates a random graph where each possible edge exists with probability p.
+This is the simplest random graph model and is useful as a null model or for testing.
 
 Parameters:
 
@@ -45,9 +49,9 @@ select (select count(*) from onager_gen_erdos_renyi(50, 0.1, seed := 1)) as spar
 
 ## Barabási-Albert Scale-Free Graphs
 
-Creates a network with a power-law degree distribution ("scale-free").
-New nodes attach preferentially to existing high-degree nodes.
-Models many real networks like the web, social networks, and citation networks.
+This function creates a graph with a power-law degree distribution (a "scale-free" network) where new nodes
+attach preferentially to existing high-degree nodes.
+This models many real networks like the web, social networks, and citation networks very well.
 
 Parameters:
 
@@ -79,9 +83,8 @@ order by degree;
 
 ## Watts-Strogatz Small-World Graphs
 
-Creates a network with high clustering and short average path length ("small-world").
-Starts with a ring lattice and randomly rewires edges.
-Models networks where nodes cluster locally but shortcuts exist.
+This function creates a network with high clustering and short average path length (a "small-world" network).
+The generation process starts with a ring lattice and randomly rewires edges.
 
 Parameters:
 
