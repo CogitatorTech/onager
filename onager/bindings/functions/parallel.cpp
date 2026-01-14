@@ -17,7 +17,7 @@ using namespace onager;
 struct ParallelPageRankBindData : public TableFunctionData {
   double damping = 0.85;
   int64_t iterations = 100;
-  bool directed = false;
+  bool directed = true;
 };
 struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;

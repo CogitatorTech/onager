@@ -48,7 +48,7 @@ Optional parameters:
 
 - `damping` (default 0.85): Probability of following a link
 - `iterations` (default 100): Maximum iterations
-- `directed` (default false): Treat graph as directed
+- `directed` (default true): Treat graph as directed
 
 ---
 
