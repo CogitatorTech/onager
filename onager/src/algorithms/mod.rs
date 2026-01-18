@@ -18,6 +18,9 @@ pub mod personalized;
 pub mod subgraphs;
 pub mod traversal;
 
+#[cfg(test)]
+mod large_graph_tests;
+
 // Re-export all public items for backward compatibility
 pub use approximation::*;
 pub use centrality::*;
