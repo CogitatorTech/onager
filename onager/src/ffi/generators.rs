@@ -16,22 +16,24 @@ pub extern "C" fn onager_generate_erdos_renyi(
     out_dst: *mut i64,
 ) -> i64 {
     clear_last_error();
-    match algorithms::generate_erdos_renyi(n, p, seed) {
-        Ok(result) => {
-            let edge_count = result.src.len();
-            if !out_src.is_null() && !out_dst.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_src, edge_count) }
-                    .copy_from_slice(&result.src);
-                unsafe { std::slice::from_raw_parts_mut(out_dst, edge_count) }
-                    .copy_from_slice(&result.dst);
+    crate::ffi_catch_unwind!(-1, {
+        match algorithms::generate_erdos_renyi(n, p, seed) {
+            Ok(result) => {
+                let edge_count = result.src.len();
+                if !out_src.is_null() && !out_dst.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_src, edge_count) }
+                        .copy_from_slice(&result.src);
+                    unsafe { std::slice::from_raw_parts_mut(out_dst, edge_count) }
+                        .copy_from_slice(&result.dst);
+                }
+                edge_count as i64
             }
-            edge_count as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Generate Barabási-Albert graph.
@@ -44,22 +46,24 @@ pub extern "C" fn onager_generate_barabasi_albert(
     out_dst: *mut i64,
 ) -> i64 {
     clear_last_error();
-    match algorithms::generate_barabasi_albert(n, m, seed) {
-        Ok(result) => {
-            let edge_count = result.src.len();
-            if !out_src.is_null() && !out_dst.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_src, edge_count) }
-                    .copy_from_slice(&result.src);
-                unsafe { std::slice::from_raw_parts_mut(out_dst, edge_count) }
-                    .copy_from_slice(&result.dst);
+    crate::ffi_catch_unwind!(-1, {
+        match algorithms::generate_barabasi_albert(n, m, seed) {
+            Ok(result) => {
+                let edge_count = result.src.len();
+                if !out_src.is_null() && !out_dst.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_src, edge_count) }
+                        .copy_from_slice(&result.src);
+                    unsafe { std::slice::from_raw_parts_mut(out_dst, edge_count) }
+                        .copy_from_slice(&result.dst);
+                }
+                edge_count as i64
             }
-            edge_count as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Generate Watts-Strogatz graph.
@@ -73,20 +77,22 @@ pub extern "C" fn onager_generate_watts_strogatz(
     out_dst: *mut i64,
 ) -> i64 {
     clear_last_error();
-    match algorithms::generate_watts_strogatz(n, k, beta, seed) {
-        Ok(result) => {
-            let edge_count = result.src.len();
-            if !out_src.is_null() && !out_dst.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_src, edge_count) }
-                    .copy_from_slice(&result.src);
-                unsafe { std::slice::from_raw_parts_mut(out_dst, edge_count) }
-                    .copy_from_slice(&result.dst);
+    crate::ffi_catch_unwind!(-1, {
+        match algorithms::generate_watts_strogatz(n, k, beta, seed) {
+            Ok(result) => {
+                let edge_count = result.src.len();
+                if !out_src.is_null() && !out_dst.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_src, edge_count) }
+                        .copy_from_slice(&result.src);
+                    unsafe { std::slice::from_raw_parts_mut(out_dst, edge_count) }
+                        .copy_from_slice(&result.dst);
+                }
+                edge_count as i64
             }
-            edge_count as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }

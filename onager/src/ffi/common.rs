@@ -5,8 +5,45 @@
 use std::cell::RefCell;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::panic;
 
 use crate::graph;
+
+/// Wraps an FFI function body with catch_unwind to prevent panics from crossing FFI boundary.
+/// Returns the provided error_value if a panic occurs.
+///
+/// # Safety
+/// This function catches panics and converts them to error values, preventing undefined behavior
+/// when Rust panics would otherwise propagate across the C FFI boundary.
+pub fn catch_unwind_ffi<F, T>(error_value: T, f: F) -> T
+where
+    F: FnOnce() -> T + panic::UnwindSafe,
+{
+    match panic::catch_unwind(f) {
+        Ok(result) => result,
+        Err(panic_info) => {
+            // Try to extract a message from the panic
+            let msg = if let Some(s) = panic_info.downcast_ref::<&str>() {
+                format!("Internal panic: {}", s)
+            } else if let Some(s) = panic_info.downcast_ref::<String>() {
+                format!("Internal panic: {}", s)
+            } else {
+                "Internal panic (unknown cause)".to_string()
+            };
+            set_last_error(&msg);
+            error_value
+        }
+    }
+}
+
+/// Helper macro for wrapping FFI function bodies with catch_unwind.
+/// Use AssertUnwindSafe for closures that capture mutable state.
+#[macro_export]
+macro_rules! ffi_catch_unwind {
+    ($error_val:expr, $body:expr) => {
+        $crate::ffi::common::catch_unwind_ffi($error_val, std::panic::AssertUnwindSafe(|| $body))
+    };
+}
 
 /// Version string for the extension.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
