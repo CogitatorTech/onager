@@ -27,7 +27,7 @@ jobs:
       ci_tools_version: main
       extension_name: onager
       enable_rust: true
-      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
+      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads;linux_amd64_musl"
 
   duckdb-stable-build:
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.4.3
@@ -36,7 +36,7 @@ jobs:
       ci_tools_version: v1.4.3
       extension_name: onager
       enable_rust: true
-      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
+      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads;linux_amd64_musl"
 
   create-release-draft:
     name: Create Draft Release with Built Binaries

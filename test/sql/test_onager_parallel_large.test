@@ -17,9 +17,9 @@ SET threads=4
 # Generate a graph with 15000 nodes (above the 12288 crash threshold)
 # This creates ~150000 edges which will be processed in parallel chunks
 statement ok
-CREATE TABLE large_edges AS 
-  SELECT (random() * 15000)::BIGINT as source, 
-         (random() * 15000)::BIGINT as target 
+CREATE TABLE large_edges AS
+  SELECT (random() * 15000)::BIGINT as source,
+         (random() * 15000)::BIGINT as target
   FROM range(150000)
 
 # Test connected components on large graph with parallel threads
@@ -42,9 +42,9 @@ SELECT count(*) > 10000 FROM onager_cmm_louvain((SELECT source, target FROM larg
 
 # Test at exact 12288 boundary (6 * STANDARD_VECTOR_SIZE)
 statement ok
-CREATE TABLE boundary_edges AS 
-  SELECT (random() * 12288)::BIGINT as source, 
-         (random() * 12288)::BIGINT as target 
+CREATE TABLE boundary_edges AS
+  SELECT (random() * 12288)::BIGINT as source,
+         (random() * 12288)::BIGINT as target
   FROM range(122880)
 
 query I
