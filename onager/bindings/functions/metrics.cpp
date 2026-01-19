@@ -5,6 +5,7 @@
  * Diameter, Radius, Average Clustering, Average Path Length, Transitivity, Triangle Count.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -15,6 +16,7 @@ using namespace onager;
 // =============================================================================
 
 struct DiameterGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   int64_t result = -1;
   bool computed = false, output_done = false;
@@ -29,6 +31,7 @@ static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBi
 static unique_ptr<GlobalTableFunctionState> DiameterInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DiameterGlobalState>(); }
 static OperatorResultType DiameterInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DiameterGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -52,6 +55,7 @@ static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunc
 // =============================================================================
 
 struct RadiusGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   int64_t result = -1;
   bool computed = false, output_done = false;
@@ -66,6 +70,7 @@ static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBind
 static unique_ptr<GlobalTableFunctionState> RadiusInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<RadiusGlobalState>(); }
 static OperatorResultType RadiusInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<RadiusGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -89,6 +94,7 @@ static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFuncti
 // =============================================================================
 
 struct AvgClusteringGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   double result = 0.0;
   bool computed = false, output_done = false;
@@ -103,6 +109,7 @@ static unique_ptr<FunctionData> AvgClusteringBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> AvgClusteringInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<AvgClusteringGlobalState>(); }
 static OperatorResultType AvgClusteringInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgClusteringGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -125,6 +132,7 @@ static OperatorFinalizeResultType AvgClusteringFinal(ExecutionContext &ctx, Tabl
 // =============================================================================
 
 struct TriangleCountGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_counts;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -139,6 +147,7 @@ static unique_ptr<FunctionData> TriangleCountBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> TriangleCountInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<TriangleCountGlobalState>(); }
 static OperatorResultType TriangleCountInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<TriangleCountGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -167,6 +176,7 @@ static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, Tabl
 // =============================================================================
 
 struct TransitivityGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   double result = 0.0;
   bool computed = false, output_done = false;
@@ -181,6 +191,7 @@ static unique_ptr<FunctionData> TransitivityBind(ClientContext &ctx, TableFuncti
 static unique_ptr<GlobalTableFunctionState> TransitivityInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<TransitivityGlobalState>(); }
 static OperatorResultType TransitivityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<TransitivityGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -203,6 +214,7 @@ static OperatorFinalizeResultType TransitivityFinal(ExecutionContext &ctx, Table
 // =============================================================================
 
 struct AvgPathLengthGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   double result = 0.0;
   bool computed = false, output_done = false;
@@ -217,6 +229,7 @@ static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> AvgPathLengthInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<AvgPathLengthGlobalState>(); }
 static OperatorResultType AvgPathLengthInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgPathLengthGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -239,6 +252,7 @@ static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, Tabl
 // =============================================================================
 
 struct AssortativityGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   double result = 0.0;
   bool computed = false, output_done = false;
@@ -253,6 +267,7 @@ static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> AssortativityInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<AssortativityGlobalState>(); }
 static OperatorResultType AssortativityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AssortativityGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -276,6 +291,7 @@ static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, Tabl
 
 struct DensityBindData : public TableFunctionData { bool directed = false; };
 struct DensityGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes;
   double result = 0.0;
   bool computed = false, output_done = false;
@@ -294,6 +310,7 @@ static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBin
 static unique_ptr<GlobalTableFunctionState> DensityInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DensityGlobalState>(); }
 static OperatorResultType DensityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DensityGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;

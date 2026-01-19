@@ -5,6 +5,7 @@
  * Dijkstra, BFS, DFS, Bellman-Ford, Floyd-Warshall.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -16,6 +17,7 @@ using namespace onager;
 
 struct DijkstraBindData : public TableFunctionData { int64_t source = 0; };
 struct DijkstraGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_distances;
   idx_t output_idx = 0; bool computed = false;
@@ -33,6 +35,7 @@ static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBi
 static unique_ptr<GlobalTableFunctionState> DijkstraInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DijkstraGlobalState>(); }
 static OperatorResultType DijkstraInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DijkstraGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -62,6 +65,7 @@ static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunc
 
 struct BfsBindData : public TableFunctionData { int64_t source = 0; };
 struct BfsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_order;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -77,6 +81,7 @@ static unique_ptr<FunctionData> BfsBind(ClientContext &ctx, TableFunctionBindInp
 static unique_ptr<GlobalTableFunctionState> BfsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<BfsGlobalState>(); }
 static OperatorResultType BfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -106,6 +111,7 @@ static OperatorFinalizeResultType BfsFinal(ExecutionContext &ctx, TableFunctionI
 
 struct DfsBindData : public TableFunctionData { int64_t source = 0; };
 struct DfsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_order;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -121,6 +127,7 @@ static unique_ptr<FunctionData> DfsBind(ClientContext &ctx, TableFunctionBindInp
 static unique_ptr<GlobalTableFunctionState> DfsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DfsGlobalState>(); }
 static OperatorResultType DfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -150,6 +157,7 @@ static OperatorFinalizeResultType DfsFinal(ExecutionContext &ctx, TableFunctionI
 
 struct BellmanFordBindData : public TableFunctionData { int64_t source = 0; };
 struct BellmanFordGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> weights, result_distances;
   idx_t output_idx = 0; bool computed = false;
@@ -167,6 +175,7 @@ static unique_ptr<FunctionData> BellmanFordBind(ClientContext &ctx, TableFunctio
 static unique_ptr<GlobalTableFunctionState> BellmanFordInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<BellmanFordGlobalState>(); }
 static OperatorResultType BellmanFordInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BellmanFordGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   auto w = FlatVector::GetData<double>(input.data[2]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }
@@ -196,6 +205,7 @@ static OperatorFinalizeResultType BellmanFordFinal(ExecutionContext &ctx, TableF
 // =============================================================================
 
 struct FloydWarshallGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_src, result_dst;
   std::vector<double> weights, result_distances;
   idx_t output_idx = 0; bool computed = false;
@@ -212,6 +222,7 @@ static unique_ptr<FunctionData> FloydWarshallBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> FloydWarshallInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<FloydWarshallGlobalState>(); }
 static OperatorResultType FloydWarshallInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<FloydWarshallGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   auto w = FlatVector::GetData<double>(input.data[2]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }

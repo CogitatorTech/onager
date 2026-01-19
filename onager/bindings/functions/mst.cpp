@@ -5,6 +5,7 @@
  * Kruskal's MST algorithm.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -15,6 +16,7 @@ using namespace onager;
 // =============================================================================
 
 struct KruskalMstGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_src, result_dst;
   std::vector<double> weights, result_weights;
   double total_weight = 0.0;
@@ -32,6 +34,7 @@ static unique_ptr<FunctionData> KruskalMstBind(ClientContext &ctx, TableFunction
 static unique_ptr<GlobalTableFunctionState> KruskalMstInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<KruskalMstGlobalState>(); }
 static OperatorResultType KruskalMstInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<KruskalMstGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   auto w = FlatVector::GetData<double>(input.data[2]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }

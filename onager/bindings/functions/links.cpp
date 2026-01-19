@@ -5,6 +5,7 @@
  * Jaccard, Adamic-Adar, Preferential Attachment, Resource Allocation, Common Neighbors.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -15,6 +16,7 @@ using namespace onager;
 // =============================================================================
 
 struct JaccardGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_n1, result_n2;
   std::vector<double> result_scores;
   idx_t output_idx = 0; bool computed = false;
@@ -31,6 +33,7 @@ static unique_ptr<FunctionData> JaccardBind(ClientContext &ctx, TableFunctionBin
 static unique_ptr<GlobalTableFunctionState> JaccardInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<JaccardGlobalState>(); }
 static OperatorResultType JaccardInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<JaccardGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -59,6 +62,7 @@ static OperatorFinalizeResultType JaccardFinal(ExecutionContext &ctx, TableFunct
 // =============================================================================
 
 struct AdamicAdarGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_n1, result_n2;
   std::vector<double> result_scores;
   idx_t output_idx = 0; bool computed = false;
@@ -75,6 +79,7 @@ static unique_ptr<FunctionData> AdamicAdarBind(ClientContext &ctx, TableFunction
 static unique_ptr<GlobalTableFunctionState> AdamicAdarInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<AdamicAdarGlobalState>(); }
 static OperatorResultType AdamicAdarInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AdamicAdarGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -103,6 +108,7 @@ static OperatorFinalizeResultType AdamicAdarFinal(ExecutionContext &ctx, TableFu
 // =============================================================================
 
 struct PrefAttachGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_n1, result_n2;
   std::vector<double> result_scores;
   idx_t output_idx = 0; bool computed = false;
@@ -119,6 +125,7 @@ static unique_ptr<FunctionData> PrefAttachBind(ClientContext &ctx, TableFunction
 static unique_ptr<GlobalTableFunctionState> PrefAttachInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<PrefAttachGlobalState>(); }
 static OperatorResultType PrefAttachInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<PrefAttachGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -147,6 +154,7 @@ static OperatorFinalizeResultType PrefAttachFinal(ExecutionContext &ctx, TableFu
 // =============================================================================
 
 struct ResourceAllocGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_n1, result_n2;
   std::vector<double> result_scores;
   idx_t output_idx = 0; bool computed = false;
@@ -163,6 +171,7 @@ static unique_ptr<FunctionData> ResourceAllocBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> ResourceAllocInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ResourceAllocGlobalState>(); }
 static OperatorResultType ResourceAllocInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ResourceAllocGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
@@ -191,6 +200,7 @@ static OperatorFinalizeResultType ResourceAllocFinal(ExecutionContext &ctx, Tabl
 // =============================================================================
 
 struct CommonNeighborsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_n1, result_n2, result_counts;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -206,6 +216,7 @@ static unique_ptr<FunctionData> CommonNeighborsBind(ClientContext &ctx, TableFun
 static unique_ptr<GlobalTableFunctionState> CommonNeighborsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<CommonNeighborsGlobalState>(); }
 static OperatorResultType CommonNeighborsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<CommonNeighborsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;

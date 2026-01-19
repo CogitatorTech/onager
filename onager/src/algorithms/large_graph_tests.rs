@@ -70,7 +70,11 @@ mod tests {
         // Since we create a connected backbone, should be 1 component
         let unique_components: std::collections::HashSet<_> =
             cc.component_ids.iter().copied().collect();
-        assert_eq!(unique_components.len(), 1, "Graph should be fully connected");
+        assert_eq!(
+            unique_components.len(),
+            1,
+            "Graph should be fully connected"
+        );
     }
 
     #[test]

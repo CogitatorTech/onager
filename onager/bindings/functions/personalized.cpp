@@ -3,6 +3,7 @@
  * @brief Personalized PageRank table functions for Onager DuckDB extension.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -18,6 +19,7 @@ struct PersonalizedPageRankBindData : public TableFunctionData {
   double tolerance = 1e-6;
 };
 struct PersonalizedPageRankGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, pers_nodes, result_nodes;
   std::vector<double> pers_weights, result_scores;
   idx_t output_idx = 0; bool computed = false;
@@ -43,6 +45,7 @@ static unique_ptr<GlobalTableFunctionState> PersonalizedPageRankInitGlobal(Clien
 
 static OperatorResultType PersonalizedPageRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<PersonalizedPageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]);
   auto d = FlatVector::GetData<int64_t>(input.data[1]);
   auto pn = FlatVector::GetData<int64_t>(input.data[2]);
