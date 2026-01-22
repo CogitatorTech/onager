@@ -1487,11 +1487,16 @@
 
 <h1 id="graph-generators">Graph Generators<a class="headerlink" href="#graph-generators" title="Permanent link">&para;</a></h1>
 <p>Graph generators create synthetic networks with specific structural properties.
-Useful for testing algorithms, simulating networks, or creating benchmark datasets.</p>
+They are usually useful for testing algorithms, simulating networks, or creating benchmark datasets.</p>
+<div class="admonition note">
+<p class="admonition-title">Return format</p>
+<p>Generators return the generated graph in edge list format so nodes with no edges are omitted.
+Nodes will be assigned sequential IDs starting from 0 to n-1.</p>
+</div>
 <hr />
 <h2 id="erdos-renyi-random-graphs">Erdős-Rényi Random Graphs<a class="headerlink" href="#erdos-renyi-random-graphs" title="Permanent link">&para;</a></h2>
-<p>Creates a random graph where each possible edge exists with probability p.
-This is the simplest random graph model, useful as a null model or for testing.</p>
+<p>This function creates a random graph where each possible edge exists with probability p.
+This is the simplest random graph model and is useful as a null model or for testing.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>n</code>: Number of nodes</li>
@@ -1531,9 +1536,9 @@ This is the simplest random graph model, useful as a null model or for testing.<
 </code></pre></div>
 <hr />
 <h2 id="barabasi-albert-scale-free-graphs">Barabási-Albert Scale-Free Graphs<a class="headerlink" href="#barabasi-albert-scale-free-graphs" title="Permanent link">&para;</a></h2>
-<p>Creates a network with a power-law degree distribution ("scale-free").
-New nodes attach preferentially to existing high-degree nodes.
-Models many real networks like the web, social networks, and citation networks.</p>
+<p>This function creates a graph with a power-law degree distribution (a "scale-free" network) where new nodes
+attach preferentially to existing high-degree nodes.
+This models many real networks like the web, social networks, and citation networks very well.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>n</code>: Number of nodes</li>
@@ -1557,9 +1562,8 @@ Models many real networks like the web, social networks, and citation networks.<
 </code></pre></div>
 <hr />
 <h2 id="watts-strogatz-small-world-graphs">Watts-Strogatz Small-World Graphs<a class="headerlink" href="#watts-strogatz-small-world-graphs" title="Permanent link">&para;</a></h2>
-<p>Creates a network with high clustering and short average path length ("small-world").
-Starts with a ring lattice and randomly rewires edges.
-Models networks where nodes cluster locally but shortcuts exist.</p>
+<p>This function creates a network with high clustering and short average path length (a "small-world" network).
+The generation process starts with a ring lattice and randomly rewires edges.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>n</code>: Number of nodes</li>

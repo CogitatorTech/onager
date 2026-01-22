@@ -1709,7 +1709,7 @@ PR(u) = \frac{1-d}{N} + d \sum_{v \in B_u} \frac{PR(v)}{L(v)}
 <ul>
 <li><code>damping</code> (default 0.85): Probability of following a link vs jumping randomly</li>
 <li><code>iterations</code> (default 100): Maximum iterations</li>
-<li><code>directed</code> (default false): Treat graph as directed</li>
+<li><code>directed</code> (default true): Treat graph as directed</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">-- Custom damping factor</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">onager_ctr_pagerank</span><span class="p">(</span>
