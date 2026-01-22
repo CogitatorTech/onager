@@ -50,6 +50,7 @@ static OperatorResultType ParallelPageRankInOut(ExecutionContext &ctx, TableFunc
 }
 static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelPageRankBindData>(); auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.directed, nullptr, nullptr);
@@ -96,6 +97,7 @@ static OperatorResultType ParallelBfsInOut(ExecutionContext &ctx, TableFunctionI
 }
 static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelBfsBindData>(); auto &gs = data.global_state->Cast<ParallelBfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_bfs_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
@@ -144,6 +146,7 @@ static OperatorResultType ParallelPathsInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelPathsBindData>(); auto &gs = data.global_state->Cast<ParallelPathsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_shortest_paths_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
@@ -188,6 +191,7 @@ static OperatorResultType ParallelComponentsInOut(ExecutionContext &ctx, TableFu
 }
 static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelComponentsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_components_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -233,6 +237,7 @@ static OperatorResultType ParallelClusteringInOut(ExecutionContext &ctx, TableFu
 }
 static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelClusteringGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_clustering_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -277,6 +282,7 @@ static OperatorResultType ParallelTrianglesInOut(ExecutionContext &ctx, TableFun
 }
 static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelTrianglesGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_triangles_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);

@@ -70,6 +70,7 @@ static OperatorResultType PageRankInOut(ExecutionContext &context, TableFunction
 static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, TableFunctionInput &data, DataChunk &output) {
   auto &bind = data.bind_data->Cast<PageRankBindData>();
   auto &gs = data.global_state->Cast<PageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     size_t ec = gs.src_nodes.size();
@@ -123,6 +124,7 @@ static OperatorResultType DegreeInOut(ExecutionContext &ctx, TableFunctionInput 
 }
 static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<DegreeBindData>(); auto &gs = data.global_state->Cast<DegreeGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_degree(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr, nullptr);
@@ -171,6 +173,7 @@ static OperatorResultType BetweennessInOut(ExecutionContext &ctx, TableFunctionI
 }
 static OperatorFinalizeResultType BetweennessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<BetweennessBindData>(); auto &gs = data.global_state->Cast<BetweennessGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_betweenness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.normalized, nullptr, nullptr);
@@ -216,6 +219,7 @@ static OperatorResultType ClosenessInOut(ExecutionContext &ctx, TableFunctionInp
 }
 static OperatorFinalizeResultType ClosenessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ClosenessGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_closeness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -261,6 +265,7 @@ static OperatorResultType HarmonicInOut(ExecutionContext &ctx, TableFunctionInpu
 }
 static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<HarmonicGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_harmonic(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -313,6 +318,7 @@ static OperatorResultType KatzInOut(ExecutionContext &ctx, TableFunctionInput &d
 }
 static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<KatzBindData>(); auto &gs = data.global_state->Cast<KatzGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.max_iter, bd.tolerance, nullptr, nullptr);
@@ -364,6 +370,7 @@ static OperatorResultType EigenvectorInOut(ExecutionContext &ctx, TableFunctionI
 }
 static OperatorFinalizeResultType EigenvectorFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<EigenvectorBindData>(); auto &gs = data.global_state->Cast<EigenvectorGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_eigenvector(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.tolerance, nullptr, nullptr);
@@ -480,6 +487,7 @@ static OperatorResultType VoteRankInOut(ExecutionContext &ctx, TableFunctionInpu
 }
 static OperatorFinalizeResultType VoteRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<VoteRankBindData>(); auto &gs = data.global_state->Cast<VoteRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_voterank(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.num_seeds, nullptr);
@@ -545,6 +553,7 @@ static OperatorResultType LocalReachingInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<LocalReachingBindData>(); auto &gs = data.global_state->Cast<LocalReachingGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, nullptr, nullptr);
@@ -590,6 +599,7 @@ static OperatorResultType LaplacianInOut(ExecutionContext &ctx, TableFunctionInp
 }
 static OperatorFinalizeResultType LaplacianFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<LaplacianGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);

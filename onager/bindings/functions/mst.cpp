@@ -42,6 +42,7 @@ static OperatorResultType KruskalMstInOut(ExecutionContext &ctx, TableFunctionIn
 }
 static OperatorFinalizeResultType KruskalMstFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<KruskalMstGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t ec = ::onager::onager_compute_kruskal_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr, nullptr);

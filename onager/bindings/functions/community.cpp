@@ -41,6 +41,7 @@ static OperatorResultType LouvainInOut(ExecutionContext &ctx, TableFunctionInput
 }
 static OperatorFinalizeResultType LouvainFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<LouvainBindData>(); auto &gs = data.global_state->Cast<LouvainGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_louvain(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.seed, nullptr, nullptr);
@@ -85,6 +86,7 @@ static OperatorResultType ComponentsInOut(ExecutionContext &ctx, TableFunctionIn
 }
 static OperatorFinalizeResultType ComponentsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ComponentsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_connected_components(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -129,6 +131,7 @@ static OperatorResultType LabelPropInOut(ExecutionContext &ctx, TableFunctionInp
 }
 static OperatorFinalizeResultType LabelPropFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<LabelPropGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_label_propagation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -176,6 +179,7 @@ static OperatorResultType GirvanNewmanInOut(ExecutionContext &ctx, TableFunction
 }
 static OperatorFinalizeResultType GirvanNewmanFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<GirvanNewmanBindData>(); auto &gs = data.global_state->Cast<GirvanNewmanGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_girvan_newman(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.target_communities, nullptr, nullptr);
@@ -226,6 +230,7 @@ static OperatorResultType SpectralInOut(ExecutionContext &ctx, TableFunctionInpu
 }
 static OperatorFinalizeResultType SpectralFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<SpectralBindData>(); auto &gs = data.global_state->Cast<SpectralGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_spectral_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.k, bd.seed, nullptr, nullptr);
@@ -276,6 +281,7 @@ static OperatorResultType InfomapInOut(ExecutionContext &ctx, TableFunctionInput
 }
 static OperatorFinalizeResultType InfomapFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<InfomapBindData>(); auto &gs = data.global_state->Cast<InfomapGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_infomap(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.seed, nullptr, nullptr);

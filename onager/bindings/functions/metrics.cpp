@@ -38,6 +38,7 @@ static OperatorResultType DiameterInOut(ExecutionContext &ctx, TableFunctionInpu
 }
 static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<DiameterGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_diameter(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
@@ -77,6 +78,7 @@ static OperatorResultType RadiusInOut(ExecutionContext &ctx, TableFunctionInput 
 }
 static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<RadiusGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_radius(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
@@ -116,6 +118,7 @@ static OperatorResultType AvgClusteringInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType AvgClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgClusteringGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_avg_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
@@ -154,6 +157,7 @@ static OperatorResultType TriangleCountInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TriangleCountGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_triangle_count(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -198,6 +202,7 @@ static OperatorResultType TransitivityInOut(ExecutionContext &ctx, TableFunction
 }
 static OperatorFinalizeResultType TransitivityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TransitivityGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_transitivity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
@@ -236,6 +241,7 @@ static OperatorResultType AvgPathLengthInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgPathLengthGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_avg_path_length(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
@@ -274,6 +280,7 @@ static OperatorResultType AssortativityInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AssortativityGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_assortativity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
@@ -318,6 +325,7 @@ static OperatorResultType DensityInOut(ExecutionContext &ctx, TableFunctionInput
 static OperatorFinalizeResultType DensityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<DensityGlobalState>();
   auto &bd = data.bind_data->Cast<DensityBindData>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_graph_density(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);

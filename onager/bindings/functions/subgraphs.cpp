@@ -44,6 +44,7 @@ static OperatorResultType EgoGraphInOut(ExecutionContext &ctx, TableFunctionInpu
 }
 static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<EgoGraphBindData>(); auto &gs = data.global_state->Cast<EgoGraphGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_ego_graph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.center, bd.radius, nullptr, nullptr);
@@ -93,6 +94,7 @@ static OperatorResultType KHopInOut(ExecutionContext &ctx, TableFunctionInput &d
 }
 static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<KHopBindData>(); auto &gs = data.global_state->Cast<KHopGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_k_hop_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.start, bd.k, nullptr);
@@ -143,6 +145,7 @@ static OperatorResultType InducedSubgraphInOut(ExecutionContext &ctx, TableFunct
 }
 static OperatorFinalizeResultType InducedSubgraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_induced_subgraph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.filter_nodes.data(), gs.filter_nodes.size(), nullptr, nullptr);

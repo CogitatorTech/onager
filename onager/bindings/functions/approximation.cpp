@@ -37,6 +37,7 @@ static OperatorResultType MaxCliqueInOut(ExecutionContext &ctx, TableFunctionInp
 }
 static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<MaxCliqueGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_max_clique(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
@@ -80,6 +81,7 @@ static OperatorResultType IndependentSetInOut(ExecutionContext &ctx, TableFuncti
 }
 static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<IndependentSetGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_independent_set(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
@@ -123,6 +125,7 @@ static OperatorResultType VertexCoverInOut(ExecutionContext &ctx, TableFunctionI
 }
 static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<VertexCoverGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_vertex_cover(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
@@ -172,6 +175,7 @@ static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &da
 }
 static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TspGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr);

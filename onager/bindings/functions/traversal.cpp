@@ -42,6 +42,7 @@ static OperatorResultType DijkstraInOut(ExecutionContext &ctx, TableFunctionInpu
 }
 static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<DijkstraBindData>(); auto &gs = data.global_state->Cast<DijkstraGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
@@ -88,6 +89,7 @@ static OperatorResultType BfsInOut(ExecutionContext &ctx, TableFunctionInput &da
 }
 static OperatorFinalizeResultType BfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<BfsBindData>(); auto &gs = data.global_state->Cast<BfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_bfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
@@ -134,6 +136,7 @@ static OperatorResultType DfsInOut(ExecutionContext &ctx, TableFunctionInput &da
 }
 static OperatorFinalizeResultType DfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<DfsBindData>(); auto &gs = data.global_state->Cast<DfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_dfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
@@ -183,6 +186,7 @@ static OperatorResultType BellmanFordInOut(ExecutionContext &ctx, TableFunctionI
 }
 static OperatorFinalizeResultType BellmanFordFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<BellmanFordBindData>(); auto &gs = data.global_state->Cast<BellmanFordGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_bellman_ford(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
@@ -230,6 +234,7 @@ static OperatorResultType FloydWarshallInOut(ExecutionContext &ctx, TableFunctio
 }
 static OperatorFinalizeResultType FloydWarshallFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<FloydWarshallGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_floyd_warshall(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);

@@ -63,6 +63,7 @@ static OperatorResultType PersonalizedPageRankInOut(ExecutionContext &ctx, Table
 static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<PersonalizedPageRankBindData>();
   auto &gs = data.global_state->Cast<PersonalizedPageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_personalized_pagerank(
