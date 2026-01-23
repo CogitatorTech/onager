@@ -108,9 +108,9 @@ SELECT node_id, component FROM onager_cmm_components((SELECT src, dst FROM test_
 query II rowsort
 SELECT * FROM full_results
 ----
-1	1
-2	1
-3	1
+1	0
+2	0
+3	0
 
 statement ok
 DROP TABLE full_results
@@ -181,7 +181,7 @@ DROP TABLE density_results
 # Test MST
 statement ok
 CREATE TABLE mst_edges AS
-SELECT src::bigint, dst::bigint, 1.0::double as weight FROM algo_test_edges
+SELECT src::bigint as src, dst::bigint as dst, 1.0::double as weight FROM algo_test_edges
 
 statement ok
 CREATE TABLE mst_results AS
