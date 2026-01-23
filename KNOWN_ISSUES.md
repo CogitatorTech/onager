@@ -12,7 +12,7 @@ condition errors during `CREATE TABLE AS SELECT` or when materializing results.
 
 See [this issue](https://github.com/CogitatorTech/onager/issues/3) for more details.
 
-The error typically manifests as:
+The error typically is occurrs with a message like this:
 
 ```
 INTERNAL Error:
