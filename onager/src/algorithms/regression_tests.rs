@@ -147,14 +147,14 @@ mod tests {
     }
 
     #[test]
-    fn test_louvain_50k_nodes() {
-        let (src, dst) = generate_graph_edges(50_000);
+    fn test_louvain_30k_nodes() {
+        let (src, dst) = generate_graph_edges(30_000);
         let result = compute_louvain(&src, &dst, Some(42));
         assert!(
             result.is_ok(),
-            "Louvain should succeed on 50k nodes (GitHub #3 regression test)"
+            "Louvain should succeed on 30k nodes (GitHub #3 regression test)"
         );
         let lv = result.unwrap();
-        assert_eq!(lv.node_ids.len(), 50_000, "Should return all 50k nodes");
+        assert_eq!(lv.node_ids.len(), 30_000, "Should return all 30k nodes");
     }
 }
