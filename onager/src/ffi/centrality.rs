@@ -99,30 +99,32 @@ pub extern "C" fn onager_compute_degree(
     out_out_degree: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_degree(src, dst, directed) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_in_degree.is_null() && !out_out_degree.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_in_degree, n) }
-                    .copy_from_slice(&result.in_degrees);
-                unsafe { std::slice::from_raw_parts_mut(out_out_degree, n) }
-                    .copy_from_slice(&result.out_degrees);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_degree(src, dst, directed) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_in_degree.is_null() && !out_out_degree.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_in_degree, n) }
+                        .copy_from_slice(&result.in_degrees);
+                    unsafe { std::slice::from_raw_parts_mut(out_out_degree, n) }
+                        .copy_from_slice(&result.out_degrees);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute in-degree of a single node (scalar).
@@ -134,19 +136,21 @@ pub extern "C" fn onager_compute_node_in_degree(
     node: i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_node_degree(src, dst, node) {
-        Ok(r) => r.in_degree,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
         }
-    }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_node_degree(src, dst, node) {
+            Ok(r) => r.in_degree,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
+        }
+    })
 }
 
 /// Compute out-degree of a single node (scalar).
@@ -158,19 +162,21 @@ pub extern "C" fn onager_compute_node_out_degree(
     node: i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_node_degree(src, dst, node) {
-        Ok(r) => r.out_degree,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
         }
-    }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_node_degree(src, dst, node) {
+            Ok(r) => r.out_degree,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
+        }
+    })
 }
 
 /// Compute betweenness centrality on edge arrays.
@@ -184,28 +190,30 @@ pub extern "C" fn onager_compute_betweenness(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_betweenness(src, dst, normalized) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centralities);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_betweenness(src, dst, normalized) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centralities);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute closeness centrality.
@@ -218,28 +226,30 @@ pub extern "C" fn onager_compute_closeness(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_closeness(src, dst) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centralities);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_closeness(src, dst) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centralities);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute eigenvector centrality.
@@ -254,28 +264,30 @@ pub extern "C" fn onager_compute_eigenvector(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_eigenvector(src, dst, max_iter, tolerance) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centralities);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_eigenvector(src, dst, max_iter, tolerance) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centralities);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute Katz centrality.
@@ -325,28 +337,30 @@ pub extern "C" fn onager_compute_harmonic(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_harmonic(src, dst) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centralities);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_harmonic(src, dst) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centralities);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute VoteRank for influential spreaders.
@@ -359,26 +373,28 @@ pub extern "C" fn onager_compute_voterank(
     out_nodes: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_voterank(src, dst, num_seeds) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_voterank(src, dst, num_seeds) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute Local Reaching Centrality.
@@ -392,28 +408,30 @@ pub extern "C" fn onager_compute_local_reaching(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_local_reaching(src, dst, distance) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centrality);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_local_reaching(src, dst, distance) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centrality);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute Laplacian Centrality.
@@ -426,26 +444,28 @@ pub extern "C" fn onager_compute_laplacian(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_laplacian(src, dst) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centrality);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_laplacian(src, dst) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centrality);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }

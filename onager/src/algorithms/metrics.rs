@@ -35,8 +35,12 @@ pub fn compute_diameter(src: &[i64], dst: &[i64]) -> Result<i64> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
     Ok(diameter(&graph).map(|d| d as i64).unwrap_or(-1))
@@ -64,8 +68,12 @@ pub fn compute_radius(src: &[i64], dst: &[i64]) -> Result<i64> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
     Ok(radius(&graph).map(|v| v as i64).unwrap_or(-1))
@@ -93,8 +101,12 @@ pub fn compute_avg_clustering(src: &[i64], dst: &[i64]) -> Result<f64> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
     Ok(average_clustering_coefficient(&graph))
@@ -122,8 +134,12 @@ pub fn compute_avg_path_length(src: &[i64], dst: &[i64]) -> Result<f64> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
     Ok(average_path_length(&graph).unwrap_or(f64::NAN))
@@ -151,8 +167,12 @@ pub fn compute_transitivity(src: &[i64], dst: &[i64]) -> Result<f64> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
     Ok(transitivity(&graph))
@@ -188,8 +208,12 @@ pub fn compute_triangle_count(src: &[i64], dst: &[i64]) -> Result<TriangleResult
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -233,8 +257,12 @@ pub fn compute_assortativity(src: &[i64], dst: &[i64]) -> Result<f64> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
     Ok(assortativity(&graph))

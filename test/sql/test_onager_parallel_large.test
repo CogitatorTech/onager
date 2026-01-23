@@ -1,0 +1,60 @@
+# group: [onager_parallel_regression]
+
+# Regression test for parallel execution bug fixed in issue #3
+# Tests that large graphs work correctly with multiple threads.
+# The bug occurred when DuckDB's parallel workers called InOut functions
+# concurrently, causing data races on shared vectors.
+
+require onager
+
+statement ok
+pragma enable_verification
+
+# Force multiple threads to trigger parallel execution
+statement ok
+SET threads=4
+
+# Generate a graph with 15000 nodes (above the 12288 crash threshold)
+# This creates ~75000 edges which will be processed in parallel chunks
+statement ok
+CREATE TABLE large_edges AS
+  SELECT (random() * 15000)::BIGINT as source,
+         (random() * 15000)::BIGINT as target
+  FROM range(75000)
+
+# Test connected components on large graph with parallel threads
+query I
+SELECT count(*) >= 1 FROM onager_cmm_components((SELECT source, target FROM large_edges))
+----
+1
+
+# Test PageRank on large graph with parallel threads
+query I
+SELECT count(*) > 10000 FROM onager_ctr_pagerank((SELECT source, target FROM large_edges))
+----
+1
+
+# Test Louvain on large graph with parallel threads
+query I
+SELECT count(*) > 10000 FROM onager_cmm_louvain((SELECT source, target FROM large_edges))
+----
+1
+
+# Test at exact 12288 boundary (6 * STANDARD_VECTOR_SIZE)
+statement ok
+CREATE TABLE boundary_edges AS
+  SELECT (random() * 12288)::BIGINT as source,
+         (random() * 12288)::BIGINT as target
+  FROM range(61440)
+
+query I
+SELECT count(*) >= 1 FROM onager_cmm_components((SELECT source, target FROM boundary_edges))
+----
+1
+
+# Cleanup
+statement ok
+DROP TABLE large_edges
+
+statement ok
+DROP TABLE boundary_edges

@@ -38,8 +38,12 @@ pub fn compute_dijkstra(src: &[i64], dst: &[i64], source_node: i64) -> Result<Di
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
 
@@ -92,8 +96,12 @@ pub fn compute_bfs(src: &[i64], dst: &[i64], source_node: i64) -> Result<BfsResu
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -144,8 +152,12 @@ pub fn compute_dfs(src: &[i64], dst: &[i64], source_node: i64) -> Result<DfsResu
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -194,8 +206,12 @@ pub fn compute_shortest_distance(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
 
@@ -247,8 +263,12 @@ pub fn compute_bellman_ford(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(weights[i]));
     }
 
@@ -308,8 +328,12 @@ pub fn compute_floyd_warshall(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(weights[i]));
     }
 

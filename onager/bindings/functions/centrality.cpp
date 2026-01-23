@@ -5,6 +5,7 @@
  * PageRank, Degree, Betweenness, Closeness, Eigenvector, Katz, Harmonic.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -21,6 +22,7 @@ struct PageRankBindData : public TableFunctionData {
 };
 
 struct PageRankGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes;
   std::vector<int64_t> dst_nodes;
   std::vector<int64_t> result_nodes;
@@ -54,6 +56,7 @@ static unique_ptr<GlobalTableFunctionState> PageRankInitGlobal(ClientContext &co
 static OperatorResultType PageRankInOut(ExecutionContext &context, TableFunctionInput &data,
                                          DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<PageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto src = FlatVector::GetData<int64_t>(input.data[0]);
   auto dst = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) {
@@ -67,6 +70,7 @@ static OperatorResultType PageRankInOut(ExecutionContext &context, TableFunction
 static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, TableFunctionInput &data, DataChunk &output) {
   auto &bind = data.bind_data->Cast<PageRankBindData>();
   auto &gs = data.global_state->Cast<PageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     size_t ec = gs.src_nodes.size();
@@ -94,6 +98,7 @@ static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, Table
 
 struct DegreeBindData : public TableFunctionData { bool directed = true; };
 struct DegreeGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_in, result_out;
   idx_t output_idx = 0; bool computed = false;
@@ -112,12 +117,14 @@ static unique_ptr<FunctionData> DegreeBind(ClientContext &ctx, TableFunctionBind
 static unique_ptr<GlobalTableFunctionState> DegreeInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DegreeGlobalState>(); }
 static OperatorResultType DegreeInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DegreeGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<DegreeBindData>(); auto &gs = data.global_state->Cast<DegreeGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_degree(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr, nullptr);
@@ -141,6 +148,7 @@ static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFuncti
 
 struct BetweennessBindData : public TableFunctionData { bool normalized = true; };
 struct BetweennessGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centralities;
   idx_t output_idx = 0; bool computed = false;
@@ -158,12 +166,14 @@ static unique_ptr<FunctionData> BetweennessBind(ClientContext &ctx, TableFunctio
 static unique_ptr<GlobalTableFunctionState> BetweennessInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<BetweennessGlobalState>(); }
 static OperatorResultType BetweennessInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BetweennessGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType BetweennessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<BetweennessBindData>(); auto &gs = data.global_state->Cast<BetweennessGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_betweenness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.normalized, nullptr, nullptr);
@@ -186,6 +196,7 @@ static OperatorFinalizeResultType BetweennessFinal(ExecutionContext &ctx, TableF
 // =============================================================================
 
 struct ClosenessGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centralities;
   idx_t output_idx = 0; bool computed = false;
@@ -201,12 +212,14 @@ static unique_ptr<FunctionData> ClosenessBind(ClientContext &ctx, TableFunctionB
 static unique_ptr<GlobalTableFunctionState> ClosenessInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ClosenessGlobalState>(); }
 static OperatorResultType ClosenessInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ClosenessGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ClosenessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ClosenessGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_closeness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -229,6 +242,7 @@ static OperatorFinalizeResultType ClosenessFinal(ExecutionContext &ctx, TableFun
 // =============================================================================
 
 struct HarmonicGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centralities;
   idx_t output_idx = 0; bool computed = false;
@@ -244,12 +258,14 @@ static unique_ptr<FunctionData> HarmonicBind(ClientContext &ctx, TableFunctionBi
 static unique_ptr<GlobalTableFunctionState> HarmonicInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<HarmonicGlobalState>(); }
 static OperatorResultType HarmonicInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<HarmonicGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<HarmonicGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_harmonic(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -273,6 +289,7 @@ static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunc
 
 struct KatzBindData : public TableFunctionData { double alpha = 0.1; int64_t max_iter = 100; double tolerance = 1e-6; };
 struct KatzGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centralities;
   idx_t output_idx = 0; bool computed = false;
@@ -294,12 +311,14 @@ static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindIn
 static unique_ptr<GlobalTableFunctionState> KatzInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<KatzGlobalState>(); }
 static OperatorResultType KatzInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<KatzGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<KatzBindData>(); auto &gs = data.global_state->Cast<KatzGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.max_iter, bd.tolerance, nullptr, nullptr);
@@ -323,6 +342,7 @@ static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunction
 
 struct EigenvectorBindData : public TableFunctionData { int64_t max_iter = 100; double tolerance = 1e-6; };
 struct EigenvectorGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centralities;
   idx_t output_idx = 0; bool computed = false;
@@ -343,12 +363,14 @@ static unique_ptr<FunctionData> EigenvectorBind(ClientContext &ctx, TableFunctio
 static unique_ptr<GlobalTableFunctionState> EigenvectorInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<EigenvectorGlobalState>(); }
 static OperatorResultType EigenvectorInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<EigenvectorGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType EigenvectorFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<EigenvectorBindData>(); auto &gs = data.global_state->Cast<EigenvectorGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_eigenvector(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.tolerance, nullptr, nullptr);
@@ -440,6 +462,7 @@ using namespace onager;
 
 struct VoteRankBindData : public TableFunctionData { int64_t num_seeds = 10; };
 struct VoteRankGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -457,12 +480,14 @@ static unique_ptr<FunctionData> VoteRankBind(ClientContext &ctx, TableFunctionBi
 static unique_ptr<GlobalTableFunctionState> VoteRankInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<VoteRankGlobalState>(); }
 static OperatorResultType VoteRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<VoteRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType VoteRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<VoteRankBindData>(); auto &gs = data.global_state->Cast<VoteRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_voterank(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.num_seeds, nullptr);
@@ -501,6 +526,7 @@ using namespace onager;
 
 struct LocalReachingBindData : public TableFunctionData { int64_t distance = 2; };
 struct LocalReachingGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centrality;
   idx_t output_idx = 0; bool computed = false;
@@ -520,12 +546,14 @@ static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> LocalReachingInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LocalReachingGlobalState>(); }
 static OperatorResultType LocalReachingInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<LocalReachingGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<LocalReachingBindData>(); auto &gs = data.global_state->Cast<LocalReachingGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, nullptr, nullptr);
@@ -548,6 +576,7 @@ static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, Tabl
 // =============================================================================
 
 struct LaplacianGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_centrality;
   idx_t output_idx = 0; bool computed = false;
@@ -563,12 +592,14 @@ static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionB
 static unique_ptr<GlobalTableFunctionState> LaplacianInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LaplacianGlobalState>(); }
 static OperatorResultType LaplacianInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<LaplacianGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LaplacianFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<LaplacianGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);

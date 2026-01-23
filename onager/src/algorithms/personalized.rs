@@ -62,8 +62,12 @@ pub fn compute_personalized_pagerank(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 

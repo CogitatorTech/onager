@@ -5,6 +5,7 @@
  * Louvain, Connected Components, Label Propagation, Girvan-Newman.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -16,6 +17,7 @@ using namespace onager;
 
 struct LouvainBindData : public TableFunctionData { int64_t seed = -1; };
 struct LouvainGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_communities;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -32,12 +34,14 @@ static unique_ptr<FunctionData> LouvainBind(ClientContext &ctx, TableFunctionBin
 static unique_ptr<GlobalTableFunctionState> LouvainInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LouvainGlobalState>(); }
 static OperatorResultType LouvainInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<LouvainGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LouvainFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<LouvainBindData>(); auto &gs = data.global_state->Cast<LouvainGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_louvain(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.seed, nullptr, nullptr);
@@ -60,6 +64,7 @@ static OperatorFinalizeResultType LouvainFinal(ExecutionContext &ctx, TableFunct
 // =============================================================================
 
 struct ComponentsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_components;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -74,12 +79,14 @@ static unique_ptr<FunctionData> ComponentsBind(ClientContext &ctx, TableFunction
 static unique_ptr<GlobalTableFunctionState> ComponentsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ComponentsGlobalState>(); }
 static OperatorResultType ComponentsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ComponentsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ComponentsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ComponentsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_connected_components(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -102,6 +109,7 @@ static OperatorFinalizeResultType ComponentsFinal(ExecutionContext &ctx, TableFu
 // =============================================================================
 
 struct LabelPropGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_labels;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -116,12 +124,14 @@ static unique_ptr<FunctionData> LabelPropBind(ClientContext &ctx, TableFunctionB
 static unique_ptr<GlobalTableFunctionState> LabelPropInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LabelPropGlobalState>(); }
 static OperatorResultType LabelPropInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<LabelPropGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LabelPropFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<LabelPropGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_label_propagation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -145,6 +155,7 @@ static OperatorFinalizeResultType LabelPropFinal(ExecutionContext &ctx, TableFun
 
 struct GirvanNewmanBindData : public TableFunctionData { int64_t target_communities = 2; };
 struct GirvanNewmanGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_ids, result_communities;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -161,12 +172,14 @@ static unique_ptr<FunctionData> GirvanNewmanBind(ClientContext &ctx, TableFuncti
 static unique_ptr<GlobalTableFunctionState> GirvanNewmanInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<GirvanNewmanGlobalState>(); }
 static OperatorResultType GirvanNewmanInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<GirvanNewmanGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType GirvanNewmanFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<GirvanNewmanBindData>(); auto &gs = data.global_state->Cast<GirvanNewmanGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_girvan_newman(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.target_communities, nullptr, nullptr);
@@ -190,6 +203,7 @@ static OperatorFinalizeResultType GirvanNewmanFinal(ExecutionContext &ctx, Table
 
 struct SpectralBindData : public TableFunctionData { int64_t k = 2; int64_t seed = -1; };
 struct SpectralGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_communities;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -209,12 +223,14 @@ static unique_ptr<FunctionData> SpectralBind(ClientContext &ctx, TableFunctionBi
 static unique_ptr<GlobalTableFunctionState> SpectralInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<SpectralGlobalState>(); }
 static OperatorResultType SpectralInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<SpectralGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType SpectralFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<SpectralBindData>(); auto &gs = data.global_state->Cast<SpectralGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_spectral_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.k, bd.seed, nullptr, nullptr);
@@ -238,6 +254,7 @@ static OperatorFinalizeResultType SpectralFinal(ExecutionContext &ctx, TableFunc
 
 struct InfomapBindData : public TableFunctionData { int64_t max_iter = 100; int64_t seed = -1; };
 struct InfomapGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_communities;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -257,12 +274,14 @@ static unique_ptr<FunctionData> InfomapBind(ClientContext &ctx, TableFunctionBin
 static unique_ptr<GlobalTableFunctionState> InfomapInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<InfomapGlobalState>(); }
 static OperatorResultType InfomapInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<InfomapGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType InfomapFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<InfomapBindData>(); auto &gs = data.global_state->Cast<InfomapGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_infomap(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.seed, nullptr, nullptr);

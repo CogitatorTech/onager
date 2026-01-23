@@ -42,8 +42,12 @@ pub fn compute_jaccard(src: &[i64], dst: &[i64]) -> Result<LinkPredictionResult>
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -89,8 +93,12 @@ pub fn compute_adamic_adar(src: &[i64], dst: &[i64]) -> Result<LinkPredictionRes
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -136,8 +144,12 @@ pub fn compute_preferential_attachment(src: &[i64], dst: &[i64]) -> Result<LinkP
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -183,8 +195,12 @@ pub fn compute_resource_allocation(src: &[i64], dst: &[i64]) -> Result<LinkPredi
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -237,8 +253,12 @@ pub fn compute_common_neighbors(src: &[i64], dst: &[i64]) -> Result<CommonNeighb
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 

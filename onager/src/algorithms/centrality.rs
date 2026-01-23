@@ -49,8 +49,15 @@ pub fn compute_pagerank(
             }
         }
         for i in 0..src.len() {
-            let src_id = node_set[&src[i]];
-            let dst_id = node_set[&dst[i]];
+            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+            })?;
+            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Destination node {} not found in graph",
+                    dst[i]
+                ))
+            })?;
             graph.add_edge(src_id, dst_id, 1.0);
         }
         let ranks = pagerank(&graph, damping, iterations, tolerance, None)
@@ -74,8 +81,15 @@ pub fn compute_pagerank(
             }
         }
         for i in 0..src.len() {
-            let src_id = node_set[&src[i]];
-            let dst_id = node_set[&dst[i]];
+            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+            })?;
+            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Destination node {} not found in graph",
+                    dst[i]
+                ))
+            })?;
             graph.add_edge(src_id, dst_id, 1.0);
         }
         let ranks = pagerank(&graph, damping, iterations, tolerance, None)
@@ -119,8 +133,15 @@ pub fn compute_degree(src: &[i64], dst: &[i64], directed: bool) -> Result<Degree
             }
         }
         for i in 0..src.len() {
-            let src_id = node_set[&src[i]];
-            let dst_id = node_set[&dst[i]];
+            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+            })?;
+            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Destination node {} not found in graph",
+                    dst[i]
+                ))
+            })?;
             graph.add_edge(src_id, dst_id, 1.0);
         }
         let in_deg =
@@ -149,8 +170,15 @@ pub fn compute_degree(src: &[i64], dst: &[i64], directed: bool) -> Result<Degree
             }
         }
         for i in 0..src.len() {
-            let src_id = node_set[&src[i]];
-            let dst_id = node_set[&dst[i]];
+            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+            })?;
+            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Destination node {} not found in graph",
+                    dst[i]
+                ))
+            })?;
             graph.add_edge(src_id, dst_id, 1.0);
         }
         let deg =
@@ -201,8 +229,12 @@ pub fn compute_betweenness(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
     let centralities = betweenness_centrality(&graph, normalized)
@@ -247,8 +279,12 @@ pub fn compute_closeness(src: &[i64], dst: &[i64]) -> Result<ClosenessResult> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
     let centralities =
@@ -298,8 +334,12 @@ pub fn compute_eigenvector(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
     let centralities = eigenvector_centrality(&graph, max_iter, tolerance)
@@ -350,8 +390,12 @@ pub fn compute_katz(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
     let centralities = katz_centrality(&graph, alpha, None, max_iter, tolerance)
@@ -396,8 +440,12 @@ pub fn compute_harmonic(src: &[i64], dst: &[i64]) -> Result<HarmonicResult> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
     }
     let centralities =
@@ -491,8 +539,12 @@ pub fn compute_voterank(src: &[i64], dst: &[i64], num_seeds: usize) -> Result<Vo
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -545,8 +597,12 @@ pub fn compute_local_reaching(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -598,8 +654,12 @@ pub fn compute_laplacian(src: &[i64], dst: &[i64]) -> Result<LaplacianResult> {
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 

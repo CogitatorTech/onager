@@ -1,6 +1,6 @@
 [package]
 name = "onager"
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
 edition = "2021"
 publish = false
 description = "A Graph Analytics Toolbox for DuckDB"
@@ -32,7 +32,7 @@ proptest = "1.5"
 opt-level = 3
 lto = true
 codegen-units = 1
-panic = "abort"
+panic = "unwind"
 
 [profile.dev]
 opt-level = 0

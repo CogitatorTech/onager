@@ -51,8 +51,15 @@ pub fn compute_pagerank_parallel(
             }
         }
         for i in 0..src.len() {
-            let src_id = node_set[&src[i]];
-            let dst_id = node_set[&dst[i]];
+            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+            })?;
+            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Destination node {} not found in graph",
+                    dst[i]
+                ))
+            })?;
             let weight = if weights.is_empty() { 1.0 } else { weights[i] };
             graph.add_edge(src_id, dst_id, weight);
         }
@@ -81,8 +88,15 @@ pub fn compute_pagerank_parallel(
             }
         }
         for i in 0..src.len() {
-            let src_id = node_set[&src[i]];
-            let dst_id = node_set[&dst[i]];
+            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+            })?;
+            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Destination node {} not found in graph",
+                    dst[i]
+                ))
+            })?;
             let weight = if weights.is_empty() { 1.0 } else { weights[i] };
             graph.add_edge(src_id, dst_id, weight);
         }
@@ -130,8 +144,12 @@ pub fn compute_bfs_parallel(src: &[i64], dst: &[i64], source: i64) -> Result<Bfs
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -190,8 +208,12 @@ pub fn compute_shortest_paths_parallel(
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -242,8 +264,12 @@ pub fn compute_components_parallel(src: &[i64], dst: &[i64]) -> Result<Connected
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -295,8 +321,12 @@ pub fn compute_clustering_parallel(src: &[i64], dst: &[i64]) -> Result<Clusterin
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
@@ -341,8 +371,12 @@ pub fn compute_triangles_parallel(src: &[i64], dst: &[i64]) -> Result<TriangleRe
         }
     }
     for i in 0..src.len() {
-        let src_id = node_set[&src[i]];
-        let dst_id = node_set[&dst[i]];
+        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
+        })?;
+        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
+            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
+        })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
 

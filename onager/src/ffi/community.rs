@@ -17,29 +17,31 @@ pub extern "C" fn onager_compute_louvain(
     out_communities: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
-    match algorithms::compute_louvain(src, dst, seed_opt) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_communities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
-                    .copy_from_slice(&result.community_ids);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
+        match algorithms::compute_louvain(src, dst, seed_opt) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_communities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
+                        .copy_from_slice(&result.community_ids);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute connected components.
@@ -52,28 +54,30 @@ pub extern "C" fn onager_compute_connected_components(
     out_components: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_connected_components(src, dst) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_components.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_components, n) }
-                    .copy_from_slice(&result.component_ids);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_connected_components(src, dst) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_components.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_components, n) }
+                        .copy_from_slice(&result.component_ids);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute label propagation.
@@ -86,28 +90,30 @@ pub extern "C" fn onager_compute_label_propagation(
     out_labels: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_label_propagation(src, dst) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_node_ids.is_null() && !out_labels.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_node_ids, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_labels, n) }
-                    .copy_from_slice(&result.labels);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_label_propagation(src, dst) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_node_ids.is_null() && !out_labels.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_node_ids, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_labels, n) }
+                        .copy_from_slice(&result.labels);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute Girvan-Newman community detection.
@@ -121,28 +127,30 @@ pub extern "C" fn onager_compute_girvan_newman(
     out_communities: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_girvan_newman(src, dst, target_communities) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_communities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
-                    .copy_from_slice(&result.community_ids);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_girvan_newman(src, dst, target_communities) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_communities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
+                        .copy_from_slice(&result.community_ids);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute spectral clustering.
@@ -157,29 +165,31 @@ pub extern "C" fn onager_compute_spectral_clustering(
     out_communities: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
-    match algorithms::compute_spectral_clustering(src, dst, k, seed_opt) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_communities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
-                    .copy_from_slice(&result.community_ids);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
+        match algorithms::compute_spectral_clustering(src, dst, k, seed_opt) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_communities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
+                        .copy_from_slice(&result.community_ids);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute infomap community detection.
@@ -194,27 +204,29 @@ pub extern "C" fn onager_compute_infomap(
     out_communities: *mut i64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
-    match algorithms::compute_infomap(src, dst, max_iter, seed_opt) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_communities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
-                    .copy_from_slice(&result.community_ids);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
+        match algorithms::compute_infomap(src, dst, max_iter, seed_opt) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_communities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_communities, n) }
+                        .copy_from_slice(&result.community_ids);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }

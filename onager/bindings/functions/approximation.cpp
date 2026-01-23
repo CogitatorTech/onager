@@ -5,6 +5,7 @@
  * Maximum Clique, Independent Set, Vertex Cover approximations.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -15,6 +16,7 @@ using namespace onager;
 // =============================================================================
 
 struct MaxCliqueGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -28,12 +30,14 @@ static unique_ptr<FunctionData> MaxCliqueBind(ClientContext &ctx, TableFunctionB
 static unique_ptr<GlobalTableFunctionState> MaxCliqueInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<MaxCliqueGlobalState>(); }
 static OperatorResultType MaxCliqueInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<MaxCliqueGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<MaxCliqueGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_max_clique(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
@@ -56,6 +60,7 @@ static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFun
 // =============================================================================
 
 struct IndependentSetGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -69,12 +74,14 @@ static unique_ptr<FunctionData> IndependentSetBind(ClientContext &ctx, TableFunc
 static unique_ptr<GlobalTableFunctionState> IndependentSetInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<IndependentSetGlobalState>(); }
 static OperatorResultType IndependentSetInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<IndependentSetGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<IndependentSetGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_independent_set(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
@@ -97,6 +104,7 @@ static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, Tab
 // =============================================================================
 
 struct VertexCoverGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -110,12 +118,14 @@ static unique_ptr<FunctionData> VertexCoverBind(ClientContext &ctx, TableFunctio
 static unique_ptr<GlobalTableFunctionState> VertexCoverInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<VertexCoverGlobalState>(); }
 static OperatorResultType VertexCoverInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<VertexCoverGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<VertexCoverGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_vertex_cover(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
@@ -138,6 +148,7 @@ static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableF
 // =============================================================================
 
 struct TspGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_tour;
   std::vector<double> weights;
   double result_cost = 0.0;
@@ -154,6 +165,7 @@ static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInp
 static unique_ptr<GlobalTableFunctionState> TspInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<TspGlobalState>(); }
 static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<TspGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   auto w = FlatVector::GetData<double>(input.data[2]);
   for (idx_t i = 0; i < input.size(); i++) {
@@ -163,6 +175,7 @@ static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &da
 }
 static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TspGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr);

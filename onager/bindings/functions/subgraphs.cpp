@@ -5,6 +5,7 @@
  * Ego Graph, K-Hop Neighbors, Induced Subgraph.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -16,6 +17,7 @@ using namespace onager;
 
 struct EgoGraphBindData : public TableFunctionData { int64_t center = 0; int64_t radius = 1; };
 struct EgoGraphGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_src, result_dst;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -35,12 +37,14 @@ static unique_ptr<FunctionData> EgoGraphBind(ClientContext &ctx, TableFunctionBi
 static unique_ptr<GlobalTableFunctionState> EgoGraphInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<EgoGraphGlobalState>(); }
 static OperatorResultType EgoGraphInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<EgoGraphGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<EgoGraphBindData>(); auto &gs = data.global_state->Cast<EgoGraphGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_ego_graph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.center, bd.radius, nullptr, nullptr);
@@ -64,6 +68,7 @@ static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunc
 
 struct KHopBindData : public TableFunctionData { int64_t start = 0; int64_t k = 1; };
 struct KHopGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -82,12 +87,14 @@ static unique_ptr<FunctionData> KHopBind(ClientContext &ctx, TableFunctionBindIn
 static unique_ptr<GlobalTableFunctionState> KHopInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<KHopGlobalState>(); }
 static OperatorResultType KHopInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<KHopGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<KHopBindData>(); auto &gs = data.global_state->Cast<KHopGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_k_hop_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.start, bd.k, nullptr);
@@ -110,6 +117,7 @@ static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunction
 // =============================================================================
 
 struct InducedSubgraphGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, filter_nodes, result_src, result_dst;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -124,6 +132,7 @@ static unique_ptr<FunctionData> InducedSubgraphBind(ClientContext &ctx, TableFun
 static unique_ptr<GlobalTableFunctionState> InducedSubgraphInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<InducedSubgraphGlobalState>(); }
 static OperatorResultType InducedSubgraphInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]);
   auto d = FlatVector::GetData<int64_t>(input.data[1]);
   auto f = FlatVector::GetData<int64_t>(input.data[2]);
@@ -136,6 +145,7 @@ static OperatorResultType InducedSubgraphInOut(ExecutionContext &ctx, TableFunct
 }
 static OperatorFinalizeResultType InducedSubgraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_induced_subgraph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.filter_nodes.data(), gs.filter_nodes.size(), nullptr, nullptr);

@@ -20,47 +20,50 @@ pub extern "C" fn onager_compute_personalized_pagerank(
     out_scores: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
 
-    let personalization: Vec<(i64, f64)> =
-        if pers_count > 0 && !pers_nodes_ptr.is_null() && !pers_weights_ptr.is_null() {
-            let pers_nodes = unsafe { std::slice::from_raw_parts(pers_nodes_ptr, pers_count) };
-            let pers_weights = unsafe { std::slice::from_raw_parts(pers_weights_ptr, pers_count) };
-            pers_nodes
-                .iter()
-                .zip(pers_weights.iter())
-                .map(|(&n, &w)| (n, w))
-                .collect()
-        } else {
-            Vec::new()
-        };
+        let personalization: Vec<(i64, f64)> =
+            if pers_count > 0 && !pers_nodes_ptr.is_null() && !pers_weights_ptr.is_null() {
+                let pers_nodes = unsafe { std::slice::from_raw_parts(pers_nodes_ptr, pers_count) };
+                let pers_weights =
+                    unsafe { std::slice::from_raw_parts(pers_weights_ptr, pers_count) };
+                pers_nodes
+                    .iter()
+                    .zip(pers_weights.iter())
+                    .map(|(&n, &w)| (n, w))
+                    .collect()
+            } else {
+                Vec::new()
+            };
 
-    match algorithms::compute_personalized_pagerank(
-        src,
-        dst,
-        &personalization,
-        damping,
-        max_iter,
-        tolerance,
-    ) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_scores.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_scores, n) }
-                    .copy_from_slice(&result.scores);
+        match algorithms::compute_personalized_pagerank(
+            src,
+            dst,
+            &personalization,
+            damping,
+            max_iter,
+            tolerance,
+        ) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_scores.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_scores, n) }
+                        .copy_from_slice(&result.scores);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }

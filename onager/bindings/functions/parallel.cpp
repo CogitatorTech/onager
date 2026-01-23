@@ -5,6 +5,7 @@
  * Parallel PageRank, BFS, Shortest Paths, Connected Components, Clustering Coefficients, Triangle Count.
  */
 #include "functions.hpp"
+#include <mutex>
 
 namespace duckdb {
 
@@ -17,9 +18,10 @@ using namespace onager;
 struct ParallelPageRankBindData : public TableFunctionData {
   double damping = 0.85;
   int64_t iterations = 100;
-  bool directed = false;
+  bool directed = true;
 };
 struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_ranks;
   idx_t output_idx = 0; bool computed = false;
@@ -41,12 +43,14 @@ static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFu
 static unique_ptr<GlobalTableFunctionState> ParallelPageRankInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelPageRankGlobalState>(); }
 static OperatorResultType ParallelPageRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelPageRankBindData>(); auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.directed, nullptr, nullptr);
@@ -70,6 +74,7 @@ static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, T
 
 struct ParallelBfsBindData : public TableFunctionData { int64_t source = 0; };
 struct ParallelBfsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_order;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -85,12 +90,14 @@ static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctio
 static unique_ptr<GlobalTableFunctionState> ParallelBfsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelBfsGlobalState>(); }
 static OperatorResultType ParallelBfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelBfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelBfsBindData>(); auto &gs = data.global_state->Cast<ParallelBfsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_bfs_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
@@ -114,6 +121,7 @@ static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableF
 
 struct ParallelPathsBindData : public TableFunctionData { int64_t source = 0; };
 struct ParallelPathsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_distances;
   idx_t output_idx = 0; bool computed = false;
@@ -131,12 +139,14 @@ static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunct
 static unique_ptr<GlobalTableFunctionState> ParallelPathsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelPathsGlobalState>(); }
 static OperatorResultType ParallelPathsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelPathsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelPathsBindData>(); auto &gs = data.global_state->Cast<ParallelPathsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_shortest_paths_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
@@ -159,6 +169,7 @@ static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, Tabl
 // =============================================================================
 
 struct ParallelComponentsGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_components;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -173,12 +184,14 @@ static unique_ptr<FunctionData> ParallelComponentsBind(ClientContext &ctx, Table
 static unique_ptr<GlobalTableFunctionState> ParallelComponentsInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelComponentsGlobalState>(); }
 static OperatorResultType ParallelComponentsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelComponentsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelComponentsGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_components_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -201,6 +214,7 @@ static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx,
 // =============================================================================
 
 struct ParallelClusteringGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
   std::vector<double> result_coefficients;
   idx_t output_idx = 0; bool computed = false;
@@ -216,12 +230,14 @@ static unique_ptr<FunctionData> ParallelClusteringBind(ClientContext &ctx, Table
 static unique_ptr<GlobalTableFunctionState> ParallelClusteringInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelClusteringGlobalState>(); }
 static OperatorResultType ParallelClusteringInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelClusteringGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelClusteringGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_clustering_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
@@ -244,6 +260,7 @@ static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx,
 // =============================================================================
 
 struct ParallelTrianglesGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes, result_counts;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
@@ -258,12 +275,14 @@ static unique_ptr<FunctionData> ParallelTrianglesBind(ClientContext &ctx, TableF
 static unique_ptr<GlobalTableFunctionState> ParallelTrianglesInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelTrianglesGlobalState>(); }
 static OperatorResultType ParallelTrianglesInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelTrianglesGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
   for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelTrianglesGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_triangles_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
