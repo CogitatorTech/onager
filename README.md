@@ -40,6 +40,7 @@ Users typically want something like DuckPGQ when they need to query graph patter
 - Includes multi-threaded algorithm implementations
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
+Check out [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for known issues and limitations of the current version.
 
 > [!IMPORTANT]
 > Onager is in early development, so bugs and breaking changes are expected.
