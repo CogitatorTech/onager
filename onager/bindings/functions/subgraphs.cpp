@@ -175,6 +175,7 @@ void RegisterSubgraphFunctions(ExtensionLoader &loader) {
   ego_graph.in_out_function_final = EgoGraphFinal;
   ego_graph.named_parameters["center"] = LogicalType::BIGINT;
   ego_graph.named_parameters["radius"] = LogicalType::BIGINT;
+  ego_graph.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(ego_graph);
 
   TableFunction k_hop("onager_sub_k_hop", {LogicalType::TABLE}, nullptr, KHopBind, KHopInitGlobal);
@@ -182,11 +183,13 @@ void RegisterSubgraphFunctions(ExtensionLoader &loader) {
   k_hop.in_out_function_final = KHopFinal;
   k_hop.named_parameters["start"] = LogicalType::BIGINT;
   k_hop.named_parameters["k"] = LogicalType::BIGINT;
+  k_hop.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(k_hop);
 
   TableFunction induced("onager_sub_induced", {LogicalType::TABLE}, nullptr, InducedSubgraphBind, InducedSubgraphInitGlobal);
   induced.in_out_function = InducedSubgraphInOut;
   induced.in_out_function_final = InducedSubgraphFinal;
+  induced.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(induced);
 }
 

@@ -1,7 +1,4 @@
-//! Large graph tests to verify algorithms work on graphs with 10k+ nodes.
-//!
-//! These tests specifically target the 12,288 node boundary where
-//! DuckDB's STANDARD_VECTOR_SIZE (2048) * 6 = 12288 chunks align.
+//! # Check (GitHub Issue #3)
 
 #[cfg(test)]
 mod tests {
@@ -122,5 +119,42 @@ mod tests {
         );
         let pr = result.unwrap();
         assert_eq!(pr.node_ids.len(), 12_289);
+    }
+
+    #[test]
+    fn test_connected_components_50k_nodes() {
+        let (src, dst) = generate_graph_edges(50_000);
+        let result = compute_connected_components(&src, &dst);
+        assert!(
+            result.is_ok(),
+            "Connected components should succeed on 50k nodes (GitHub #3 regression test)"
+        );
+        let cc = result.unwrap();
+        assert_eq!(cc.node_ids.len(), 50_000, "Should return all 50k nodes");
+    }
+
+    #[test]
+    fn test_pagerank_50k_nodes() {
+        let (src, dst) = generate_graph_edges(50_000);
+        // Use fewer iterations for faster test execution
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 10, true);
+        assert!(
+            result.is_ok(),
+            "PageRank should succeed on 50k nodes (GitHub #3 regression test)"
+        );
+        let pr = result.unwrap();
+        assert_eq!(pr.node_ids.len(), 50_000, "Should return all 50k nodes");
+    }
+
+    #[test]
+    fn test_louvain_20k_nodes() {
+        let (src, dst) = generate_graph_edges(20_000);
+        let result = compute_louvain(&src, &dst, Some(42));
+        assert!(
+            result.is_ok(),
+            "Louvain should succeed on 20k nodes (GitHub #3 regression test)"
+        );
+        let lv = result.unwrap();
+        assert_eq!(lv.node_ids.len(), 20_000, "Should return all 20k nodes");
     }
 }
