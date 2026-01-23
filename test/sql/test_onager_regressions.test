@@ -1,0 +1,232 @@
+# group: [onager]
+
+# Regression test for GitHub issue #3
+
+require onager
+
+statement ok
+pragma enable_verification
+
+# Test with multiple threads to catch batch index issues
+statement ok
+SET threads TO 4
+
+# =============================================================================
+# Test 1: Small graph materialization with multiple threads
+# =============================================================================
+
+statement ok
+CREATE TABLE small_edges AS
+SELECT * FROM (VALUES
+  (1::bigint, 2::bigint), (2, 3), (3, 4), (4, 5),
+  (5, 6), (6, 7), (7, 8), (8, 9), (9, 10), (10, 1),
+  (1, 5), (2, 6), (3, 7), (4, 8), (5, 9)
+) t(src, dst)
+
+# Materialize connected components results into a table
+statement ok
+CREATE TABLE cc_results AS
+SELECT * FROM onager_cmm_components((SELECT src, dst FROM small_edges))
+
+query I
+SELECT count(*) FROM cc_results
+----
+10
+
+statement ok
+DROP TABLE cc_results
+
+# Materialize pagerank results into a table
+statement ok
+CREATE TABLE pr_results AS
+SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM small_edges))
+
+query I
+SELECT count(*) FROM pr_results
+----
+10
+
+statement ok
+DROP TABLE pr_results
+
+statement ok
+DROP TABLE small_edges
+
+# =============================================================================
+# Test 2: Medium graph (1000 nodes) - tests chunked output with threads
+# =============================================================================
+
+# Generate a graph with ~1000 nodes using Erdos-Renyi
+statement ok
+CREATE TABLE medium_edges AS
+SELECT src, dst FROM onager_gen_erdos_renyi(1000, 0.01, seed := 42)
+
+# Materialize community detection results
+statement ok
+CREATE TABLE louvain_results AS
+SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM medium_edges))
+
+query I
+SELECT count(*) >= 900 FROM louvain_results
+----
+1
+
+statement ok
+DROP TABLE louvain_results
+
+# Materialize centrality results
+statement ok
+CREATE TABLE degree_results AS
+SELECT * FROM onager_ctr_degree((SELECT src, dst FROM medium_edges))
+
+query I
+SELECT count(*) >= 900 FROM degree_results
+----
+1
+
+statement ok
+DROP TABLE degree_results
+
+statement ok
+DROP TABLE medium_edges
+
+# =============================================================================
+# Test 3: Verify SELECT * works (not just aggregations like count(*))
+# =============================================================================
+
+statement ok
+CREATE TABLE test_graph AS
+SELECT * FROM (VALUES
+  (1::bigint, 2::bigint), (2, 3), (3, 1)
+) t(src, dst)
+
+# This specifically tests materializing all columns, which triggered the bug
+statement ok
+CREATE TABLE full_results AS
+SELECT node_id, component FROM onager_cmm_components((SELECT src, dst FROM test_graph))
+
+query II rowsort
+SELECT * FROM full_results
+----
+1	1
+2	1
+3	1
+
+statement ok
+DROP TABLE full_results
+
+statement ok
+DROP TABLE test_graph
+
+# =============================================================================
+# Test 4: Test various algorithms with CREATE TABLE AS
+# =============================================================================
+
+statement ok
+CREATE TABLE algo_test_edges AS
+SELECT src, dst FROM onager_gen_barabasi_albert(500, 3, seed := 123)
+
+# Test approximation algorithms
+statement ok
+CREATE TABLE clique_results AS
+SELECT * FROM onager_apx_max_clique((SELECT src, dst FROM algo_test_edges))
+
+query I
+SELECT count(*) > 0 FROM clique_results
+----
+1
+
+statement ok
+DROP TABLE clique_results
+
+# Test link prediction
+statement ok
+CREATE TABLE jaccard_results AS
+SELECT * FROM onager_lnk_jaccard((SELECT src, dst FROM algo_test_edges))
+
+query I
+SELECT count(*) > 0 FROM jaccard_results
+----
+1
+
+statement ok
+DROP TABLE jaccard_results
+
+# Test traversal
+statement ok
+CREATE TABLE bfs_results AS
+SELECT * FROM onager_trv_bfs((SELECT src, dst FROM algo_test_edges), source := 1)
+
+query I
+SELECT count(*) > 0 FROM bfs_results
+----
+1
+
+statement ok
+DROP TABLE bfs_results
+
+# Test metrics (scalar results)
+statement ok
+CREATE TABLE density_results AS
+SELECT * FROM onager_mtr_density((SELECT src, dst FROM algo_test_edges))
+
+query I
+SELECT count(*) FROM density_results
+----
+1
+
+statement ok
+DROP TABLE density_results
+
+# Test MST
+statement ok
+CREATE TABLE mst_edges AS
+SELECT src::bigint, dst::bigint, 1.0::double as weight FROM algo_test_edges
+
+statement ok
+CREATE TABLE mst_results AS
+SELECT * FROM onager_mst_kruskal((SELECT src, dst, weight FROM mst_edges))
+
+query I
+SELECT count(*) > 0 FROM mst_results
+----
+1
+
+statement ok
+DROP TABLE mst_results
+
+statement ok
+DROP TABLE mst_edges
+
+statement ok
+DROP TABLE algo_test_edges
+
+# =============================================================================
+# Test 5: Test with single thread (baseline - should always work)
+# =============================================================================
+
+statement ok
+SET threads TO 1
+
+statement ok
+CREATE TABLE single_thread_edges AS
+SELECT src, dst FROM onager_gen_erdos_renyi(200, 0.05, seed := 99)
+
+statement ok
+CREATE TABLE single_thread_results AS
+SELECT * FROM onager_cmm_components((SELECT src, dst FROM single_thread_edges))
+
+query I
+SELECT count(*) > 0 FROM single_thread_results
+----
+1
+
+statement ok
+DROP TABLE single_thread_results
+
+statement ok
+DROP TABLE single_thread_edges
+
+# Reset to default
+statement ok
+RESET threads
