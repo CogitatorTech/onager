@@ -310,22 +310,26 @@ void RegisterCommunityFunctions(ExtensionLoader &loader) {
   louvain.in_out_function = LouvainInOut;
   louvain.in_out_function_final = LouvainFinal;
   louvain.named_parameters["seed"] = LogicalType::BIGINT;
+  louvain.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(louvain);
 
   TableFunction components("onager_cmm_components", {LogicalType::TABLE}, nullptr, ComponentsBind, ComponentsInitGlobal);
   components.in_out_function = ComponentsInOut;
   components.in_out_function_final = ComponentsFinal;
+  components.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(components);
 
   TableFunction label_prop("onager_cmm_label_prop", {LogicalType::TABLE}, nullptr, LabelPropBind, LabelPropInitGlobal);
   label_prop.in_out_function = LabelPropInOut;
   label_prop.in_out_function_final = LabelPropFinal;
+  label_prop.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(label_prop);
 
   TableFunction girvan_newman("onager_cmm_girvan_newman", {LogicalType::TABLE}, nullptr, GirvanNewmanBind, GirvanNewmanInitGlobal);
   girvan_newman.in_out_function = GirvanNewmanInOut;
   girvan_newman.in_out_function_final = GirvanNewmanFinal;
   girvan_newman.named_parameters["communities"] = LogicalType::BIGINT;
+  girvan_newman.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(girvan_newman);
 
   TableFunction spectral("onager_cmm_spectral", {LogicalType::TABLE}, nullptr, SpectralBind, SpectralInitGlobal);
@@ -333,6 +337,7 @@ void RegisterCommunityFunctions(ExtensionLoader &loader) {
   spectral.in_out_function_final = SpectralFinal;
   spectral.named_parameters["k"] = LogicalType::BIGINT;
   spectral.named_parameters["seed"] = LogicalType::BIGINT;
+  spectral.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(spectral);
 
   TableFunction infomap("onager_cmm_infomap", {LogicalType::TABLE}, nullptr, InfomapBind, InfomapInitGlobal);
@@ -340,6 +345,7 @@ void RegisterCommunityFunctions(ExtensionLoader &loader) {
   infomap.in_out_function_final = InfomapFinal;
   infomap.named_parameters["max_iter"] = LogicalType::BIGINT;
   infomap.named_parameters["seed"] = LogicalType::BIGINT;
+  infomap.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(infomap);
 }
 

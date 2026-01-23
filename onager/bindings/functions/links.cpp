@@ -255,26 +255,31 @@ void RegisterLinkFunctions(ExtensionLoader &loader) {
   TableFunction jaccard("onager_lnk_jaccard", {LogicalType::TABLE}, nullptr, JaccardBind, JaccardInitGlobal);
   jaccard.in_out_function = JaccardInOut;
   jaccard.in_out_function_final = JaccardFinal;
+  jaccard.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(jaccard);
 
   TableFunction adamic_adar("onager_lnk_adamic_adar", {LogicalType::TABLE}, nullptr, AdamicAdarBind, AdamicAdarInitGlobal);
   adamic_adar.in_out_function = AdamicAdarInOut;
   adamic_adar.in_out_function_final = AdamicAdarFinal;
+  adamic_adar.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(adamic_adar);
 
   TableFunction pref_attach("onager_lnk_pref_attach", {LogicalType::TABLE}, nullptr, PrefAttachBind, PrefAttachInitGlobal);
   pref_attach.in_out_function = PrefAttachInOut;
   pref_attach.in_out_function_final = PrefAttachFinal;
+  pref_attach.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(pref_attach);
 
   TableFunction resource_alloc("onager_lnk_resource_alloc", {LogicalType::TABLE}, nullptr, ResourceAllocBind, ResourceAllocInitGlobal);
   resource_alloc.in_out_function = ResourceAllocInOut;
   resource_alloc.in_out_function_final = ResourceAllocFinal;
+  resource_alloc.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(resource_alloc);
 
   TableFunction common_neighbors("onager_lnk_common_neighbors", {LogicalType::TABLE}, nullptr, CommonNeighborsBind, CommonNeighborsInitGlobal);
   common_neighbors.in_out_function = CommonNeighborsInOut;
   common_neighbors.in_out_function_final = CommonNeighborsFinal;
+  common_neighbors.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(common_neighbors);
 }
 

@@ -401,28 +401,33 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   pagerank.named_parameters["damping"] = LogicalType::DOUBLE;
   pagerank.named_parameters["iterations"] = LogicalType::BIGINT;
   pagerank.named_parameters["directed"] = LogicalType::BOOLEAN;
+  pagerank.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(pagerank);
 
   TableFunction degree("onager_ctr_degree", {LogicalType::TABLE}, nullptr, DegreeBind, DegreeInitGlobal);
   degree.in_out_function = DegreeInOut;
   degree.in_out_function_final = DegreeFinal;
   degree.named_parameters["directed"] = LogicalType::BOOLEAN;
+  degree.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(degree);
 
   TableFunction betweenness("onager_ctr_betweenness", {LogicalType::TABLE}, nullptr, BetweennessBind, BetweennessInitGlobal);
   betweenness.in_out_function = BetweennessInOut;
   betweenness.in_out_function_final = BetweennessFinal;
   betweenness.named_parameters["normalized"] = LogicalType::BOOLEAN;
+  betweenness.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(betweenness);
 
   TableFunction closeness("onager_ctr_closeness", {LogicalType::TABLE}, nullptr, ClosenessBind, ClosenessInitGlobal);
   closeness.in_out_function = ClosenessInOut;
   closeness.in_out_function_final = ClosenessFinal;
+  closeness.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(closeness);
 
   TableFunction harmonic("onager_ctr_harmonic", {LogicalType::TABLE}, nullptr, HarmonicBind, HarmonicInitGlobal);
   harmonic.in_out_function = HarmonicInOut;
   harmonic.in_out_function_final = HarmonicFinal;
+  harmonic.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(harmonic);
 
   TableFunction katz("onager_ctr_katz", {LogicalType::TABLE}, nullptr, KatzBind, KatzInitGlobal);
@@ -431,6 +436,7 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   katz.named_parameters["alpha"] = LogicalType::DOUBLE;
   katz.named_parameters["max_iter"] = LogicalType::BIGINT;
   katz.named_parameters["tolerance"] = LogicalType::DOUBLE;
+  katz.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(katz);
 
   TableFunction eigenvector("onager_ctr_eigenvector", {LogicalType::TABLE}, nullptr, EigenvectorBind, EigenvectorInitGlobal);
@@ -438,6 +444,7 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   eigenvector.in_out_function_final = EigenvectorFinal;
   eigenvector.named_parameters["max_iter"] = LogicalType::BIGINT;
   eigenvector.named_parameters["tolerance"] = LogicalType::DOUBLE;
+  eigenvector.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(eigenvector);
 }
 
@@ -512,6 +519,7 @@ void RegisterVoteRankFunction(ExtensionLoader &loader) {
   voterank.in_out_function = VoteRankInOut;
   voterank.in_out_function_final = VoteRankFinal;
   voterank.named_parameters["num_seeds"] = LogicalType::BIGINT;
+  voterank.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(voterank);
 }
 } // namespace onager
@@ -623,12 +631,14 @@ void RegisterLocalReachingFunction(ExtensionLoader &loader) {
   lr.in_out_function = LocalReachingInOut;
   lr.in_out_function_final = LocalReachingFinal;
   lr.named_parameters["distance"] = LogicalType::BIGINT;
+  lr.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(lr);
 }
 void RegisterLaplacianFunction(ExtensionLoader &loader) {
   TableFunction lap("onager_ctr_laplacian", {LogicalType::TABLE}, nullptr, LaplacianBind, LaplacianInitGlobal);
   lap.in_out_function = LaplacianInOut;
   lap.in_out_function_final = LaplacianFinal;
+  lap.order_preservation_type = OrderPreservationType::NO_ORDER;
   loader.RegisterFunction(lap);
 }
 } // namespace onager
