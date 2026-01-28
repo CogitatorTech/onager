@@ -7,7 +7,7 @@ description = "A Graph Analytics Toolbox for DuckDB"
 
 [lib]
 name = "onager"
-crate-type = ["rlib", "staticlib", "cdylib"]
+crate-type = ["staticlib", "cdylib"]
 
 [features]
 duckdb_extension = []
