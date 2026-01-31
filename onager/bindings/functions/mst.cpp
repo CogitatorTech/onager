@@ -61,6 +61,55 @@ static OperatorFinalizeResultType KruskalMstFinal(ExecutionContext &ctx, TableFu
 }
 
 // =============================================================================
+// Prim MST
+// =============================================================================
+
+struct PrimMstGlobalState : public GlobalTableFunctionState {
+  std::mutex input_mutex;
+  std::vector<int64_t> src_nodes, dst_nodes, result_src, result_dst;
+  std::vector<double> weights, result_weights;
+  double total_weight = 0.0;
+  idx_t output_idx = 0; bool computed = false;
+  idx_t MaxThreads() const override { return 1; }
+};
+
+static unique_ptr<FunctionData> PrimMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  CheckInt64Input(input, "onager_mst_prim", 3);
+  rt.push_back(LogicalType::BIGINT); nm.push_back("src");
+  rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
+  rt.push_back(LogicalType::DOUBLE); nm.push_back("weight");
+  return make_uniq<TableFunctionData>();
+}
+static unique_ptr<GlobalTableFunctionState> PrimMstInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<PrimMstGlobalState>(); }
+static OperatorResultType PrimMstInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &gs = data.global_state->Cast<PrimMstGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
+  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
+  auto w = FlatVector::GetData<double>(input.data[2]);
+  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }
+  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+}
+static OperatorFinalizeResultType PrimMstFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &gs = data.global_state->Cast<PrimMstGlobalState>();
+  std::lock_guard<std::mutex> lock(gs.input_mutex);
+  if (!gs.computed) {
+    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    int64_t ec = ::onager::onager_compute_prim_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr, nullptr);
+    if (ec < 0) throw InvalidInputException("Prim MST failed: " + GetOnagerError());
+    gs.result_src.resize(ec); gs.result_dst.resize(ec); gs.result_weights.resize(ec);
+    ::onager::onager_compute_prim_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_src.data(), gs.result_dst.data(), gs.result_weights.data(), &gs.total_weight);
+    gs.computed = true;
+  }
+  idx_t rem = gs.result_src.size() - gs.output_idx;
+  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
+  auto s = FlatVector::GetData<int64_t>(output.data[0]); auto d = FlatVector::GetData<int64_t>(output.data[1]); auto w = FlatVector::GetData<double>(output.data[2]);
+  for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; w[i] = gs.result_weights[gs.output_idx+i]; }
+  gs.output_idx += to; output.SetCardinality(to);
+  return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
+}
+
+// =============================================================================
 // Registration
 // =============================================================================
 
@@ -72,6 +121,12 @@ void RegisterMstFunctions(ExtensionLoader &loader) {
   kruskal.in_out_function_final = KruskalMstFinal;
   ONAGER_SET_NO_ORDER(kruskal);
   loader.RegisterFunction(kruskal);
+
+  TableFunction prim("onager_mst_prim", {LogicalType::TABLE}, nullptr, PrimMstBind, PrimMstInitGlobal);
+  prim.in_out_function = PrimMstInOut;
+  prim.in_out_function_final = PrimMstFinal;
+  ONAGER_SET_NO_ORDER(prim);
+  loader.RegisterFunction(prim);
 }
 
 } // namespace onager

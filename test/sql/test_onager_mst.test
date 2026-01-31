@@ -22,11 +22,33 @@ select count(*) > 0 from onager_mst_kruskal((select src, dst, weight from weight
 ----
 1
 
-# Verify MST has correct number of edges (n-1 for connected graph)
+ints
+# Verify Kruskal MST has correct number of edges (n-1 for connected graph)
 query I
 select count(*) from onager_mst_kruskal((select src, dst, weight from weighted_edges))
 ----
 3
+
+# Test Prim MST returns results
+query I
+select count(*) > 0 from onager_mst_prim((select src, dst, weight from weighted_edges))
+----
+1
+
+# Verify Prim MST has correct number of edges (n-1 for connected graph)
+query I
+select count(*) from onager_mst_prim((select src, dst, weight from weighted_edges))
+----
+3
+
+# Both algorithms should return same total weight for MST
+query I
+select abs(
+  (select sum(weight) from onager_mst_kruskal((select src, dst, weight from weighted_edges))) -
+  (select sum(weight) from onager_mst_prim((select src, dst, weight from weighted_edges)))
+) < 0.001
+----
+true
 
 # Cleanup
 statement ok

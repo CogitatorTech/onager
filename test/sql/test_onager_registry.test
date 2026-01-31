@@ -24,3 +24,154 @@ query T
 select typeof(onager_last_error())
 ----
 VARCHAR
+
+# =============================================================================
+# Graph Registry Management Tests
+# =============================================================================
+
+# Test create_graph returns 0 on success
+query I
+select onager_create_graph('test_graph', true)
+----
+0
+
+# Test create_graph fails for duplicate name
+query I
+select onager_create_graph('test_graph', true)
+----
+-1
+
+# Test list_graphs contains our graph
+query I
+select onager_list_graphs() like '%test_graph%'
+----
+true
+
+# Test add_node returns 0 on success
+query I
+select onager_add_node('test_graph', 1)
+----
+0
+
+query I
+select onager_add_node('test_graph', 2)
+----
+0
+
+query I
+select onager_add_node('test_graph', 3)
+----
+0
+
+# Test add_node fails for duplicate node
+query I
+select onager_add_node('test_graph', 1)
+----
+-1
+
+# Test node_count returns correct count
+query I
+select onager_node_count('test_graph')
+----
+3
+
+# Test add_edge returns 0 on success
+query I
+select onager_add_edge('test_graph', 1, 2, 1.0)
+----
+0
+
+query I
+select onager_add_edge('test_graph', 2, 3, 2.0)
+----
+0
+
+# Test edge_count returns correct count
+query I
+select onager_edge_count('test_graph')
+----
+2
+
+# Test node_in_degree (node 2 has 1 incoming edge from node 1)
+query I
+select onager_node_in_degree('test_graph', 2)
+----
+1
+
+# Test node_out_degree (node 1 has 1 outgoing edge to node 2)
+query I
+select onager_node_out_degree('test_graph', 1)
+----
+1
+
+# Test node_in_degree for non-existent node returns -1
+query I
+select onager_node_in_degree('test_graph', 999)
+----
+-1
+
+# Test node_count for non-existent graph returns -1
+query I
+select onager_node_count('non_existent_graph')
+----
+-1
+
+# Test drop_graph returns 0 on success
+query I
+select onager_drop_graph('test_graph')
+----
+0
+
+# Test drop_graph fails for non-existent graph
+query I
+select onager_drop_graph('test_graph')
+----
+-1
+
+# Test list_graphs no longer contains our graph
+query I
+select onager_list_graphs() like '%test_graph%'
+----
+false
+
+# =============================================================================
+# Test undirected graph
+# =============================================================================
+
+query I
+select onager_create_graph('undirected_test', false)
+----
+0
+
+query I
+select onager_add_node('undirected_test', 1)
+----
+0
+
+query I
+select onager_add_node('undirected_test', 2)
+----
+0
+
+query I
+select onager_add_edge('undirected_test', 1, 2, 1.0)
+----
+0
+
+# For undirected graph, in_degree equals out_degree
+query I
+select onager_node_in_degree('undirected_test', 1)
+----
+1
+
+query I
+select onager_node_out_degree('undirected_test', 1)
+----
+1
+
+# Cleanup
+query I
+select onager_drop_graph('undirected_test')
+----
+0
+
