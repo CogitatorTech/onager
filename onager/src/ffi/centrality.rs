@@ -309,28 +309,30 @@ pub extern "C" fn onager_compute_katz(
     out_centralities: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_katz(src, dst, alpha, max_iter, tolerance) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_nodes.is_null() && !out_centralities.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
-                    .copy_from_slice(&result.centralities);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_katz(src, dst, alpha, max_iter, tolerance) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_nodes.is_null() && !out_centralities.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_centralities, n) }
+                        .copy_from_slice(&result.centralities);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute harmonic centrality.

@@ -112,20 +112,22 @@ pub extern "C" fn onager_get_version() -> *mut c_char {
 #[no_mangle]
 pub unsafe extern "C" fn onager_create_graph(name: *const c_char, directed: bool) -> i32 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::create_graph(name, directed) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::create_graph(name, directed) {
-        Ok(()) => 0,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Drops a graph with the given name.
@@ -134,37 +136,41 @@ pub unsafe extern "C" fn onager_create_graph(name: *const c_char, directed: bool
 #[no_mangle]
 pub unsafe extern "C" fn onager_drop_graph(name: *const c_char) -> i32 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::drop_graph(name) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::drop_graph(name) {
-        Ok(()) => 0,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Returns a JSON array of all graph names.
 #[no_mangle]
 pub extern "C" fn onager_list_graphs() -> *mut c_char {
     clear_last_error();
-    let graphs = graph::list_graphs();
-    let json = match serde_json::to_string(&graphs) {
-        Ok(s) => s,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            return std::ptr::null_mut();
-        }
-    };
-    CString::new(json)
-        .map(|s| s.into_raw())
-        .unwrap_or(std::ptr::null_mut())
+    crate::ffi_catch_unwind!(std::ptr::null_mut(), {
+        let graphs = graph::list_graphs();
+        let json = match serde_json::to_string(&graphs) {
+            Ok(s) => s,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                return std::ptr::null_mut();
+            }
+        };
+        CString::new(json)
+            .map(|s| s.into_raw())
+            .unwrap_or(std::ptr::null_mut())
+    })
 }
 
 /// Adds a node to the specified graph.
@@ -173,20 +179,22 @@ pub extern "C" fn onager_list_graphs() -> *mut c_char {
 #[no_mangle]
 pub unsafe extern "C" fn onager_add_node(graph_name: *const c_char, node_id: i64) -> i32 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::add_node(name, node_id) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::add_node(name, node_id) {
-        Ok(()) => 0,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Adds an edge to the specified graph.
@@ -200,20 +208,22 @@ pub unsafe extern "C" fn onager_add_edge(
     weight: f64,
 ) -> i32 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::add_edge(name, src, dst, weight) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::add_edge(name, src, dst, weight) {
-        Ok(()) => 0,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Returns the number of nodes in the graph.
@@ -222,20 +232,22 @@ pub unsafe extern "C" fn onager_add_edge(
 #[no_mangle]
 pub unsafe extern "C" fn onager_node_count(graph_name: *const c_char) -> i64 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::node_count(name) {
+            Ok(count) => count as i64,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::node_count(name) {
-        Ok(count) => count as i64,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Returns the number of edges in the graph.
@@ -244,20 +256,22 @@ pub unsafe extern "C" fn onager_node_count(graph_name: *const c_char) -> i64 {
 #[no_mangle]
 pub unsafe extern "C" fn onager_edge_count(graph_name: *const c_char) -> i64 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::edge_count(name) {
+            Ok(count) => count as i64,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::edge_count(name) {
-        Ok(count) => count as i64,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Returns the in-degree of a node in the named graph.
@@ -266,20 +280,22 @@ pub unsafe extern "C" fn onager_edge_count(graph_name: *const c_char) -> i64 {
 #[no_mangle]
 pub unsafe extern "C" fn onager_graph_node_in_degree(graph_name: *const c_char, node: i64) -> i64 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::get_node_in_degree(name, node) {
+            Ok(degree) => degree as i64,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::get_node_in_degree(name, node) {
-        Ok(degree) => degree as i64,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Returns the out-degree of a node in the named graph.
@@ -288,18 +304,20 @@ pub unsafe extern "C" fn onager_graph_node_in_degree(graph_name: *const c_char, 
 #[no_mangle]
 pub unsafe extern "C" fn onager_graph_node_out_degree(graph_name: *const c_char, node: i64) -> i64 {
     clear_last_error();
-    let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_last_error("Invalid UTF-8 in graph name");
-            return -1;
+    crate::ffi_catch_unwind!(-1, {
+        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in graph name");
+                return -1;
+            }
+        };
+        match graph::get_node_out_degree(name, node) {
+            Ok(degree) => degree as i64,
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-    };
-    match graph::get_node_out_degree(name, node) {
-        Ok(degree) => degree as i64,
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
