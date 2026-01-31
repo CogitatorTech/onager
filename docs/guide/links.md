@@ -103,6 +103,30 @@ order by score desc limit 10;
 
 ---
 
+## Common Neighbors
+
+Simply counts the number of shared neighbors between two nodes.
+The most basic link prediction heuristic — nodes with many common friends are likely to become friends.
+
+\[
+CN(u, v) = |N(u) \cap N(v)|
+\]
+
+```sql
+select node1, node2, count as common_neighbors
+from onager_lnk_common_neighbors((select src, dst from edges))
+where count > 0
+order by count desc limit 10;
+```
+
+| Column | Type   | Description                      |
+|--------|--------|----------------------------------|
+| node1  | bigint | First node                       |
+| node2  | bigint | Second node                      |
+| count  | bigint | Number of shared neighbors       |
+
+---
+
 ## Complete Example: Friend Recommendations
 
 Find potential connections in a social network:

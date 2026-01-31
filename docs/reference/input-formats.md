@@ -42,7 +42,8 @@ select onager_node_in_degree('social', 1);
 
     - `onager_pth_bellman_ford` — shortest paths with negative weights
     - `onager_pth_floyd_warshall` — all-pairs shortest paths
-    - `onager_mst_kruskal` — minimum spanning tree
+    - `onager_mst_kruskal` — minimum spanning tree (Kruskal's)
+    - `onager_mst_prim` — minimum spanning tree (Prim's)
     - `onager_apx_tsp` — traveling salesman approximation
 
     Pass weights like this:

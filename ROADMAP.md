@@ -87,7 +87,7 @@ It outlines features to be implemented and their current status.
 ### 9. Minimum Spanning Tree
 
 * [x] Kruskal's algorithm
-* [ ] Prim's algorithm
+* [x] Prim's algorithm
 
 ### 10. Link Prediction
 

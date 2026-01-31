@@ -100,6 +100,7 @@ Complete reference for all Onager SQL functions.
 | Function                             | Returns            | Description   |
 |--------------------------------------|--------------------|---------------|
 | `onager_mst_kruskal(weighted_edges)` | `src, dst, weight` | Kruskal's MST |
+| `onager_mst_prim(weighted_edges)`    | `src, dst, weight` | Prim's MST    |
 
 ## Generator Functions
 
