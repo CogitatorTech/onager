@@ -19,6 +19,23 @@
 
 #include "rust.h"
 
+// =============================================================================
+// DuckDB Version Compatibility
+// =============================================================================
+// order_preservation_type was added in DuckDB 1.5.0
+// Use this macro to set NO_ORDER preservation in a version-compatible way
+#if defined(DUCKDB_MAJOR_VERSION) && defined(DUCKDB_MINOR_VERSION)
+  #if DUCKDB_MAJOR_VERSION > 1 || (DUCKDB_MAJOR_VERSION == 1 && DUCKDB_MINOR_VERSION >= 5)
+    #define ONAGER_HAS_ORDER_PRESERVATION 1
+  #endif
+#endif
+
+#ifdef ONAGER_HAS_ORDER_PRESERVATION
+  #define ONAGER_SET_NO_ORDER(func) (func).order_preservation_type = OrderPreservationType::NO_ORDER
+#else
+  #define ONAGER_SET_NO_ORDER(func) ((void)0)
+#endif
+
 namespace duckdb {
 namespace onager {
 

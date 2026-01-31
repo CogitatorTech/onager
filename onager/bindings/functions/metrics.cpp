@@ -348,50 +348,50 @@ void RegisterMetricFunctions(ExtensionLoader &loader) {
   TableFunction diameter("onager_mtr_diameter", {LogicalType::TABLE}, nullptr, DiameterBind, DiameterInitGlobal);
   diameter.in_out_function = DiameterInOut;
   diameter.in_out_function_final = DiameterFinal;
-  diameter.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(diameter);
   loader.RegisterFunction(diameter);
 
   TableFunction radius("onager_mtr_radius", {LogicalType::TABLE}, nullptr, RadiusBind, RadiusInitGlobal);
   radius.in_out_function = RadiusInOut;
   radius.in_out_function_final = RadiusFinal;
-  radius.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(radius);
   loader.RegisterFunction(radius);
 
   TableFunction avg_clustering("onager_mtr_avg_clustering", {LogicalType::TABLE}, nullptr, AvgClusteringBind, AvgClusteringInitGlobal);
   avg_clustering.in_out_function = AvgClusteringInOut;
   avg_clustering.in_out_function_final = AvgClusteringFinal;
-  avg_clustering.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(avg_clustering);
   loader.RegisterFunction(avg_clustering);
 
   TableFunction triangles("onager_mtr_triangles", {LogicalType::TABLE}, nullptr, TriangleCountBind, TriangleCountInitGlobal);
   triangles.in_out_function = TriangleCountInOut;
   triangles.in_out_function_final = TriangleCountFinal;
-  triangles.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(triangles);
   loader.RegisterFunction(triangles);
 
   TableFunction transitivity("onager_mtr_transitivity", {LogicalType::TABLE}, nullptr, TransitivityBind, TransitivityInitGlobal);
   transitivity.in_out_function = TransitivityInOut;
   transitivity.in_out_function_final = TransitivityFinal;
-  transitivity.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(transitivity);
   loader.RegisterFunction(transitivity);
 
   TableFunction avg_path_length("onager_mtr_avg_path_length", {LogicalType::TABLE}, nullptr, AvgPathLengthBind, AvgPathLengthInitGlobal);
   avg_path_length.in_out_function = AvgPathLengthInOut;
   avg_path_length.in_out_function_final = AvgPathLengthFinal;
-  avg_path_length.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(avg_path_length);
   loader.RegisterFunction(avg_path_length);
 
   TableFunction assortativity("onager_mtr_assortativity", {LogicalType::TABLE}, nullptr, AssortativityBind, AssortativityInitGlobal);
   assortativity.in_out_function = AssortativityInOut;
   assortativity.in_out_function_final = AssortativityFinal;
-  assortativity.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(assortativity);
   loader.RegisterFunction(assortativity);
 
   TableFunction density("onager_mtr_density", {LogicalType::TABLE}, nullptr, DensityBind, DensityInitGlobal);
   density.in_out_function = DensityInOut;
   density.in_out_function_final = DensityFinal;
   density.named_parameters["directed"] = LogicalType::BOOLEAN;
-  density.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(density);
   loader.RegisterFunction(density);
 }
 

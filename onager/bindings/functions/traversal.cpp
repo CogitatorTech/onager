@@ -263,34 +263,34 @@ void RegisterTraversalFunctions(ExtensionLoader &loader) {
   dijkstra.in_out_function = DijkstraInOut;
   dijkstra.in_out_function_final = DijkstraFinal;
   dijkstra.named_parameters["source"] = LogicalType::BIGINT;
-  dijkstra.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(dijkstra);
   loader.RegisterFunction(dijkstra);
 
   TableFunction bfs("onager_trv_bfs", {LogicalType::TABLE}, nullptr, BfsBind, BfsInitGlobal);
   bfs.in_out_function = BfsInOut;
   bfs.in_out_function_final = BfsFinal;
   bfs.named_parameters["source"] = LogicalType::BIGINT;
-  bfs.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(bfs);
   loader.RegisterFunction(bfs);
 
   TableFunction dfs("onager_trv_dfs", {LogicalType::TABLE}, nullptr, DfsBind, DfsInitGlobal);
   dfs.in_out_function = DfsInOut;
   dfs.in_out_function_final = DfsFinal;
   dfs.named_parameters["source"] = LogicalType::BIGINT;
-  dfs.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(dfs);
   loader.RegisterFunction(dfs);
 
   TableFunction bellman_ford("onager_pth_bellman_ford", {LogicalType::TABLE}, nullptr, BellmanFordBind, BellmanFordInitGlobal);
   bellman_ford.in_out_function = BellmanFordInOut;
   bellman_ford.in_out_function_final = BellmanFordFinal;
   bellman_ford.named_parameters["source"] = LogicalType::BIGINT;
-  bellman_ford.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(bellman_ford);
   loader.RegisterFunction(bellman_ford);
 
   TableFunction floyd_warshall("onager_pth_floyd_warshall", {LogicalType::TABLE}, nullptr, FloydWarshallBind, FloydWarshallInitGlobal);
   floyd_warshall.in_out_function = FloydWarshallInOut;
   floyd_warshall.in_out_function_final = FloydWarshallFinal;
-  floyd_warshall.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(floyd_warshall);
   loader.RegisterFunction(floyd_warshall);
 }
 

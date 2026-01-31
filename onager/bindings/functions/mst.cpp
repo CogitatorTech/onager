@@ -70,7 +70,7 @@ void RegisterMstFunctions(ExtensionLoader &loader) {
   TableFunction kruskal("onager_mst_kruskal", {LogicalType::TABLE}, nullptr, KruskalMstBind, KruskalMstInitGlobal);
   kruskal.in_out_function = KruskalMstInOut;
   kruskal.in_out_function_final = KruskalMstFinal;
-  kruskal.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(kruskal);
   loader.RegisterFunction(kruskal);
 }
 

@@ -104,7 +104,7 @@ void RegisterPersonalizedFunctions(ExtensionLoader &loader) {
   pers_pr.named_parameters["damping"] = LogicalType::DOUBLE;
   pers_pr.named_parameters["max_iter"] = LogicalType::BIGINT;
   pers_pr.named_parameters["tolerance"] = LogicalType::DOUBLE;
-  pers_pr.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(pers_pr);
   loader.RegisterFunction(pers_pr);
 }
 
