@@ -6,42 +6,87 @@ site_url: https://cogitatortech.github.io/onager/
 
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   palette:
+    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: deep purple
       accent: amber
       toggle:
-        icon: material/brightness-7
+        icon: material/weather-night
         name: Switch to dark mode
+    # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: deep purple
       accent: amber
       toggle:
-        icon: material/brightness-4
+        icon: material/weather-sunny
         name: Switch to light mode
   font:
     text: Inter
     code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+    annotation: material/arrow-right-circle
   features:
-    - content.code.copy
+    # Navigation
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tracking
     - navigation.tabs
-    - navigation.top
-    - navigation.indexes
+    - navigation.tabs.sticky
+    - navigation.sections
     - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    # Table of contents
+    - toc.follow
+    # Search
+    - search.suggest
+    - search.highlight
+    - search.share
+    # Content
+    - content.code.copy
     - content.code.select
     - content.code.annotate
-    - navigation.tracking
-    - navigation.sections
+    - content.tabs.link
+    - content.tooltips
+    # Header
+    - header.autohide
+    - announce.dismiss
 
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/CogitatorTech/onager
+      name: Onager on GitHub
+  generator: false
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: Thanks for your feedback! Help us improve by opening an issue.
+
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
-  - search
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - tags
 
 nav:
   - Home: index.md
@@ -71,18 +116,57 @@ nav:
       - Input Formats: reference/input-formats.md
 
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - pymdownx.details
-  - pymdownx.arithmatex:
-      generic: true
+  # Python Markdown
+  - abbr
   - admonition
   - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
   - toc:
       permalink: true
+      permalink_title: Anchor link to this section
+      toc_depth: 3
+  # PyMdownx
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      auto_title: false
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: CogitatorTech
+      repo: onager
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      base_path: docs
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
 
 extra_javascript:
   - assets/js/mathjax.js
