@@ -19,28 +19,30 @@ pub extern "C" fn onager_compute_pagerank(
     out_ranks: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer for src or dst");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    match algorithms::compute_pagerank(src, dst, &[], damping, iterations, directed) {
-        Ok(result) => {
-            let node_count = result.node_ids.len();
-            if !out_nodes.is_null() && !out_ranks.is_null() {
-                let out_n = unsafe { std::slice::from_raw_parts_mut(out_nodes, node_count) };
-                let out_r = unsafe { std::slice::from_raw_parts_mut(out_ranks, node_count) };
-                out_n.copy_from_slice(&result.node_ids);
-                out_r.copy_from_slice(&result.ranks);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer for src or dst");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        match algorithms::compute_pagerank(src, dst, &[], damping, iterations, directed) {
+            Ok(result) => {
+                let node_count = result.node_ids.len();
+                if !out_nodes.is_null() && !out_ranks.is_null() {
+                    let out_n = unsafe { std::slice::from_raw_parts_mut(out_nodes, node_count) };
+                    let out_r = unsafe { std::slice::from_raw_parts_mut(out_ranks, node_count) };
+                    out_n.copy_from_slice(&result.node_ids);
+                    out_r.copy_from_slice(&result.ranks);
+                }
+                node_count as i64
             }
-            node_count as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute PageRank using parallel algorithm.
@@ -58,33 +60,37 @@ pub extern "C" fn onager_compute_pagerank_parallel(
     out_ranks: *mut f64,
 ) -> i64 {
     clear_last_error();
-    if src_ptr.is_null() || dst_ptr.is_null() {
-        set_last_error("Null pointer");
-        return -1;
-    }
-    let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-    let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-    let weights = if weights_ptr.is_null() || weights_count == 0 {
-        &[]
-    } else {
-        unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
-    };
-    match algorithms::compute_pagerank_parallel(src, dst, weights, damping, iterations, directed) {
-        Ok(result) => {
-            let n = result.node_ids.len();
-            if !out_node_ids.is_null() && !out_ranks.is_null() {
-                unsafe { std::slice::from_raw_parts_mut(out_node_ids, n) }
-                    .copy_from_slice(&result.node_ids);
-                unsafe { std::slice::from_raw_parts_mut(out_ranks, n) }
-                    .copy_from_slice(&result.ranks);
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        let weights = if weights_ptr.is_null() || weights_count == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
+        };
+        match algorithms::compute_pagerank_parallel(
+            src, dst, weights, damping, iterations, directed,
+        ) {
+            Ok(result) => {
+                let n = result.node_ids.len();
+                if !out_node_ids.is_null() && !out_ranks.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_node_ids, n) }
+                        .copy_from_slice(&result.node_ids);
+                    unsafe { std::slice::from_raw_parts_mut(out_ranks, n) }
+                        .copy_from_slice(&result.ranks);
+                }
+                n as i64
             }
-            n as i64
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
         }
-        Err(e) => {
-            set_last_error(&e.to_string());
-            -1
-        }
-    }
+    })
 }
 
 /// Compute degree centrality on edge arrays.

@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - '.github/**'
   push:
     tags:
       - 'v*'
@@ -42,6 +41,7 @@ jobs:
     name: Create Draft Release with Built Binaries
     needs:
       - duckdb-stable-build
+      - duckdb-next-stable-build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
@@ -50,6 +50,7 @@ jobs:
       - name: Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: onager-*
           path: dist
           merge-multiple: true
       - name: List Artifacts
