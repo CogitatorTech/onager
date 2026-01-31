@@ -34,3 +34,39 @@ order by weight;
 | src    | bigint | Source node       |
 | dst    | bigint | Destination node  |
 | weight | double | Edge weight       |
+
+---
+
+## Prim's Algorithm
+
+Prim's algorithm builds the MST by starting from an arbitrary node and repeatedly adding the minimum weight edge that connects a new node.
+
+```sql
+select src, dst, weight
+from onager_mst_prim((select src, dst, weight from weighted_edges))
+order by weight;
+```
+
+| Column | Type   | Description       |
+|--------|--------|-------------------|
+| src    | bigint | Source node       |
+| dst    | bigint | Destination node  |
+| weight | double | Edge weight       |
+
+---
+
+## Comparison
+
+Both algorithms produce optimal minimum spanning trees but differ in approach:
+
+- **Kruskal's**: Sorts all edges globally which is best for sparse graphs
+- **Prim's**: Grows tree from a starting node which is best for dense graphs
+
+```sql
+-- Both return the same total weight
+select 'Kruskal' as algorithm, sum(weight) as total_weight
+from onager_mst_kruskal((select src, dst, weight from weighted_edges))
+union all
+select 'Prim', sum(weight)
+from onager_mst_prim((select src, dst, weight from weighted_edges));
+```

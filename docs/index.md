@@ -68,7 +68,7 @@ Onager currently includes the following graph algorithms:
 | Subgraphs       | Ego graph, k-hop neighbors, and induced subgraph                                                                                      |
 | Generators      | Erdős-Rényi, Barabási-Albert, and Watts-Strogatz                                                                                      |
 | Approximation   | Max clique, independent set, vertex cover, and TSP                                                                                    |
-| MST             | Kruskal's algorithm                                                                                                                   |
+| MST             | Kruskal's and Prim's algorithms                                                                                                       |
 | Parallel        | PageRank, BFS, shortest paths, connected components, clustering, and triangle counting                                                |
 
 ## Get Started
