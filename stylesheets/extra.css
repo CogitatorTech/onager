@@ -1,0 +1,27 @@
+/* Custom styles for Onager documentation */
+
+/* Improve code block readability */
+.highlight .hll {
+  background-color: var(--md-code-hl-color);
+}
+
+/* Better spacing for admonitions */
+.admonition {
+  margin: 1.5625em 0;
+}
+
+/* Improve table styling */
+table {
+  display: table;
+  width: 100%;
+}
+
+/* Better link styling */
+a:hover {
+  text-decoration: underline;
+}
+
+/* Code annotation improvements */
+.md-annotation__index {
+  cursor: pointer;
+}
