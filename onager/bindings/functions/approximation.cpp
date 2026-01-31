@@ -203,25 +203,25 @@ void RegisterApproximationFunctions(ExtensionLoader &loader) {
   TableFunction max_clique("onager_apx_max_clique", {LogicalType::TABLE}, nullptr, MaxCliqueBind, MaxCliqueInitGlobal);
   max_clique.in_out_function = MaxCliqueInOut;
   max_clique.in_out_function_final = MaxCliqueFinal;
-  max_clique.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(max_clique);
   loader.RegisterFunction(max_clique);
 
   TableFunction independent_set("onager_apx_independent_set", {LogicalType::TABLE}, nullptr, IndependentSetBind, IndependentSetInitGlobal);
   independent_set.in_out_function = IndependentSetInOut;
   independent_set.in_out_function_final = IndependentSetFinal;
-  independent_set.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(independent_set);
   loader.RegisterFunction(independent_set);
 
   TableFunction vertex_cover("onager_apx_vertex_cover", {LogicalType::TABLE}, nullptr, VertexCoverBind, VertexCoverInitGlobal);
   vertex_cover.in_out_function = VertexCoverInOut;
   vertex_cover.in_out_function_final = VertexCoverFinal;
-  vertex_cover.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(vertex_cover);
   loader.RegisterFunction(vertex_cover);
 
   TableFunction tsp("onager_apx_tsp", {LogicalType::TABLE}, nullptr, TspBind, TspInitGlobal);
   tsp.in_out_function = TspInOut;
   tsp.in_out_function_final = TspFinal;
-  tsp.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(tsp);
   loader.RegisterFunction(tsp);
 }
 

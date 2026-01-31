@@ -313,39 +313,39 @@ void RegisterParallelFunctions(ExtensionLoader &loader) {
   par_pr.named_parameters["damping"] = LogicalType::DOUBLE;
   par_pr.named_parameters["iterations"] = LogicalType::BIGINT;
   par_pr.named_parameters["directed"] = LogicalType::BOOLEAN;
-  par_pr.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(par_pr);
   loader.RegisterFunction(par_pr);
 
   TableFunction par_bfs("onager_par_bfs", {LogicalType::TABLE}, nullptr, ParallelBfsBind, ParallelBfsInitGlobal);
   par_bfs.in_out_function = ParallelBfsInOut;
   par_bfs.in_out_function_final = ParallelBfsFinal;
   par_bfs.named_parameters["source"] = LogicalType::BIGINT;
-  par_bfs.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(par_bfs);
   loader.RegisterFunction(par_bfs);
 
   TableFunction par_paths("onager_par_shortest_paths", {LogicalType::TABLE}, nullptr, ParallelPathsBind, ParallelPathsInitGlobal);
   par_paths.in_out_function = ParallelPathsInOut;
   par_paths.in_out_function_final = ParallelPathsFinal;
   par_paths.named_parameters["source"] = LogicalType::BIGINT;
-  par_paths.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(par_paths);
   loader.RegisterFunction(par_paths);
 
   TableFunction par_components("onager_par_components", {LogicalType::TABLE}, nullptr, ParallelComponentsBind, ParallelComponentsInitGlobal);
   par_components.in_out_function = ParallelComponentsInOut;
   par_components.in_out_function_final = ParallelComponentsFinal;
-  par_components.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(par_components);
   loader.RegisterFunction(par_components);
 
   TableFunction par_clustering("onager_par_clustering", {LogicalType::TABLE}, nullptr, ParallelClusteringBind, ParallelClusteringInitGlobal);
   par_clustering.in_out_function = ParallelClusteringInOut;
   par_clustering.in_out_function_final = ParallelClusteringFinal;
-  par_clustering.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(par_clustering);
   loader.RegisterFunction(par_clustering);
 
   TableFunction par_triangles("onager_par_triangles", {LogicalType::TABLE}, nullptr, ParallelTrianglesBind, ParallelTrianglesInitGlobal);
   par_triangles.in_out_function = ParallelTrianglesInOut;
   par_triangles.in_out_function_final = ParallelTrianglesFinal;
-  par_triangles.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(par_triangles);
   loader.RegisterFunction(par_triangles);
 }
 

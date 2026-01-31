@@ -140,17 +140,17 @@ namespace onager {
 void RegisterGeneratorFunctions(ExtensionLoader &loader) {
   TableFunction erdos_renyi("onager_gen_erdos_renyi", {LogicalType::BIGINT, LogicalType::DOUBLE}, ErdosRenyiFunction, ErdosRenyiBind, ErdosRenyiInitGlobal);
   erdos_renyi.named_parameters["seed"] = LogicalType::BIGINT;
-  erdos_renyi.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(erdos_renyi);
   loader.RegisterFunction(erdos_renyi);
 
   TableFunction barabasi_albert("onager_gen_barabasi_albert", {LogicalType::BIGINT, LogicalType::BIGINT}, BarabasiAlbertFunction, BarabasiAlbertBind, BarabasiAlbertInitGlobal);
   barabasi_albert.named_parameters["seed"] = LogicalType::BIGINT;
-  barabasi_albert.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(barabasi_albert);
   loader.RegisterFunction(barabasi_albert);
 
   TableFunction watts_strogatz("onager_gen_watts_strogatz", {LogicalType::BIGINT, LogicalType::BIGINT, LogicalType::DOUBLE}, WattsStrogatzFunction, WattsStrogatzBind, WattsStrogatzInitGlobal);
   watts_strogatz.named_parameters["seed"] = LogicalType::BIGINT;
-  watts_strogatz.order_preservation_type = OrderPreservationType::NO_ORDER;
+  ONAGER_SET_NO_ORDER(watts_strogatz);
   loader.RegisterFunction(watts_strogatz);
 }
 
