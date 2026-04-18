@@ -85,8 +85,8 @@ static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, Table
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto ndata = FlatVector::GetData<int64_t>(output.data[0]);
-  auto rdata = FlatVector::GetData<double>(output.data[1]);
+  auto ndata = GetFlatVectorDataWritable<int64_t>(output.data[0]);
+  auto rdata = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { ndata[i] = gs.result_nodes[gs.output_idx+i]; rdata[i] = gs.result_ranks[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -136,7 +136,7 @@ static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFuncti
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto id = FlatVector::GetData<double>(output.data[1]); auto od = FlatVector::GetData<double>(output.data[2]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto id = GetFlatVectorDataWritable<double>(output.data[1]); auto od = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; id[i] = gs.result_in[gs.output_idx+i]; od[i] = gs.result_out[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -185,7 +185,7 @@ static OperatorFinalizeResultType BetweennessFinal(ExecutionContext &ctx, TableF
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centralities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -231,7 +231,7 @@ static OperatorFinalizeResultType ClosenessFinal(ExecutionContext &ctx, TableFun
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centralities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -277,7 +277,7 @@ static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunc
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centralities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -330,7 +330,7 @@ static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunction
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centralities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -382,7 +382,7 @@ static OperatorFinalizeResultType EigenvectorFinal(ExecutionContext &ctx, TableF
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centralities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -506,7 +506,7 @@ static OperatorFinalizeResultType VoteRankFinal(ExecutionContext &ctx, TableFunc
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -573,7 +573,7 @@ static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, Tabl
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centrality[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -619,7 +619,7 @@ static OperatorFinalizeResultType LaplacianFinal(ExecutionContext &ctx, TableFun
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_centrality[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;

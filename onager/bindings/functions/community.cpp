@@ -53,7 +53,7 @@ static OperatorFinalizeResultType LouvainFinal(ExecutionContext &ctx, TableFunct
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_communities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -98,7 +98,7 @@ static OperatorFinalizeResultType ComponentsFinal(ExecutionContext &ctx, TableFu
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_components[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -143,7 +143,7 @@ static OperatorFinalizeResultType LabelPropFinal(ExecutionContext &ctx, TableFun
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto l = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto l = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; l[i] = gs.result_labels[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -191,7 +191,7 @@ static OperatorFinalizeResultType GirvanNewmanFinal(ExecutionContext &ctx, Table
   idx_t rem = gs.result_ids.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_ids[gs.output_idx+i]; c[i] = gs.result_communities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_ids.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -242,7 +242,7 @@ static OperatorFinalizeResultType SpectralFinal(ExecutionContext &ctx, TableFunc
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_communities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -293,7 +293,7 @@ static OperatorFinalizeResultType InfomapFinal(ExecutionContext &ctx, TableFunct
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_communities[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;

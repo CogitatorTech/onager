@@ -81,8 +81,8 @@ static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ct
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]);
-  auto sc = FlatVector::GetData<double>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
+  auto sc = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) {
     n[i] = gs.result_nodes[gs.output_idx+i];
     sc[i] = gs.result_scores[gs.output_idx+i];

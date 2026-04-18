@@ -46,7 +46,7 @@ static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunc
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<int64_t>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -86,7 +86,7 @@ static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFuncti
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<int64_t>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -125,7 +125,7 @@ static OperatorFinalizeResultType AvgClusteringFinal(ExecutionContext &ctx, Tabl
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<double>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -169,7 +169,7 @@ static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, Tabl
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]); auto c = FlatVector::GetData<int64_t>(output.data[1]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_counts[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -209,7 +209,7 @@ static OperatorFinalizeResultType TransitivityFinal(ExecutionContext &ctx, Table
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<double>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -248,7 +248,7 @@ static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, Tabl
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<double>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -287,7 +287,7 @@ static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, Tabl
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<double>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -333,7 +333,7 @@ static OperatorFinalizeResultType DensityFinal(ExecutionContext &ctx, TableFunct
     gs.computed = true;
   }
   if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
-  FlatVector::GetData<double>(output.data[0])[0] = gs.result;
+  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
   output.SetCardinality(1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }

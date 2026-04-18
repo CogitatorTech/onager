@@ -56,7 +56,7 @@ static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunc
   idx_t rem = gs.result_src.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto s = FlatVector::GetData<int64_t>(output.data[0]); auto d = FlatVector::GetData<int64_t>(output.data[1]);
+  auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -106,7 +106,7 @@ static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunction
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -157,7 +157,7 @@ static OperatorFinalizeResultType InducedSubgraphFinal(ExecutionContext &ctx, Ta
   idx_t rem = gs.result_src.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto s = FlatVector::GetData<int64_t>(output.data[0]); auto d = FlatVector::GetData<int64_t>(output.data[1]);
+  auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;

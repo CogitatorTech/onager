@@ -49,7 +49,7 @@ static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFun
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -93,7 +93,7 @@ static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, Tab
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -137,7 +137,7 @@ static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableF
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n = FlatVector::GetData<int64_t>(output.data[0]);
+  auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -187,7 +187,7 @@ static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionI
   idx_t rem = gs.result_tour.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto ord = FlatVector::GetData<int64_t>(output.data[0]); auto n = FlatVector::GetData<int64_t>(output.data[1]);
+  auto ord = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { ord[i] = static_cast<int64_t>(gs.output_idx + i); n[i] = gs.result_tour[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_tour.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;

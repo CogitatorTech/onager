@@ -45,7 +45,7 @@ static void ErdosRenyiFunction(ClientContext &ctx, TableFunctionInput &data, Dat
   idx_t rem = gs.result_src.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto s = FlatVector::GetData<int64_t>(output.data[0]); auto d = FlatVector::GetData<int64_t>(output.data[1]);
+  auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
 }
@@ -85,7 +85,7 @@ static void BarabasiAlbertFunction(ClientContext &ctx, TableFunctionInput &data,
   idx_t rem = gs.result_src.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto s = FlatVector::GetData<int64_t>(output.data[0]); auto d = FlatVector::GetData<int64_t>(output.data[1]);
+  auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
 }
@@ -126,7 +126,7 @@ static void WattsStrogatzFunction(ClientContext &ctx, TableFunctionInput &data, 
   idx_t rem = gs.result_src.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto s = FlatVector::GetData<int64_t>(output.data[0]); auto d = FlatVector::GetData<int64_t>(output.data[1]);
+  auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
 }
