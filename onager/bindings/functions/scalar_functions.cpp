@@ -40,7 +40,7 @@ static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &res
   args.data[1].ToUnifiedFormat(count, node_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
 
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
@@ -61,7 +61,7 @@ static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &re
   args.data[1].ToUnifiedFormat(count, node_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
 
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
@@ -155,7 +155,7 @@ static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result
   args.data[0].ToUnifiedFormat(count, name_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     int64_t node_count = ::onager::onager_node_count(name.GetString().c_str());
@@ -173,7 +173,7 @@ static void GetEdgeCount(DataChunk &args, ExpressionState &state, Vector &result
   args.data[0].ToUnifiedFormat(count, name_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     int64_t edge_count = ::onager::onager_edge_count(name.GetString().c_str());

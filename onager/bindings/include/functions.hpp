@@ -62,6 +62,17 @@ inline T *GetConstantVectorDataWritable(Vector &vector) {
 }
 
 /**
+ * @brief Returns a writable reference to a flat vector's validity mask across DuckDB versions.
+ *
+ * On v1.5.2, `FlatVector::Validity(Vector &)` already returns `ValidityMask &`.
+ * On newer DuckDB it returns `const ValidityMask &` and `ValidityMutable` must be
+ * used. Casting away const here keeps a single call site that compiles on both.
+ */
+inline ValidityMask &GetFlatVectorValidityWritable(Vector &vector) {
+  return const_cast<ValidityMask &>(FlatVector::Validity(vector));
+}
+
+/**
  * @brief Retrieves the last error message from the Onager Rust core.
  */
 inline std::string GetOnagerError() {
