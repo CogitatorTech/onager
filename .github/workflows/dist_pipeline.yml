@@ -1,6 +1,9 @@
 name: Build Extension Binaries
+
 on:
   workflow_dispatch:
+  schedule: # Run every day at midnight (UTC)
+    - cron: '0 0 * * *'
   pull_request:
     branches:
       - main
@@ -8,6 +11,8 @@ on:
       - '**.md'
       - 'docs/**'
   push:
+    branches:
+      - develop
     tags:
       - 'v*'
 

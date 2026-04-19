@@ -52,7 +52,7 @@ static OperatorFinalizeResultType JaccardFinal(ExecutionContext &ctx, TableFunct
   idx_t rem = gs.result_n1.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n1 = FlatVector::GetData<int64_t>(output.data[0]); auto n2 = FlatVector::GetData<int64_t>(output.data[1]); auto sc = FlatVector::GetData<double>(output.data[2]);
+  auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -99,7 +99,7 @@ static OperatorFinalizeResultType AdamicAdarFinal(ExecutionContext &ctx, TableFu
   idx_t rem = gs.result_n1.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n1 = FlatVector::GetData<int64_t>(output.data[0]); auto n2 = FlatVector::GetData<int64_t>(output.data[1]); auto sc = FlatVector::GetData<double>(output.data[2]);
+  auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -146,7 +146,7 @@ static OperatorFinalizeResultType PrefAttachFinal(ExecutionContext &ctx, TableFu
   idx_t rem = gs.result_n1.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n1 = FlatVector::GetData<int64_t>(output.data[0]); auto n2 = FlatVector::GetData<int64_t>(output.data[1]); auto sc = FlatVector::GetData<double>(output.data[2]);
+  auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -193,7 +193,7 @@ static OperatorFinalizeResultType ResourceAllocFinal(ExecutionContext &ctx, Tabl
   idx_t rem = gs.result_n1.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n1 = FlatVector::GetData<int64_t>(output.data[0]); auto n2 = FlatVector::GetData<int64_t>(output.data[1]); auto sc = FlatVector::GetData<double>(output.data[2]);
+  auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
@@ -239,7 +239,7 @@ static OperatorFinalizeResultType CommonNeighborsFinal(ExecutionContext &ctx, Ta
   idx_t rem = gs.result_n1.size() - gs.output_idx;
   if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
-  auto n1 = FlatVector::GetData<int64_t>(output.data[0]); auto n2 = FlatVector::GetData<int64_t>(output.data[1]); auto cnt = FlatVector::GetData<int64_t>(output.data[2]);
+  auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto cnt = GetFlatVectorDataWritable<int64_t>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; cnt[i] = gs.result_counts[gs.output_idx+i]; }
   gs.output_idx += to; output.SetCardinality(to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;

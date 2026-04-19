@@ -17,7 +17,7 @@ using namespace onager;
 static void GetVersion(DataChunk &args, ExpressionState &state, Vector &result) {
   char *version_c = ::onager::onager_get_version();
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
-  ConstantVector::GetData<string_t>(result)[0] = StringVector::AddString(result, version_c);
+  GetConstantVectorDataWritable<string_t>(result)[0] = StringVector::AddString(result, version_c);
   ConstantVector::SetNull(result, false);
   ::onager::onager_free(version_c);
 }
@@ -29,7 +29,7 @@ static void GetLastError(DataChunk &args, ExpressionState &state, Vector &result
     ConstantVector::SetNull(result, true);
     return;
   }
-  ConstantVector::GetData<string_t>(result)[0] = StringVector::AddString(result, err);
+  GetConstantVectorDataWritable<string_t>(result)[0] = StringVector::AddString(result, err);
   ConstantVector::SetNull(result, false);
 }
 
@@ -39,8 +39,8 @@ static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &res
   args.data[0].ToUnifiedFormat(count, name_data);
   args.data[1].ToUnifiedFormat(count, node_data);
 
-  auto result_data = FlatVector::GetData<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto result_data = GetFlatVectorDataWritable<int64_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
 
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
@@ -60,8 +60,8 @@ static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &re
   args.data[0].ToUnifiedFormat(count, name_data);
   args.data[1].ToUnifiedFormat(count, node_data);
 
-  auto result_data = FlatVector::GetData<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto result_data = GetFlatVectorDataWritable<int64_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
 
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
@@ -85,7 +85,7 @@ static void CreateGraph(DataChunk &args, ExpressionState &state, Vector &result)
   args.data[0].ToUnifiedFormat(count, name_data);
   args.data[1].ToUnifiedFormat(count, dir_data);
 
-  auto result_data = FlatVector::GetData<int32_t>(result);
+  auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     auto dir = ((bool*)dir_data.data)[dir_data.sel->get_index(i)];
@@ -98,7 +98,7 @@ static void DropGraph(DataChunk &args, ExpressionState &state, Vector &result) {
   UnifiedVectorFormat name_data;
   args.data[0].ToUnifiedFormat(count, name_data);
 
-  auto result_data = FlatVector::GetData<int32_t>(result);
+  auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     result_data[i] = ::onager::onager_drop_graph(name.GetString().c_str());
@@ -111,7 +111,7 @@ static void AddNode(DataChunk &args, ExpressionState &state, Vector &result) {
   args.data[0].ToUnifiedFormat(count, name_data);
   args.data[1].ToUnifiedFormat(count, node_data);
 
-  auto result_data = FlatVector::GetData<int32_t>(result);
+  auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
@@ -127,7 +127,7 @@ static void AddEdge(DataChunk &args, ExpressionState &state, Vector &result) {
   args.data[2].ToUnifiedFormat(count, dst_data);
   args.data[3].ToUnifiedFormat(count, w_data);
 
-  auto result_data = FlatVector::GetData<int32_t>(result);
+  auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     auto src = ((int64_t*)src_data.data)[src_data.sel->get_index(i)];
@@ -144,7 +144,7 @@ static void ListGraphs(DataChunk &args, ExpressionState &state, Vector &result) 
     ConstantVector::SetNull(result, true);
     return;
   }
-  ConstantVector::GetData<string_t>(result)[0] = StringVector::AddString(result, json);
+  GetConstantVectorDataWritable<string_t>(result)[0] = StringVector::AddString(result, json);
   ConstantVector::SetNull(result, false);
   ::onager::onager_free(json);
 }
@@ -154,8 +154,8 @@ static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result
   UnifiedVectorFormat name_data;
   args.data[0].ToUnifiedFormat(count, name_data);
 
-  auto result_data = FlatVector::GetData<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto result_data = GetFlatVectorDataWritable<int64_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     int64_t node_count = ::onager::onager_node_count(name.GetString().c_str());
@@ -172,8 +172,8 @@ static void GetEdgeCount(DataChunk &args, ExpressionState &state, Vector &result
   UnifiedVectorFormat name_data;
   args.data[0].ToUnifiedFormat(count, name_data);
 
-  auto result_data = FlatVector::GetData<int64_t>(result);
-  auto &result_validity = FlatVector::Validity(result);
+  auto result_data = GetFlatVectorDataWritable<int64_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
     auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
     int64_t edge_count = ::onager::onager_edge_count(name.GetString().c_str());
