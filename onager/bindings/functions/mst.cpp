@@ -35,9 +35,7 @@ static unique_ptr<GlobalTableFunctionState> KruskalMstInitGlobal(ClientContext &
 static OperatorResultType KruskalMstInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<KruskalMstGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto w = FlatVector::GetData<double>(input.data[2]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }
+  AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_mst_kruskal");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KruskalMstFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -84,9 +82,7 @@ static unique_ptr<GlobalTableFunctionState> PrimMstInitGlobal(ClientContext &ctx
 static OperatorResultType PrimMstInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<PrimMstGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto w = FlatVector::GetData<double>(input.data[2]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }
+  AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_mst_prim");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType PrimMstFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {

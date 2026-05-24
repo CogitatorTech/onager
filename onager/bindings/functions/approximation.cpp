@@ -31,8 +31,7 @@ static unique_ptr<GlobalTableFunctionState> MaxCliqueInitGlobal(ClientContext &c
 static OperatorResultType MaxCliqueInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<MaxCliqueGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_apx_max_clique");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -75,8 +74,7 @@ static unique_ptr<GlobalTableFunctionState> IndependentSetInitGlobal(ClientConte
 static OperatorResultType IndependentSetInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<IndependentSetGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_apx_independent_set");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -119,8 +117,7 @@ static unique_ptr<GlobalTableFunctionState> VertexCoverInitGlobal(ClientContext 
 static OperatorResultType VertexCoverInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<VertexCoverGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_apx_vertex_cover");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -166,11 +163,7 @@ static unique_ptr<GlobalTableFunctionState> TspInitGlobal(ClientContext &ctx, Ta
 static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<TspGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto w = FlatVector::GetData<double>(input.data[2]);
-  for (idx_t i = 0; i < input.size(); i++) {
-    gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]);
-  }
+  AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_apx_tsp");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {

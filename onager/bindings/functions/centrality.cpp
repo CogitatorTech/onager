@@ -57,12 +57,7 @@ static OperatorResultType PageRankInOut(ExecutionContext &context, TableFunction
                                          DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<PageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto src = FlatVector::GetData<int64_t>(input.data[0]);
-  auto dst = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) {
-    gs.src_nodes.push_back(src[i]);
-    gs.dst_nodes.push_back(dst[i]);
-  }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_pagerank");
   output.SetCardinality(0);
   return OperatorResultType::NEED_MORE_INPUT;
 }
@@ -118,8 +113,7 @@ static unique_ptr<GlobalTableFunctionState> DegreeInitGlobal(ClientContext &ctx,
 static OperatorResultType DegreeInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DegreeGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_degree");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -167,8 +161,7 @@ static unique_ptr<GlobalTableFunctionState> BetweennessInitGlobal(ClientContext 
 static OperatorResultType BetweennessInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BetweennessGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_betweenness");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType BetweennessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -213,8 +206,7 @@ static unique_ptr<GlobalTableFunctionState> ClosenessInitGlobal(ClientContext &c
 static OperatorResultType ClosenessInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ClosenessGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_closeness");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ClosenessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -259,8 +251,7 @@ static unique_ptr<GlobalTableFunctionState> HarmonicInitGlobal(ClientContext &ct
 static OperatorResultType HarmonicInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<HarmonicGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_harmonic");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -312,8 +303,7 @@ static unique_ptr<GlobalTableFunctionState> KatzInitGlobal(ClientContext &ctx, T
 static OperatorResultType KatzInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<KatzGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_katz");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -364,8 +354,7 @@ static unique_ptr<GlobalTableFunctionState> EigenvectorInitGlobal(ClientContext 
 static OperatorResultType EigenvectorInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<EigenvectorGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_eigenvector");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType EigenvectorFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -488,8 +477,7 @@ static unique_ptr<GlobalTableFunctionState> VoteRankInitGlobal(ClientContext &ct
 static OperatorResultType VoteRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<VoteRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_voterank");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType VoteRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -555,8 +543,7 @@ static unique_ptr<GlobalTableFunctionState> LocalReachingInitGlobal(ClientContex
 static OperatorResultType LocalReachingInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<LocalReachingGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_local_reaching");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -601,8 +588,7 @@ static unique_ptr<GlobalTableFunctionState> LaplacianInitGlobal(ClientContext &c
 static OperatorResultType LaplacianInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<LaplacianGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_laplacian");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LaplacianFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {

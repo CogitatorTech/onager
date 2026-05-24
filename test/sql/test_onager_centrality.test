@@ -19,6 +19,13 @@ select count(*) > 0 from onager_ctr_pagerank((select src, dst from test_edges))
 ----
 1
 
+# Test PageRank with filtered input (selection vector verification)
+query I
+select count(*) from onager_ctr_pagerank((select src, dst from test_edges where src > 1)) where node_id = 4
+----
+1
+
+
 # Test Degree Centrality
 query I
 select count(*) > 0 from onager_ctr_degree((select src, dst from test_edges))

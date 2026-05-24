@@ -36,8 +36,7 @@ static unique_ptr<GlobalTableFunctionState> DijkstraInitGlobal(ClientContext &ct
 static OperatorResultType DijkstraInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DijkstraGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dijkstra");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -83,8 +82,7 @@ static unique_ptr<GlobalTableFunctionState> BfsInitGlobal(ClientContext &ctx, Ta
 static OperatorResultType BfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_bfs");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType BfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -130,8 +128,7 @@ static unique_ptr<GlobalTableFunctionState> DfsInitGlobal(ClientContext &ctx, Ta
 static OperatorResultType DfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dfs");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -179,9 +176,7 @@ static unique_ptr<GlobalTableFunctionState> BellmanFordInitGlobal(ClientContext 
 static OperatorResultType BellmanFordInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BellmanFordGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto w = FlatVector::GetData<double>(input.data[2]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }
+  AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_pth_bellman_ford");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType BellmanFordFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -227,9 +222,7 @@ static unique_ptr<GlobalTableFunctionState> FloydWarshallInitGlobal(ClientContex
 static OperatorResultType FloydWarshallInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<FloydWarshallGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto w = FlatVector::GetData<double>(input.data[2]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); gs.weights.push_back(w[i]); }
+  AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_pth_floyd_warshall");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType FloydWarshallFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {

@@ -29,6 +29,9 @@ would like to work on or if it has already been resolved.
 
 ### Development Workflow
 
+> [!IMPORTANT]
+> If you're using an AI-assisted coding tool like Claude Code or Codex, make sure the AI follows the instructions in the [AGENTS.md](AGENTS.md) file.
+
 #### Code Style
 
 - Use the `make rust-format` command to format the code.

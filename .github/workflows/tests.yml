@@ -21,12 +21,12 @@ concurrency:
 
 jobs:
   rust-tests:
-    name: Rust Tests and Code Coverage
+    name: Rust tests and code coverage
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: always
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -45,31 +45,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Install System Dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc curl pkg-config libssl-dev make liblzma-dev
           cargo install cargo-tarpaulin --locked || true
 
-      - name: Run Rust Tests
+      - name: Run Rust tests
         run: |
           make rust-test
 
-      - name: Generate Coverage (using Tarpaulin)
+      - name: Generate coverage (using Tarpaulin)
         run: |
           make rust-coverage
 
-      - name: Upload Coverage Reports to Codecov
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: false
 
   sqllogictest:
-    name: Sqllogictest Tests
+    name: Sqllogictest tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -77,12 +77,12 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Install System Dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc curl pkg-config libssl-dev make liblzma-dev
 
-      - name: Build Extension and Run SQL Tests
+      - name: Build extension and run SQL tests
         run: |
           make release
           make test

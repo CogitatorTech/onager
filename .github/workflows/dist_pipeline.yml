@@ -34,16 +34,16 @@ jobs:
       exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
 
   duckdb-stable-build:
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.2
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.3
     with:
-      duckdb_version: v1.5.2
-      ci_tools_version: v1.5.2
+      duckdb_version: v1.5.3
+      ci_tools_version: v1.5.3
       extension_name: onager
       enable_rust: true
       exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
 
   create-release-draft:
-    name: Create Draft Release with Built Binaries
+    name: Create draft release with built binaries
     needs:
       - duckdb-stable-build
       - duckdb-next-stable-build
@@ -52,18 +52,18 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download All Build Artifacts
+      - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: onager-*
           path: dist
           merge-multiple: true
-      - name: List Artifacts
+      - name: List artifacts
         run: |
           echo "Downloaded artifacts to: $(pwd)/dist"
           ls -la dist || true
           find dist -type f -maxdepth 2 -print || true
-      - name: Create Draft Release and Upload Assets
+      - name: Create draft release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           draft: true
