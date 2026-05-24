@@ -17,7 +17,7 @@ jobs:
   deploy-docs:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -25,12 +25,12 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get upgrade -y
           sudo apt-get install -y gcc curl pkg-config libssl-dev make
 
-      - name: Generate Documentation
+      - name: Generate documentation
         run: |
           pip install uv && uv sync --extra dev
           source .venv/bin/activate && make docs
