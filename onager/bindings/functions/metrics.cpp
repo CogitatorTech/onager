@@ -11,6 +11,24 @@ namespace duckdb {
 
 using namespace onager;
 
+static void AppendInt64Edges(DataChunk &input, std::vector<int64_t> &src_nodes, std::vector<int64_t> &dst_nodes, const char *function_name) {
+  UnifiedVectorFormat src_data, dst_data;
+  input.data[0].ToUnifiedFormat(input.size(), src_data);
+  input.data[1].ToUnifiedFormat(input.size(), dst_data);
+
+  auto src = UnifiedVectorFormat::GetData<int64_t>(src_data);
+  auto dst = UnifiedVectorFormat::GetData<int64_t>(dst_data);
+  for (idx_t i = 0; i < input.size(); i++) {
+    auto src_idx = src_data.sel->get_index(i);
+    auto dst_idx = dst_data.sel->get_index(i);
+    if (!src_data.validity.RowIsValid(src_idx) || !dst_data.validity.RowIsValid(dst_idx)) {
+      throw InvalidInputException(std::string(function_name) + " does not accept NULL edge endpoints");
+    }
+    src_nodes.push_back(src[src_idx]);
+    dst_nodes.push_back(dst[dst_idx]);
+  }
+}
+
 // =============================================================================
 // Diameter
 // =============================================================================
@@ -32,8 +50,7 @@ static unique_ptr<GlobalTableFunctionState> DiameterInitGlobal(ClientContext &ct
 static OperatorResultType DiameterInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DiameterGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_diameter");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -72,8 +89,7 @@ static unique_ptr<GlobalTableFunctionState> RadiusInitGlobal(ClientContext &ctx,
 static OperatorResultType RadiusInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<RadiusGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_radius");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -112,8 +128,7 @@ static unique_ptr<GlobalTableFunctionState> AvgClusteringInitGlobal(ClientContex
 static OperatorResultType AvgClusteringInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgClusteringGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_avg_clustering");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AvgClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -151,8 +166,7 @@ static unique_ptr<GlobalTableFunctionState> TriangleCountInitGlobal(ClientContex
 static OperatorResultType TriangleCountInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<TriangleCountGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_triangles");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -196,8 +210,7 @@ static unique_ptr<GlobalTableFunctionState> TransitivityInitGlobal(ClientContext
 static OperatorResultType TransitivityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<TransitivityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_transitivity");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TransitivityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -235,8 +248,7 @@ static unique_ptr<GlobalTableFunctionState> AvgPathLengthInitGlobal(ClientContex
 static OperatorResultType AvgPathLengthInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgPathLengthGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_avg_path_length");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -274,8 +286,7 @@ static unique_ptr<GlobalTableFunctionState> AssortativityInitGlobal(ClientContex
 static OperatorResultType AssortativityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<AssortativityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_assortativity");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -318,8 +329,7 @@ static unique_ptr<GlobalTableFunctionState> DensityInitGlobal(ClientContext &ctx
 static OperatorResultType DensityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DensityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_density");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DensityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
