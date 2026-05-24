@@ -28,13 +28,13 @@ select * from onager_mtr_radius((select src, dst from test_edges))
 
 # Test Average Clustering
 query R
-select round(avg_clustering::numeric, 2) from onager_mtr_avg_clustering((select src, dst from test_edges))
+select round(min(avg_clustering)::numeric, 2) from onager_mtr_avg_clustering((select src, dst from test_edges))
 ----
 0.58
 
 # Test Transitivity
 query R
-select round(transitivity::numeric, 2) from onager_mtr_transitivity((select src, dst from test_edges))
+select round(min(transitivity)::numeric, 2) from onager_mtr_transitivity((select src, dst from test_edges))
 ----
 0.60
 
@@ -46,19 +46,19 @@ select count(*) from onager_mtr_triangles((select src, dst from test_edges)) whe
 
 # Test Assortativity
 query I
-select assortativity is not null from onager_mtr_assortativity((select src, dst from test_edges))
+select count(assortativity) from onager_mtr_assortativity((select src, dst from test_edges))
 ----
-true
+1
 
 # Test Average Path Length
 query I
-select avg_path_length > 0 from onager_mtr_avg_path_length((select src, dst from test_edges))
+select min(avg_path_length) > 0 from onager_mtr_avg_path_length((select src, dst from test_edges))
 ----
 true
 
 # Test Graph Density (undirected)
 query I
-select density > 0 from onager_mtr_density((select src, dst from test_edges))
+select min(density) > 0 from onager_mtr_density((select src, dst from test_edges))
 ----
 true
 
