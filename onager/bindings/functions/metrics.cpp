@@ -11,23 +11,6 @@ namespace duckdb {
 
 using namespace onager;
 
-static void AppendInt64Edges(DataChunk &input, std::vector<int64_t> &src_nodes, std::vector<int64_t> &dst_nodes, const char *function_name) {
-  UnifiedVectorFormat src_data, dst_data;
-  input.data[0].ToUnifiedFormat(input.size(), src_data);
-  input.data[1].ToUnifiedFormat(input.size(), dst_data);
-
-  auto src = UnifiedVectorFormat::GetData<int64_t>(src_data);
-  auto dst = UnifiedVectorFormat::GetData<int64_t>(dst_data);
-  for (idx_t i = 0; i < input.size(); i++) {
-    auto src_idx = src_data.sel->get_index(i);
-    auto dst_idx = dst_data.sel->get_index(i);
-    if (!src_data.validity.RowIsValid(src_idx) || !dst_data.validity.RowIsValid(dst_idx)) {
-      throw InvalidInputException(std::string(function_name) + " does not accept NULL edge endpoints");
-    }
-    src_nodes.push_back(src[src_idx]);
-    dst_nodes.push_back(dst[dst_idx]);
-  }
-}
 
 // =============================================================================
 // Diameter

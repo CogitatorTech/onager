@@ -99,3 +99,5 @@ site/
 bug*.md
 .claude/
 .codex
+.antigravitycli/
+.agents/

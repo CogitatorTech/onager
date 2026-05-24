@@ -44,8 +44,7 @@ static unique_ptr<GlobalTableFunctionState> ParallelPageRankInitGlobal(ClientCon
 static OperatorResultType ParallelPageRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_pagerank");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -91,8 +90,7 @@ static unique_ptr<GlobalTableFunctionState> ParallelBfsInitGlobal(ClientContext 
 static OperatorResultType ParallelBfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelBfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_bfs");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -140,8 +138,7 @@ static unique_ptr<GlobalTableFunctionState> ParallelPathsInitGlobal(ClientContex
 static OperatorResultType ParallelPathsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelPathsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_shortest_paths");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -185,8 +182,7 @@ static unique_ptr<GlobalTableFunctionState> ParallelComponentsInitGlobal(ClientC
 static OperatorResultType ParallelComponentsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelComponentsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_components");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -231,8 +227,7 @@ static unique_ptr<GlobalTableFunctionState> ParallelClusteringInitGlobal(ClientC
 static OperatorResultType ParallelClusteringInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelClusteringGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_clustering");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -276,8 +271,7 @@ static unique_ptr<GlobalTableFunctionState> ParallelTrianglesInitGlobal(ClientCo
 static OperatorResultType ParallelTrianglesInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelTrianglesGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_triangles");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {

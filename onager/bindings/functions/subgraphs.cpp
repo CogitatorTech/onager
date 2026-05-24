@@ -38,8 +38,7 @@ static unique_ptr<GlobalTableFunctionState> EgoGraphInitGlobal(ClientContext &ct
 static OperatorResultType EgoGraphInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<EgoGraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_sub_ego_graph");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -88,8 +87,7 @@ static unique_ptr<GlobalTableFunctionState> KHopInitGlobal(ClientContext &ctx, T
 static OperatorResultType KHopInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<KHopGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]); auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  for (idx_t i = 0; i < input.size(); i++) { gs.src_nodes.push_back(s[i]); gs.dst_nodes.push_back(d[i]); }
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_sub_k_hop");
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -133,13 +131,25 @@ static unique_ptr<GlobalTableFunctionState> InducedSubgraphInitGlobal(ClientCont
 static OperatorResultType InducedSubgraphInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]);
-  auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto f = FlatVector::GetData<int64_t>(input.data[2]);
+  UnifiedVectorFormat s_data, d_data, f_data;
+  input.data[0].ToUnifiedFormat(input.size(), s_data);
+  input.data[1].ToUnifiedFormat(input.size(), d_data);
+  input.data[2].ToUnifiedFormat(input.size(), f_data);
+  auto s = UnifiedVectorFormat::GetData<int64_t>(s_data);
+  auto d = UnifiedVectorFormat::GetData<int64_t>(d_data);
+  auto f = UnifiedVectorFormat::GetData<int64_t>(f_data);
   for (idx_t i = 0; i < input.size(); i++) {
-    gs.src_nodes.push_back(s[i]);
-    gs.dst_nodes.push_back(d[i]);
-    gs.filter_nodes.push_back(f[i]);
+    auto s_idx = s_data.sel->get_index(i);
+    auto d_idx = d_data.sel->get_index(i);
+    auto f_idx = f_data.sel->get_index(i);
+    if (!s_data.validity.RowIsValid(s_idx) || !d_data.validity.RowIsValid(d_idx)) {
+      throw InvalidInputException("onager_sub_induced does not accept NULL edge endpoints");
+    }
+    gs.src_nodes.push_back(s[s_idx]);
+    gs.dst_nodes.push_back(d[d_idx]);
+    if (f_data.validity.RowIsValid(f_idx)) {
+      gs.filter_nodes.push_back(f[f_idx]);
+    }
   }
   output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
 }

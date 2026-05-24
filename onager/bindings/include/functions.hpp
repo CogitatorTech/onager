@@ -96,6 +96,57 @@ inline void CheckInt64Input(TableFunctionBindInput &input, const std::string &na
   }
 }
 
+/**
+ * @brief Appends edge endpoints safely from an unweighted edge list chunk.
+ */
+inline void AppendInt64Edges(DataChunk &input, std::vector<int64_t> &src_nodes, std::vector<int64_t> &dst_nodes, const char *function_name) {
+  UnifiedVectorFormat src_data, dst_data;
+  input.data[0].ToUnifiedFormat(input.size(), src_data);
+  input.data[1].ToUnifiedFormat(input.size(), dst_data);
+
+  auto src = UnifiedVectorFormat::GetData<int64_t>(src_data);
+  auto dst = UnifiedVectorFormat::GetData<int64_t>(dst_data);
+  for (idx_t i = 0; i < input.size(); i++) {
+    auto src_idx = src_data.sel->get_index(i);
+    auto dst_idx = dst_data.sel->get_index(i);
+    if (!src_data.validity.RowIsValid(src_idx) || !dst_data.validity.RowIsValid(dst_idx)) {
+      throw InvalidInputException(std::string(function_name) + " does not accept NULL edge endpoints");
+    }
+    src_nodes.push_back(src[src_idx]);
+    dst_nodes.push_back(dst[dst_idx]);
+  }
+}
+
+/**
+ * @brief Appends weighted edge endpoints and weights safely from a weighted edge list chunk.
+ */
+inline void AppendWeightedEdges(DataChunk &input, std::vector<int64_t> &src_nodes, std::vector<int64_t> &dst_nodes, std::vector<double> &weights, const char *function_name) {
+  UnifiedVectorFormat src_data, dst_data, w_data;
+  input.data[0].ToUnifiedFormat(input.size(), src_data);
+  input.data[1].ToUnifiedFormat(input.size(), dst_data);
+  input.data[2].ToUnifiedFormat(input.size(), w_data);
+
+  auto src = UnifiedVectorFormat::GetData<int64_t>(src_data);
+  auto dst = UnifiedVectorFormat::GetData<int64_t>(dst_data);
+  auto w = UnifiedVectorFormat::GetData<double>(w_data);
+  for (idx_t i = 0; i < input.size(); i++) {
+    auto src_idx = src_data.sel->get_index(i);
+    auto dst_idx = dst_data.sel->get_index(i);
+    auto w_idx = w_data.sel->get_index(i);
+    if (!src_data.validity.RowIsValid(src_idx) || !dst_data.validity.RowIsValid(dst_idx)) {
+      throw InvalidInputException(std::string(function_name) + " does not accept NULL edge endpoints");
+    }
+    src_nodes.push_back(src[src_idx]);
+    dst_nodes.push_back(dst[dst_idx]);
+    if (w_data.validity.RowIsValid(w_idx)) {
+      weights.push_back(w[w_idx]);
+    } else {
+      weights.push_back(0.0);
+    }
+  }
+}
+
+
 // Forward declarations for modular function registration
 void RegisterScalarFunctions(ExtensionLoader &loader);
 void RegisterCentralityFunctions(ExtensionLoader &loader);

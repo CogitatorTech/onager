@@ -46,15 +46,41 @@ static unique_ptr<GlobalTableFunctionState> PersonalizedPageRankInitGlobal(Clien
 static OperatorResultType PersonalizedPageRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<PersonalizedPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  auto s = FlatVector::GetData<int64_t>(input.data[0]);
-  auto d = FlatVector::GetData<int64_t>(input.data[1]);
-  auto pn = FlatVector::GetData<int64_t>(input.data[2]);
-  auto pw = FlatVector::GetData<double>(input.data[3]);
+  UnifiedVectorFormat s_data, d_data, pn_data, pw_data;
+  input.data[0].ToUnifiedFormat(input.size(), s_data);
+  input.data[1].ToUnifiedFormat(input.size(), d_data);
+  input.data[2].ToUnifiedFormat(input.size(), pn_data);
+  input.data[3].ToUnifiedFormat(input.size(), pw_data);
+
+  auto s = UnifiedVectorFormat::GetData<int64_t>(s_data);
+  auto d = UnifiedVectorFormat::GetData<int64_t>(d_data);
+  auto pn = UnifiedVectorFormat::GetData<int64_t>(pn_data);
+  auto pw = UnifiedVectorFormat::GetData<double>(pw_data);
+
   for (idx_t i = 0; i < input.size(); i++) {
-    gs.src_nodes.push_back(s[i]);
-    gs.dst_nodes.push_back(d[i]);
-    gs.pers_nodes.push_back(pn[i]);
-    gs.pers_weights.push_back(pw[i]);
+    auto s_idx = s_data.sel->get_index(i);
+    auto d_idx = d_data.sel->get_index(i);
+    auto pn_idx = pn_data.sel->get_index(i);
+    auto pw_idx = pw_data.sel->get_index(i);
+
+    if (!s_data.validity.RowIsValid(s_idx) || !d_data.validity.RowIsValid(d_idx)) {
+      throw InvalidInputException("onager_ctr_personalized_pagerank does not accept NULL edge endpoints");
+    }
+
+    gs.src_nodes.push_back(s[s_idx]);
+    gs.dst_nodes.push_back(d[d_idx]);
+
+    if (pn_data.validity.RowIsValid(pn_idx)) {
+      gs.pers_nodes.push_back(pn[pn_idx]);
+    } else {
+      gs.pers_nodes.push_back(0);
+    }
+
+    if (pw_data.validity.RowIsValid(pw_idx)) {
+      gs.pers_weights.push_back(pw[pw_idx]);
+    } else {
+      gs.pers_weights.push_back(0.0);
+    }
   }
   output.SetCardinality(0);
   return OperatorResultType::NEED_MORE_INPUT;
