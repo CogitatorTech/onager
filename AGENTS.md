@@ -57,7 +57,7 @@ Priorities, in order:
 - `docs/examples/`, `docs/guide/`, `docs/reference/`: User-facing documentation served through MkDocs.
 - `.github/workflows/tests.yml`: Rust tests and SQL tests in CI.
 - `.github/workflows/lints.yml`: Rust formatting and clippy checks in CI.
-- `.github/workflows/dist_pipeline.yml`: cross-platform extension packaging against DuckDB `main` and `v1.5.2`.
+- `.github/workflows/dist_pipeline.yml`: cross-platform extension packaging against DuckDB `main` and `v1.5.4`.
 - `.github/workflows/docs.yml`: MkDocs site build.
 
 ## Architecture Notes
