@@ -92,7 +92,7 @@ target/
 *_output.txt
 standalone-build/
 _rust.h
-uv.lock
+#uv.lock
 tests/temp_models/
 *.cast
 site/
