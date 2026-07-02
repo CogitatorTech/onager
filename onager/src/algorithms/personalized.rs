@@ -2,7 +2,7 @@
 //!
 //! Personalized PageRank for node-specific influence computation and recommendations.
 
-use graphina::community::personalized_pagerank::personalized_page_rank;
+use graphina::centrality::personalized_pagerank::personalized_page_rank;
 use graphina::core::types::{Graph, NodeId};
 
 use crate::error::{OnagerError, Result};

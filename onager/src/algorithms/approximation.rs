@@ -4,7 +4,7 @@
 
 use graphina::approximation::clique::max_clique;
 use graphina::approximation::independent_set::maximum_independent_set;
-use graphina::approximation::tsp::traveling_salesman_problem;
+use graphina::approximation::tsp::greedy_tsp;
 use graphina::approximation::vertex_cover::min_weighted_vertex_cover;
 use graphina::core::types::{Graph, NodeId};
 
@@ -159,7 +159,7 @@ pub fn compute_vertex_cover(src: &[i64], dst: &[i64]) -> Result<VertexCoverResul
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
-    let cover = min_weighted_vertex_cover(&graph, None);
+    let cover = min_weighted_vertex_cover(&graph);
 
     let mut result_nodes = Vec::with_capacity(cover.len());
     for node_id in cover {
@@ -213,8 +213,11 @@ pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResul
         graph.add_edge(src_id, dst_id, weights[i]);
     }
 
+    let start_id = *node_set.get(&src[0]).ok_or_else(|| {
+        OnagerError::InvalidArgument(format!("Start node {} not found in graph", src[0]))
+    })?;
     let (tour_internal, cost) =
-        traveling_salesman_problem(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+        greedy_tsp(&graph, start_id).map_err(|e| OnagerError::GraphError(e.to_string()))?;
 
     let mut tour = Vec::with_capacity(tour_internal.len());
     for node_id in tour_internal {
