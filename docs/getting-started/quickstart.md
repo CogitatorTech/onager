@@ -18,7 +18,7 @@ load onager;
 
 ## 2. Create Some Edge Data
 
-Onager works with edge tables — any table with source and destination columns:
+Onager works with edge tables (tables containing source and destination columns):
 
 ```sql
 create table edges as
@@ -75,7 +75,7 @@ from onager_pth_dijkstra((select src, dst from edges), source := 1::bigint)
 order by distance;
 ```
 
-## Working with Real Data
+## Working With Real Data
 
 Import your edge data from any source DuckDB supports:
 
@@ -108,7 +108,7 @@ See the [Input Formats](../reference/input-formats.md) reference for details on 
 
 ## Next Steps
 
-- [Centrality Algorithms](../guide/centrality.md) — Find important nodes
-- [Community Detection](../guide/community.md) — Discover clusters
-- [Graph Metrics](../guide/metrics.md) — Measure network properties
-- [SQL Function Reference](../reference/sql-functions.md) — All functions
+- [Centrality Algorithms](../guide/centrality.md): Find important nodes
+- [Community Detection](../guide/community.md): Discover clusters
+- [Graph Metrics](../guide/metrics.md): Measure network properties
+- [SQL Function Reference](../reference/sql-functions.md): All functions

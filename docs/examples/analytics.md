@@ -51,7 +51,7 @@ order by size desc;
 
 ## Fraud Detection
 
-### Ring Detection with Clustering
+### Ring Detection With Clustering
 
 ```sql
 create table transactions as select * from (values
@@ -74,7 +74,7 @@ where triangles > 0;
 
 ## Recommendation Systems
 
-### Personalized PageRank for Recommendations
+### Neighborhood-Based Recommendations
 
 ```sql
 -- User interaction graph
@@ -91,6 +91,21 @@ create table edges as
 select *
 from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 2)
 where node_id > 1000;  -- Filter to items only
+```
+
+### Personalized PageRank for Recommendations
+
+```sql
+-- Recommend items for user 1 using Personalized PageRank
+-- We personalize the random walks on user 1
+select node_id - 1000 as item_id, score
+from onager_ctr_personalized_pagerank((
+  select e.src, e.dst, p.node as pers_node, p.weight::double as pers_weight
+  from edges e
+  cross join (values (1::bigint, 1.0::double)) p(node, weight)
+))
+where node_id > 1000  -- Filter to items only
+order by score desc;
 ```
 
 ---

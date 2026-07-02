@@ -11,7 +11,6 @@ use graphina::centrality::katz::katz_centrality;
 use graphina::centrality::other::{laplacian_centrality, local_reaching_centrality, voterank};
 use graphina::centrality::pagerank::pagerank;
 use graphina::core::types::{Digraph, Graph, NodeId};
-use ordered_float::OrderedFloat;
 
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
@@ -221,7 +220,7 @@ pub fn compute_betweenness(
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
     for &node in src.iter().chain(dst.iter()) {
         if !node_set.contains_key(&node) {
             let id = graph.add_node(node);
@@ -235,7 +234,7 @@ pub fn compute_betweenness(
         let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
             OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
         })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
+        graph.add_edge(src_id, dst_id, 1.0);
     }
     let centralities = betweenness_centrality(&graph, normalized)
         .map_err(|e| OnagerError::GraphError(e.to_string()))?;
@@ -271,7 +270,7 @@ pub fn compute_closeness(src: &[i64], dst: &[i64]) -> Result<ClosenessResult> {
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
     for &node in src.iter().chain(dst.iter()) {
         if !node_set.contains_key(&node) {
             let id = graph.add_node(node);
@@ -285,7 +284,7 @@ pub fn compute_closeness(src: &[i64], dst: &[i64]) -> Result<ClosenessResult> {
         let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
             OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
         })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
+        graph.add_edge(src_id, dst_id, 1.0);
     }
     let centralities =
         closeness_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
@@ -432,7 +431,7 @@ pub fn compute_harmonic(src: &[i64], dst: &[i64]) -> Result<HarmonicResult> {
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
+    let mut graph: Graph<i64, f64> = Graph::new();
     for &node in src.iter().chain(dst.iter()) {
         if !node_set.contains_key(&node) {
             let id = graph.add_node(node);
@@ -446,7 +445,7 @@ pub fn compute_harmonic(src: &[i64], dst: &[i64]) -> Result<HarmonicResult> {
         let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
             OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
         })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
+        graph.add_edge(src_id, dst_id, 1.0);
     }
     let centralities =
         harmonic_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;

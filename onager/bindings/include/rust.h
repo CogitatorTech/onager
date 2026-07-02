@@ -7,7 +7,7 @@
 
 #pragma once
 
-/* Generated with cbindgen:0.29.0 */
+/* Generated with cbindgen:0.26.0 */
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -16,7 +16,7 @@
 
 #ifdef __cplusplus
 namespace onager {
-#endif  // __cplusplus
+#endif // __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
@@ -701,13 +701,13 @@ double onager_compute_shortest_distance(const int64_t *src_ptr,
                                         int64_t target_node);
 
 #ifdef __cplusplus
-}  // extern "C"
-#endif  // __cplusplus
+} // extern "C"
+#endif // __cplusplus
 
 #ifdef __cplusplus
-}  // namespace onager
-#endif  // __cplusplus
+} // namespace onager
+#endif // __cplusplus
 
-#endif  /* ONAGER_H */
+#endif /* ONAGER_H */
 
 /* End of generated bindings */

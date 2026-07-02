@@ -49,7 +49,7 @@ Check out [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for known issues and limitations of
 
 ### Quickstart
 
-#### Install from Community Extensions Repository
+#### Install From Community Extensions Repository
 
 You can install and load Onager from
 the [DuckDB community extensions](https://duckdb.org/community_extensions/extensions/onager) repository by running the
@@ -60,7 +60,7 @@ install onager from community;
 load onager;
 ```
 
-#### Build from Source
+#### Build From Source
 
 Alternatively, you can build Onager from source and use it by following these steps:
 

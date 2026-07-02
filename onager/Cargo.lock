@@ -126,9 +126,9 @@ checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
 
 [[package]]
 name = "ctor"
-version = "0.6.3"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "424e0138278faeb2b401f174ad17e715c829512d74f3d1e81eb43365c2e0590e"
+checksum = "59c9b8bdf64ee849747c1b12eb861d21aa47fa161564f48332f1afe2373bf899"
 dependencies = [
  "ctor-proc-macro",
  "dtor",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "graphina"
-version = "0.3.0-alpha.5"
+version = "0.4.0-alpha.2"
 dependencies = [
  "bincode",
  "ctor",
@@ -224,6 +224,7 @@ dependencies = [
  "petgraph",
  "rand",
  "rayon",
+ "rustc-hash",
  "serde",
  "serde_json",
  "sprs",
@@ -457,7 +458,7 @@ dependencies = [
 
 [[package]]
 name = "onager"
-version = "0.1.0-alpha.5"
+version = "0.1.0-alpha.7"
 dependencies = [
  "graphina",
  "once_cell",
@@ -698,6 +699,12 @@ name = "regex-syntax"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
+
+[[package]]
+name = "rustc-hash"
+version = "2.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94300abf3f1ae2e2b8ffb7b58043de3d399c73fa6f4b73826402a5c457614dbe"
 
 [[package]]
 name = "rustix"

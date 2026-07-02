@@ -63,7 +63,7 @@ select * from onager_ctr_pagerank(
 
 ## Degree Centrality
 
-The simplest centrality measure — counts the number of connections per node.
+The simplest centrality measure counts the number of connections per node.
 High degree nodes are "hubs" with many direct connections.
 
 \[
@@ -81,6 +81,10 @@ order by total desc;
 | node_id    | bigint | Node identifier          |
 | in_degree  | double | Number of incoming edges |
 | out_degree | double | Number of outgoing edges |
+
+Optional parameters:
+
+- `directed` (default true): Treat graph as directed
 
 ---
 
@@ -109,6 +113,10 @@ order by betweenness desc;
 |-------------|--------|------------------------------|
 | node_id     | bigint | Node identifier              |
 | betweenness | double | Betweenness centrality score |
+
+Optional parameters:
+
+- `normalized` (default true): Normalize betweenness scores
 
 ---
 
@@ -188,7 +196,8 @@ order by katz desc;
 Optional parameters:
 
 - `alpha` (default 0.1): Attenuation factor for longer paths
-- `beta` (default 1.0): Weight for initial centrality
+- `max_iter` (default 100): Maximum iterations
+- `tolerance` (default 1e-6): Convergence threshold
 
 ---
 
