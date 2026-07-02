@@ -32,10 +32,13 @@ Priorities, in order:
 
 - Use Oxford commas in inline lists: "a, b, and c" not "a, b, c".
 - Do not use em dashes. Restructure the sentence, or use a colon or semicolon instead.
-- Avoid colorful adjectives and adverbs. Write "TCP proxy" not "lightweight TCP proxy", "scoring components" not "transparent scoring components".
-- Use noun phrases for checklist items, not imperative verbs. Write "redundant index detection" not "detect redundant indexes".
-- Headings in Markdown files must be in the title case: "Build from Source" not "Build from source". Minor words (a, an, the, and, but, or, for, in,
-  on, at, to, by, of, is, are, was, were, be) stay lowercase unless they are the first word.
+- Avoid colorful adjectives and adverbs. Write "graph generator" not "powerful graph generator".
+- Prefer using noun phrases for checklist items, not imperative verbs. Write "negative weight detection" not "detect negative weights".
+- Headings in Markdown files must be in title case: "Build from Source" not "Build from source". Minor words
+  (a, an, the, and, but, or, for, in, on, at, to, by, of) stay lowercase unless they are the first word.
+- Write correct and complete sentences.
+- Avoid made-up words, abbreviations, and colons in the middle of sentences.
+- Don't use pretentious language and made-up words.
 
 ## Repository Layout
 
@@ -148,10 +151,10 @@ Minimum expectations:
 
 Before coding:
 
-1. Identify whether the task belongs to Rust core, FFI boundary, C++ DuckDB layer, build wiring, docs, or tests.
-2. Check whether the change affects one DuckDB version or both `main` and `v1.5.2`.
-3. Decide whether `rust.h`, docs, or SQL tests need to move with the code.
-4. Confirm whether the change is safe under offline test conditions.
+1. Task classification (Rust core, FFI boundary, C++ DuckDB layer, build wiring, docs, or tests).
+2. Target DuckDB version check (single version or both `main` and `v1.5.2`).
+3. Movement dependencies check for `rust.h`, docs, and SQL tests.
+4. Safety confirmation under offline test conditions.
 
 Before submitting:
 

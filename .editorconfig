@@ -23,6 +23,6 @@ indent_size = 2
 [*.{yaml,yml,json}]
 indent_size = 2
 
-[*.{c,cpp,h,hpp}]
+[*.{c,cpp,h,hpp,sql}]
 indent_size = 2
 max_line_length = 100

@@ -106,7 +106,7 @@ order by score desc limit 10;
 ## Common Neighbors
 
 Simply counts the number of shared neighbors between two nodes.
-The most basic link prediction heuristic — nodes with many common friends are likely to become friends.
+This is the most basic link prediction heuristic that nodes with many common friends are likely to become friends.
 
 \[
 CN(u, v) = |N(u) \cap N(v)|

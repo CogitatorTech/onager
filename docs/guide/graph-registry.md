@@ -61,7 +61,7 @@ select onager_list_graphs();
 select onager_drop_graph('social');
 ```
 
-## Graph Registry vs Table Functions
+## Graph Registry Vs Table Functions
 
 | Feature      | Graph Registry                  | Table Functions              |
 |--------------|---------------------------------|------------------------------|
