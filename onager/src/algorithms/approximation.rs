@@ -284,4 +284,25 @@ mod tests {
         let result = compute_tsp(&[], &[], &[]);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_approximation_empty_graphs() {
+        let max_clique = compute_max_clique(&[], &[]).unwrap();
+        assert!(max_clique.node_ids.is_empty());
+
+        let independent_set = compute_independent_set(&[], &[]).unwrap();
+        assert!(independent_set.node_ids.is_empty());
+
+        let vertex_cover = compute_vertex_cover(&[], &[]).unwrap();
+        assert!(vertex_cover.node_ids.is_empty());
+    }
+
+    #[test]
+    fn test_approximation_mismatched_arrays() {
+        assert!(compute_max_clique(&[1, 2], &[2]).is_err());
+        assert!(compute_independent_set(&[1, 2], &[2]).is_err());
+        assert!(compute_vertex_cover(&[1, 2], &[2]).is_err());
+        assert!(compute_tsp(&[1, 2], &[2], &[1.0, 2.0]).is_err());
+        assert!(compute_tsp(&[1, 2], &[2, 3], &[1.0]).is_err());
+    }
 }
