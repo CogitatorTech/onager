@@ -51,5 +51,33 @@ select count(*) > 0 from onager_apx_tsp((select src, dst, weight from weighted_e
 ----
 1
 
+# =============================================================================
+# Approximation Empty Graph Edge Cases
+# =============================================================================
+
+# Max Clique should return empty results for empty inputs
+query I
+select count(*) from onager_apx_max_clique((select src, dst from weighted_edges where false))
+----
+0
+
+# Independent Set should return empty results for empty inputs
+query I
+select count(*) from onager_apx_independent_set((select src, dst from weighted_edges where false))
+----
+0
+
+# Vertex Cover should return empty results for empty inputs
+query I
+select count(*) from onager_apx_vertex_cover((select src, dst from weighted_edges where false))
+----
+0
+
+# TSP should return empty results for empty inputs
+query I
+select count(*) from onager_apx_tsp((select src, dst, weight from weighted_edges where false))
+----
+0
+
 statement ok
 drop table weighted_edges

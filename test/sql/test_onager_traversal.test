@@ -51,6 +51,40 @@ select count(*) > 0 from onager_pth_floyd_warshall((select src, dst, weight from
 ----
 1
 
+# =============================================================================
+# Traversal & Path Empty Graph Edge Cases
+# =============================================================================
+
+# Dijkstra should return empty results for empty inputs
+query I
+select count(*) from onager_pth_dijkstra((select src, dst from test_edges where false), source := 1)
+----
+0
+
+# BFS should return empty results for empty inputs
+query I
+select count(*) from onager_trv_bfs((select src, dst from test_edges where false), source := 1)
+----
+0
+
+# DFS should return empty results for empty inputs
+query I
+select count(*) from onager_trv_dfs((select src, dst from test_edges where false), source := 1)
+----
+0
+
+# Bellman-Ford should return empty results for empty inputs
+query I
+select count(*) from onager_pth_bellman_ford((select src, dst, weight from weighted_edges where false), source := 1)
+----
+0
+
+# Floyd-Warshall should return empty results for empty inputs
+query I
+select count(*) from onager_pth_floyd_warshall((select src, dst, weight from weighted_edges where false))
+----
+0
+
 # Cleanup
 statement ok
 drop table test_edges
