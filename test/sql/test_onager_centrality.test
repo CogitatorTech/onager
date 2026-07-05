@@ -80,6 +80,52 @@ select count(*) > 0 from onager_ctr_laplacian((select src, dst from test_edges))
 ----
 1
 
+# =============================================================================
+# Centrality Empty Graph Edge Cases
+# =============================================================================
+
+# PageRank should return empty results for empty inputs without throwing error
+query I
+select count(*) from onager_ctr_pagerank((select src, dst from test_edges where false))
+----
+0
+
+# Degree centrality should return empty results for empty inputs without throwing error
+query I
+select count(*) from onager_ctr_degree((select src, dst from test_edges where false))
+----
+0
+
+# Betweenness centrality should return empty results for empty inputs
+query I
+select count(*) from onager_ctr_betweenness((select src, dst from test_edges where false))
+----
+0
+
+# Closeness centrality should return empty results for empty inputs
+query I
+select count(*) from onager_ctr_closeness((select src, dst from test_edges where false))
+----
+0
+
+# Eigenvector centrality should return empty results for empty inputs
+query I
+select count(*) from onager_ctr_eigenvector((select src, dst from test_edges where false))
+----
+0
+
+# Katz centrality should return empty results for empty inputs
+query I
+select count(*) from onager_ctr_katz((select src, dst from test_edges where false), alpha := 0.1)
+----
+0
+
+# Harmonic centrality should return empty results for empty inputs
+query I
+select count(*) from onager_ctr_harmonic((select src, dst from test_edges where false))
+----
+0
+
 # Cleanup
 statement ok
 drop table test_edges

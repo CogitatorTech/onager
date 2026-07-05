@@ -5,7 +5,7 @@ description: Extract portions of a graph around specific nodes.
 
 # Subgraph Operations
 
-Subgraph operations extract portions of a larger graph based on structural proximity, node membership, some other criteria.
+Subgraph operations extract portions of a larger graph based on structural proximity, node membership, or some other criteria.
 They are normally useful for analyzing local neighborhoods or focusing on specific regions.
 
 ## Setup

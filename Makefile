@@ -140,9 +140,20 @@ test-hooks: ## Run Git hooks on all files manually
 clean-all: clean rust-clean ## Clean everything
 	@echo "All clean!"
 
+.PHONY: test-oracle
+test-oracle: release ## Run Python-based differential tests with NetworkX
+	@echo "Running Python-based differential tests..."
+	@source .venv/bin/activate && pytest test/test_differential.py
+
+.PHONY: bench-onager
+bench-onager: release ## Run Python-based benchmark comparisons against NetworkX
+	@echo "Running benchmark comparisons..."
+	@$(PY_DEP_MNGR) run --with networkx python3 benchmarks/compare.py
+
 .PHONY: check
-check: rust-lint rust-test ## Run all checks (linting and tests)
+check: rust-lint rust-test test-oracle ## Run all checks (linting, tests, and differential tests)
 	@echo "All checks passed!"
+
 
 
 .PHONY: docs

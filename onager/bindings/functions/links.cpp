@@ -35,13 +35,13 @@ static OperatorResultType JaccardInOut(ExecutionContext &ctx, TableFunctionInput
   auto &gs = data.global_state->Cast<JaccardGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_lnk_jaccard");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType JaccardFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<JaccardGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_jaccard(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Jaccard failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
@@ -49,11 +49,11 @@ static OperatorFinalizeResultType JaccardFinal(ExecutionContext &ctx, TableFunct
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -81,13 +81,13 @@ static OperatorResultType AdamicAdarInOut(ExecutionContext &ctx, TableFunctionIn
   auto &gs = data.global_state->Cast<AdamicAdarGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_lnk_adamic_adar");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AdamicAdarFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AdamicAdarGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_adamic_adar(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Adamic-Adar failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
@@ -95,11 +95,11 @@ static OperatorFinalizeResultType AdamicAdarFinal(ExecutionContext &ctx, TableFu
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -127,13 +127,13 @@ static OperatorResultType PrefAttachInOut(ExecutionContext &ctx, TableFunctionIn
   auto &gs = data.global_state->Cast<PrefAttachGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_lnk_pref_attach");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType PrefAttachFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<PrefAttachGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_preferential_attachment(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Preferential Attachment failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
@@ -141,11 +141,11 @@ static OperatorFinalizeResultType PrefAttachFinal(ExecutionContext &ctx, TableFu
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -173,13 +173,13 @@ static OperatorResultType ResourceAllocInOut(ExecutionContext &ctx, TableFunctio
   auto &gs = data.global_state->Cast<ResourceAllocGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_lnk_resource_alloc");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ResourceAllocFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ResourceAllocGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_resource_allocation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Resource Allocation failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
@@ -187,11 +187,11 @@ static OperatorFinalizeResultType ResourceAllocFinal(ExecutionContext &ctx, Tabl
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto sc = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; sc[i] = gs.result_scores[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -218,13 +218,13 @@ static OperatorResultType CommonNeighborsInOut(ExecutionContext &ctx, TableFunct
   auto &gs = data.global_state->Cast<CommonNeighborsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_lnk_common_neighbors");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType CommonNeighborsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<CommonNeighborsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_common_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("CommonNeighbors failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_counts.resize(nc);
@@ -232,11 +232,11 @@ static OperatorFinalizeResultType CommonNeighborsFinal(ExecutionContext &ctx, Ta
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n1 = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n2 = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto cnt = GetFlatVectorDataWritable<int64_t>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { n1[i] = gs.result_n1[gs.output_idx+i]; n2[i] = gs.result_n2[gs.output_idx+i]; cnt[i] = gs.result_counts[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_n1.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 

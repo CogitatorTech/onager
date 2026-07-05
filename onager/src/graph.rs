@@ -284,4 +284,112 @@ mod tests {
 
         drop_graph(name).unwrap();
     }
+
+    #[test]
+    fn test_list_graphs() {
+        let name1 = "test_list_1";
+        let name2 = "test_list_2";
+
+        let initial_list = list_graphs();
+        assert!(!initial_list.contains(&name1.to_string()));
+
+        create_graph(name1, false).unwrap();
+        create_graph(name2, true).unwrap();
+
+        let list_after = list_graphs();
+        assert!(list_after.contains(&name1.to_string()));
+        assert!(list_after.contains(&name2.to_string()));
+
+        drop_graph(name1).unwrap();
+        drop_graph(name2).unwrap();
+
+        let final_list = list_graphs();
+        assert!(!final_list.contains(&name1.to_string()));
+        assert!(!final_list.contains(&name2.to_string()));
+    }
+
+    #[test]
+    fn test_is_directed() {
+        let name_undir = "test_is_directed_undir";
+        let name_dir = "test_is_directed_dir";
+
+        create_graph(name_undir, false).unwrap();
+        create_graph(name_dir, true).unwrap();
+
+        {
+            let registry = GRAPH_REGISTRY.read();
+            let graph_undir = registry.get(name_undir).unwrap();
+            let graph_dir = registry.get(name_dir).unwrap();
+
+            assert!(!graph_undir.is_directed());
+            assert!(graph_dir.is_directed());
+        }
+
+        drop_graph(name_undir).unwrap();
+        drop_graph(name_dir).unwrap();
+    }
+
+    #[test]
+    fn test_node_degrees() {
+        let name_undir = "test_degrees_undir";
+        let name_dir = "test_degrees_dir";
+
+        create_graph(name_undir, false).unwrap();
+        create_graph(name_dir, true).unwrap();
+
+        // Undirected graph degrees
+        add_node(name_undir, 1).unwrap();
+        add_node(name_undir, 2).unwrap();
+        add_node(name_undir, 3).unwrap();
+        add_edge(name_undir, 1, 2, 1.0).unwrap();
+        add_edge(name_undir, 1, 3, 1.0).unwrap();
+
+        assert_eq!(get_node_in_degree(name_undir, 1).unwrap(), 2);
+        assert_eq!(get_node_out_degree(name_undir, 1).unwrap(), 2);
+        assert_eq!(get_node_in_degree(name_undir, 2).unwrap(), 1);
+        assert_eq!(get_node_out_degree(name_undir, 2).unwrap(), 1);
+
+        // Directed graph degrees
+        add_node(name_dir, 1).unwrap();
+        add_node(name_dir, 2).unwrap();
+        add_node(name_dir, 3).unwrap();
+        add_edge(name_dir, 1, 2, 1.0).unwrap();
+        add_edge(name_dir, 3, 1, 1.0).unwrap();
+
+        assert_eq!(get_node_in_degree(name_dir, 1).unwrap(), 1); // 3 -> 1
+        assert_eq!(get_node_out_degree(name_dir, 1).unwrap(), 1); // 1 -> 2
+        assert_eq!(get_node_in_degree(name_dir, 2).unwrap(), 1); // 1 -> 2
+        assert_eq!(get_node_out_degree(name_dir, 2).unwrap(), 0);
+
+        drop_graph(name_undir).unwrap();
+        drop_graph(name_dir).unwrap();
+    }
+
+    #[test]
+    fn test_graph_errors() {
+        let name = "test_graph_errs";
+        create_graph(name, false).unwrap();
+
+        // Duplicate node
+        add_node(name, 1).unwrap();
+        assert!(add_node(name, 1).is_err());
+
+        // Add edge with non-existent node
+        assert!(add_edge(name, 1, 2, 1.0).is_err());
+        assert!(add_edge(name, 2, 1, 1.0).is_err());
+
+        // Non-existent graph errors
+        assert!(node_count("non_existent").is_err());
+        assert!(edge_count("non_existent").is_err());
+        assert!(add_node("non_existent", 1).is_err());
+        assert!(add_edge("non_existent", 1, 2, 1.0).is_err());
+        assert!(get_node_in_degree("non_existent", 1).is_err());
+        assert!(get_node_out_degree("non_existent", 1).is_err());
+
+        // Non-existent node errors in existing graph
+        assert!(get_node_in_degree(name, 999).is_err());
+        assert!(get_node_out_degree(name, 999).is_err());
+
+        drop_graph(name).unwrap();
+    }
 }

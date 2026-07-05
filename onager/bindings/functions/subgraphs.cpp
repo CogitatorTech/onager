@@ -39,13 +39,13 @@ static OperatorResultType EgoGraphInOut(ExecutionContext &ctx, TableFunctionInpu
   auto &gs = data.global_state->Cast<EgoGraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_sub_ego_graph");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<EgoGraphBindData>(); auto &gs = data.global_state->Cast<EgoGraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_ego_graph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.center, bd.radius, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Ego graph failed: " + GetOnagerError());
     gs.result_src.resize(nc); gs.result_dst.resize(nc);
@@ -53,11 +53,11 @@ static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunc
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -88,13 +88,13 @@ static OperatorResultType KHopInOut(ExecutionContext &ctx, TableFunctionInput &d
   auto &gs = data.global_state->Cast<KHopGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_sub_k_hop");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<KHopBindData>(); auto &gs = data.global_state->Cast<KHopGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_k_hop_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.start, bd.k, nullptr);
     if (nc < 0) throw InvalidInputException("K-hop neighbors failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
@@ -102,11 +102,11 @@ static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunction
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -132,9 +132,9 @@ static OperatorResultType InducedSubgraphInOut(ExecutionContext &ctx, TableFunct
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   UnifiedVectorFormat s_data, d_data, f_data;
-  input.data[0].ToUnifiedFormat(input.size(), s_data);
-  input.data[1].ToUnifiedFormat(input.size(), d_data);
-  input.data[2].ToUnifiedFormat(input.size(), f_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[0], input.size(), s_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[1], input.size(), d_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[2], input.size(), f_data);
   auto s = UnifiedVectorFormat::GetData<int64_t>(s_data);
   auto d = UnifiedVectorFormat::GetData<int64_t>(d_data);
   auto f = UnifiedVectorFormat::GetData<int64_t>(f_data);
@@ -151,13 +151,13 @@ static OperatorResultType InducedSubgraphInOut(ExecutionContext &ctx, TableFunct
       gs.filter_nodes.push_back(f[f_idx]);
     }
   }
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType InducedSubgraphFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_induced_subgraph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.filter_nodes.data(), gs.filter_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Induced subgraph failed: " + GetOnagerError());
     gs.result_src.resize(nc); gs.result_dst.resize(nc);
@@ -165,11 +165,11 @@ static OperatorFinalizeResultType InducedSubgraphFinal(ExecutionContext &ctx, Ta
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 

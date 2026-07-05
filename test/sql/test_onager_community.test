@@ -49,6 +49,46 @@ select count(*) > 0 from onager_cmm_infomap((select src, dst from test_edges))
 ----
 1
 
+# =============================================================================
+# Community Empty Graph Edge Cases
+# =============================================================================
+
+# Louvain should return empty results for empty inputs
+query I
+select count(*) from onager_cmm_louvain((select src, dst from test_edges where false))
+----
+0
+
+# Connected Components should return empty results for empty inputs
+query I
+select count(*) from onager_cmm_components((select src, dst from test_edges where false))
+----
+0
+
+# Label Propagation should return empty results for empty inputs
+query I
+select count(*) from onager_cmm_label_prop((select src, dst from test_edges where false))
+----
+0
+
+# Girvan-Newman should return empty results for empty inputs
+query I
+select count(*) from onager_cmm_girvan_newman((select src, dst from test_edges where false), communities := 2)
+----
+0
+
+# Spectral clustering should return empty results for empty inputs
+query I
+select count(*) from onager_cmm_spectral((select src, dst from test_edges where false), k := 2)
+----
+0
+
+# Infomap should return empty results for empty inputs
+query I
+select count(*) from onager_cmm_infomap((select src, dst from test_edges where false))
+----
+0
+
 # Cleanup
 statement ok
 drop table test_edges

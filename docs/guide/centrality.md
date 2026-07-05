@@ -61,6 +61,41 @@ select * from onager_ctr_pagerank(
 
 ---
 
+## Personalized PageRank
+
+Personalized PageRank biases the random surfer's teleportation probability toward a specific set of target nodes rather than distributing it uniformly.
+This measures importance relative to the personalized set of nodes (e.g., for recommendation systems).
+
+```sql
+select node_id, round(score, 4) as score
+from onager_ctr_personalized_pagerank((
+  select e.src, e.dst, p.node as pers_node, p.weight::double as pers_weight
+  from edges e
+  cross join (values (1::bigint, 1.0::double)) p(node, weight)
+))
+order by score desc;
+```
+
+| Column  | Type   | Description                                       |
+|---------|--------|---------------------------------------------------|
+| node_id | bigint | Node identifier                                   |
+| score   | double | Personalized PageRank score relative to targets   |
+
+The input query relation must have exactly 4 columns:
+
+- `src` (bigint): Source node of edge
+- `dst` (bigint): Destination node of edge
+- `pers_node` (bigint): Node in the personalization vector
+- `pers_weight` (double): Personalization weight for the node
+
+Optional parameters:
+
+- `damping` (default 0.85): Surfer damping factor
+- `max_iter` (default 100): Maximum iterations
+- `tolerance` (default 1e-6): Convergence threshold
+
+---
+
 ## Degree Centrality
 
 The simplest centrality measure counts the number of connections per node.

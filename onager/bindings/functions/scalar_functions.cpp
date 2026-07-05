@@ -36,8 +36,8 @@ static void GetLastError(DataChunk &args, ExpressionState &state, Vector &result
 static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data, node_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
-  args.data[1].ToUnifiedFormat(count, node_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, node_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
   auto &result_validity = GetFlatVectorValidityWritable(result);
@@ -57,8 +57,8 @@ static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &res
 static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data, node_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
-  args.data[1].ToUnifiedFormat(count, node_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, node_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
   auto &result_validity = GetFlatVectorValidityWritable(result);
@@ -82,8 +82,8 @@ static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &re
 static void CreateGraph(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data, dir_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
-  args.data[1].ToUnifiedFormat(count, dir_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, dir_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
@@ -96,7 +96,7 @@ static void CreateGraph(DataChunk &args, ExpressionState &state, Vector &result)
 static void DropGraph(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
@@ -108,8 +108,8 @@ static void DropGraph(DataChunk &args, ExpressionState &state, Vector &result) {
 static void AddNode(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data, node_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
-  args.data[1].ToUnifiedFormat(count, node_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, node_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
@@ -122,10 +122,10 @@ static void AddNode(DataChunk &args, ExpressionState &state, Vector &result) {
 static void AddEdge(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data, src_data, dst_data, w_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
-  args.data[1].ToUnifiedFormat(count, src_data);
-  args.data[2].ToUnifiedFormat(count, dst_data);
-  args.data[3].ToUnifiedFormat(count, w_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, src_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[2], count, dst_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[3], count, w_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
   for (idx_t i = 0; i < count; i++) {
@@ -152,7 +152,7 @@ static void ListGraphs(DataChunk &args, ExpressionState &state, Vector &result) 
 static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
   auto &result_validity = GetFlatVectorValidityWritable(result);
@@ -170,7 +170,7 @@ static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result
 static void GetEdgeCount(DataChunk &args, ExpressionState &state, Vector &result) {
   auto count = args.size();
   UnifiedVectorFormat name_data;
-  args.data[0].ToUnifiedFormat(count, name_data);
+  ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
 
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
   auto &result_validity = GetFlatVectorValidityWritable(result);

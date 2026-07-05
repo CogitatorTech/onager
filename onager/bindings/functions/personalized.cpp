@@ -47,10 +47,10 @@ static OperatorResultType PersonalizedPageRankInOut(ExecutionContext &ctx, Table
   auto &gs = data.global_state->Cast<PersonalizedPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   UnifiedVectorFormat s_data, d_data, pn_data, pw_data;
-  input.data[0].ToUnifiedFormat(input.size(), s_data);
-  input.data[1].ToUnifiedFormat(input.size(), d_data);
-  input.data[2].ToUnifiedFormat(input.size(), pn_data);
-  input.data[3].ToUnifiedFormat(input.size(), pw_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[0], input.size(), s_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[1], input.size(), d_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[2], input.size(), pn_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[3], input.size(), pw_data);
 
   auto s = UnifiedVectorFormat::GetData<int64_t>(s_data);
   auto d = UnifiedVectorFormat::GetData<int64_t>(d_data);
@@ -82,7 +82,7 @@ static OperatorResultType PersonalizedPageRankInOut(ExecutionContext &ctx, Table
       gs.pers_weights.push_back(0.0);
     }
   }
-  output.SetCardinality(0);
+  ONAGER_SET_CARDINALITY(output, 0);
   return OperatorResultType::NEED_MORE_INPUT;
 }
 
@@ -91,7 +91,7 @@ static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ct
   auto &gs = data.global_state->Cast<PersonalizedPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_personalized_pagerank(
       gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(),
       gs.pers_nodes.data(), gs.pers_weights.data(), gs.pers_nodes.size(),
@@ -105,7 +105,7 @@ static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ct
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   auto sc = GetFlatVectorDataWritable<double>(output.data[1]);
@@ -113,7 +113,7 @@ static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ct
     n[i] = gs.result_nodes[gs.output_idx+i];
     sc[i] = gs.result_scores[gs.output_idx+i];
   }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 

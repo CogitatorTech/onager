@@ -49,6 +49,22 @@ select abs(
 ----
 true
 
+# =============================================================================
+# MST Empty Graph Edge Cases
+# =============================================================================
+
+# Kruskal should return empty results for empty inputs
+query I
+select count(*) from onager_mst_kruskal((select src, dst, weight from weighted_edges where false))
+----
+0
+
+# Prim should return empty results for empty inputs
+query I
+select count(*) from onager_mst_prim((select src, dst, weight from weighted_edges where false))
+----
+0
+
 # Cleanup
 statement ok
 drop table weighted_edges

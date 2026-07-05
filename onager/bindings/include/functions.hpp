@@ -36,6 +36,20 @@
   #define ONAGER_SET_NO_ORDER(func) ((void)0)
 #endif
 
+#if defined(DUCKDB_MAJOR_VERSION) && defined(DUCKDB_MINOR_VERSION)
+  #if DUCKDB_MAJOR_VERSION > 1 || (DUCKDB_MAJOR_VERSION == 1 && DUCKDB_MINOR_VERSION >= 6)
+    #define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) (vector).ToUnifiedFormat(data)
+    #define ONAGER_SET_CARDINALITY(chunk, count) (chunk).SetChildCardinality(count)
+  #else
+    #define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) (vector).ToUnifiedFormat(count, data)
+    #define ONAGER_SET_CARDINALITY(chunk, count) (chunk).SetCardinality(count)
+  #endif
+#else
+  #define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) (vector).ToUnifiedFormat(count, data)
+  #define ONAGER_SET_CARDINALITY(chunk, count) (chunk).SetCardinality(count)
+#endif
+
+
 namespace duckdb {
 namespace onager {
 
@@ -101,8 +115,8 @@ inline void CheckInt64Input(TableFunctionBindInput &input, const std::string &na
  */
 inline void AppendInt64Edges(DataChunk &input, std::vector<int64_t> &src_nodes, std::vector<int64_t> &dst_nodes, const char *function_name) {
   UnifiedVectorFormat src_data, dst_data;
-  input.data[0].ToUnifiedFormat(input.size(), src_data);
-  input.data[1].ToUnifiedFormat(input.size(), dst_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[0], input.size(), src_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[1], input.size(), dst_data);
 
   auto src = UnifiedVectorFormat::GetData<int64_t>(src_data);
   auto dst = UnifiedVectorFormat::GetData<int64_t>(dst_data);
@@ -122,9 +136,9 @@ inline void AppendInt64Edges(DataChunk &input, std::vector<int64_t> &src_nodes, 
  */
 inline void AppendWeightedEdges(DataChunk &input, std::vector<int64_t> &src_nodes, std::vector<int64_t> &dst_nodes, std::vector<double> &weights, const char *function_name) {
   UnifiedVectorFormat src_data, dst_data, w_data;
-  input.data[0].ToUnifiedFormat(input.size(), src_data);
-  input.data[1].ToUnifiedFormat(input.size(), dst_data);
-  input.data[2].ToUnifiedFormat(input.size(), w_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[0], input.size(), src_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[1], input.size(), dst_data);
+  ONAGER_TO_UNIFIED_FORMAT(input.data[2], input.size(), w_data);
 
   auto src = UnifiedVectorFormat::GetData<int64_t>(src_data);
   auto dst = UnifiedVectorFormat::GetData<int64_t>(dst_data);
