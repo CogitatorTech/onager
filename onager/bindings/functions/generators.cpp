@@ -43,11 +43,11 @@ static void ErdosRenyiFunction(ClientContext &ctx, TableFunctionInput &data, Dat
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
 }
 
 // =============================================================================
@@ -83,11 +83,11 @@ static void BarabasiAlbertFunction(ClientContext &ctx, TableFunctionInput &data,
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
 }
 
 // =============================================================================
@@ -124,11 +124,11 @@ static void WattsStrogatzFunction(ClientContext &ctx, TableFunctionInput &data, 
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
 }
 
 // =============================================================================

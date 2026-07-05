@@ -45,13 +45,13 @@ static OperatorResultType ParallelPageRankInOut(ExecutionContext &ctx, TableFunc
   auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_pagerank");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelPageRankBindData>(); auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_ranks.resize(nc);
@@ -59,11 +59,11 @@ static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, T
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto r = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; r[i] = gs.result_ranks[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -91,13 +91,13 @@ static OperatorResultType ParallelBfsInOut(ExecutionContext &ctx, TableFunctionI
   auto &gs = data.global_state->Cast<ParallelBfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_bfs");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelBfsBindData>(); auto &gs = data.global_state->Cast<ParallelBfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_bfs_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel BFS failed: " + GetOnagerError());
     gs.result_order.resize(nc);
@@ -105,11 +105,11 @@ static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableF
     gs.computed = true;
   }
   idx_t rem = gs.result_order.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_order[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_order.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -139,13 +139,13 @@ static OperatorResultType ParallelPathsInOut(ExecutionContext &ctx, TableFunctio
   auto &gs = data.global_state->Cast<ParallelPathsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_shortest_paths");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &bd = data.bind_data->Cast<ParallelPathsBindData>(); auto &gs = data.global_state->Cast<ParallelPathsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_shortest_paths_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel shortest paths failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_distances.resize(nc);
@@ -153,11 +153,11 @@ static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, Tabl
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; d[i] = gs.result_distances[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -183,13 +183,13 @@ static OperatorResultType ParallelComponentsInOut(ExecutionContext &ctx, TableFu
   auto &gs = data.global_state->Cast<ParallelComponentsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_components");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelComponentsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_components_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel components failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_components.resize(nc);
@@ -197,11 +197,11 @@ static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx,
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_components[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -228,13 +228,13 @@ static OperatorResultType ParallelClusteringInOut(ExecutionContext &ctx, TableFu
   auto &gs = data.global_state->Cast<ParallelClusteringGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_clustering");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelClusteringGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_clustering_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel clustering failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_coefficients.resize(nc);
@@ -242,11 +242,11 @@ static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx,
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<double>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_coefficients[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -272,13 +272,13 @@ static OperatorResultType ParallelTrianglesInOut(ExecutionContext &ctx, TableFun
   auto &gs = data.global_state->Cast<ParallelTrianglesGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_triangles");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<ParallelTrianglesGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_triangles_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel triangles failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_counts.resize(nc);
@@ -286,11 +286,11 @@ static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, 
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_counts[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 

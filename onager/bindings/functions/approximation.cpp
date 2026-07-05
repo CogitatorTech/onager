@@ -32,13 +32,13 @@ static OperatorResultType MaxCliqueInOut(ExecutionContext &ctx, TableFunctionInp
   auto &gs = data.global_state->Cast<MaxCliqueGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_apx_max_clique");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<MaxCliqueGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_max_clique(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
     if (nc < 0) throw InvalidInputException("Max clique failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
@@ -46,11 +46,11 @@ static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFun
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -75,13 +75,13 @@ static OperatorResultType IndependentSetInOut(ExecutionContext &ctx, TableFuncti
   auto &gs = data.global_state->Cast<IndependentSetGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_apx_independent_set");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<IndependentSetGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_independent_set(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
     if (nc < 0) throw InvalidInputException("Independent set failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
@@ -89,11 +89,11 @@ static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, Tab
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -118,13 +118,13 @@ static OperatorResultType VertexCoverInOut(ExecutionContext &ctx, TableFunctionI
   auto &gs = data.global_state->Cast<VertexCoverGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_apx_vertex_cover");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<VertexCoverGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_vertex_cover(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
     if (nc < 0) throw InvalidInputException("Vertex cover failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
@@ -132,11 +132,11 @@ static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableF
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -164,13 +164,13 @@ static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &da
   auto &gs = data.global_state->Cast<TspGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_apx_tsp");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TspGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("TSP failed: " + GetOnagerError());
     gs.result_tour.resize(nc);
@@ -178,11 +178,11 @@ static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionI
     gs.computed = true;
   }
   idx_t rem = gs.result_tour.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto ord = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto n = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { ord[i] = static_cast<int64_t>(gs.output_idx + i); n[i] = gs.result_tour[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_tour.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 

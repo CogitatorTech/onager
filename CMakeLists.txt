@@ -186,6 +186,13 @@ set(EXTENSION_NAME ${TARGET_NAME}_extension)
 set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 project(${TARGET_NAME})
 
+# Pass DuckDB version macros to the compiler if available
+if(DUCKDB_MAJOR_VERSION AND DUCKDB_MINOR_VERSION)
+  message(STATUS "[onager] Defining DUCKDB_MAJOR_VERSION=${DUCKDB_MAJOR_VERSION} and DUCKDB_MINOR_VERSION=${DUCKDB_MINOR_VERSION}")
+  add_compile_definitions(DUCKDB_MAJOR_VERSION=${DUCKDB_MAJOR_VERSION})
+  add_compile_definitions(DUCKDB_MINOR_VERSION=${DUCKDB_MINOR_VERSION})
+endif()
+
 include_directories(onager/bindings/include)
 set(EXTENSION_SOURCES
     onager/bindings/onager_extension.cpp

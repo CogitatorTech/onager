@@ -36,13 +36,13 @@ static OperatorResultType KruskalMstInOut(ExecutionContext &ctx, TableFunctionIn
   auto &gs = data.global_state->Cast<KruskalMstGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_mst_kruskal");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType KruskalMstFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<KruskalMstGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t ec = ::onager::onager_compute_kruskal_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Kruskal MST failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec); gs.result_weights.resize(ec);
@@ -50,11 +50,11 @@ static OperatorFinalizeResultType KruskalMstFinal(ExecutionContext &ctx, TableFu
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto w = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; w[i] = gs.result_weights[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -83,13 +83,13 @@ static OperatorResultType PrimMstInOut(ExecutionContext &ctx, TableFunctionInput
   auto &gs = data.global_state->Cast<PrimMstGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_mst_prim");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType PrimMstFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<PrimMstGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t ec = ::onager::onager_compute_prim_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Prim MST failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec); gs.result_weights.resize(ec);
@@ -97,11 +97,11 @@ static OperatorFinalizeResultType PrimMstFinal(ExecutionContext &ctx, TableFunct
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto s = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto d = GetFlatVectorDataWritable<int64_t>(output.data[1]); auto w = GetFlatVectorDataWritable<double>(output.data[2]);
   for (idx_t i = 0; i < to; i++) { s[i] = gs.result_src[gs.output_idx+i]; d[i] = gs.result_dst[gs.output_idx+i]; w[i] = gs.result_weights[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_src.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 

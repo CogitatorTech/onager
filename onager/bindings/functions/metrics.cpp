@@ -34,20 +34,20 @@ static OperatorResultType DiameterInOut(ExecutionContext &ctx, TableFunctionInpu
   auto &gs = data.global_state->Cast<DiameterGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_diameter");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<DiameterGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_diameter(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
     if (gs.result < 0) throw InvalidInputException("Diameter failed: " + GetOnagerError());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
@@ -73,20 +73,20 @@ static OperatorResultType RadiusInOut(ExecutionContext &ctx, TableFunctionInput 
   auto &gs = data.global_state->Cast<RadiusGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_radius");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<RadiusGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_radius(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
     if (gs.result < 0) throw InvalidInputException("Radius failed: " + GetOnagerError());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
@@ -112,19 +112,19 @@ static OperatorResultType AvgClusteringInOut(ExecutionContext &ctx, TableFunctio
   auto &gs = data.global_state->Cast<AvgClusteringGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_avg_clustering");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AvgClusteringFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgClusteringGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_avg_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
@@ -150,13 +150,13 @@ static OperatorResultType TriangleCountInOut(ExecutionContext &ctx, TableFunctio
   auto &gs = data.global_state->Cast<TriangleCountGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_triangles");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TriangleCountGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_triangle_count(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Triangle count failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_counts.resize(nc);
@@ -164,11 +164,11 @@ static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, Tabl
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
-  if (rem == 0) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (rem == 0) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   idx_t to = MinValue<idx_t>(rem, STANDARD_VECTOR_SIZE);
   auto n = GetFlatVectorDataWritable<int64_t>(output.data[0]); auto c = GetFlatVectorDataWritable<int64_t>(output.data[1]);
   for (idx_t i = 0; i < to; i++) { n[i] = gs.result_nodes[gs.output_idx+i]; c[i] = gs.result_counts[gs.output_idx+i]; }
-  gs.output_idx += to; output.SetCardinality(to);
+  gs.output_idx += to; ONAGER_SET_CARDINALITY(output, to);
   return gs.output_idx >= gs.result_nodes.size() ? OperatorFinalizeResultType::FINISHED : OperatorFinalizeResultType::HAVE_MORE_OUTPUT;
 }
 
@@ -194,19 +194,19 @@ static OperatorResultType TransitivityInOut(ExecutionContext &ctx, TableFunction
   auto &gs = data.global_state->Cast<TransitivityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_transitivity");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TransitivityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<TransitivityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_transitivity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
@@ -232,19 +232,19 @@ static OperatorResultType AvgPathLengthInOut(ExecutionContext &ctx, TableFunctio
   auto &gs = data.global_state->Cast<AvgPathLengthGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_avg_path_length");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AvgPathLengthGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_avg_path_length(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
@@ -270,19 +270,19 @@ static OperatorResultType AssortativityInOut(ExecutionContext &ctx, TableFunctio
   auto &gs = data.global_state->Cast<AssortativityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_assortativity");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<AssortativityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_assortativity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
@@ -313,21 +313,21 @@ static OperatorResultType DensityInOut(ExecutionContext &ctx, TableFunctionInput
   auto &gs = data.global_state->Cast<DensityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_mtr_density");
-  output.SetCardinality(0); return OperatorResultType::NEED_MORE_INPUT;
+  ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DensityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
   auto &gs = data.global_state->Cast<DensityGlobalState>();
   auto &bd = data.bind_data->Cast<DensityBindData>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_graph_density(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
     if (std::isnan(gs.result)) throw InvalidInputException("Density failed: " + GetOnagerError());
     gs.computed = true;
   }
-  if (gs.output_done) { output.SetCardinality(0); return OperatorFinalizeResultType::FINISHED; }
+  if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
   GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
-  output.SetCardinality(1); gs.output_done = true;
+  ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
 
