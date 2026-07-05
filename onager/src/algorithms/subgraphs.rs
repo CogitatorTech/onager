@@ -65,7 +65,7 @@ pub fn compute_ego_graph(
     let mut result_src = Vec::new();
     let mut result_dst = Vec::new();
     for (u, v, _) in ego.edges() {
-        if let (Some(&ext_u), Some(&ext_v)) = (reverse_map.get(&u), reverse_map.get(&v)) {
+        if let (Some(&ext_u), Some(&ext_v)) = (ego.node_attr(u), ego.node_attr(v)) {
             result_src.push(ext_u);
             result_dst.push(ext_v);
         }
@@ -195,7 +195,7 @@ pub fn compute_induced_subgraph(
     let mut result_src = Vec::new();
     let mut result_dst = Vec::new();
     for (u, v, _) in subgraph.edges() {
-        if let (Some(&ext_u), Some(&ext_v)) = (reverse_map.get(&u), reverse_map.get(&v)) {
+        if let (Some(&ext_u), Some(&ext_v)) = (subgraph.node_attr(u), subgraph.node_attr(v)) {
             result_src.push(ext_u);
             result_dst.push(ext_v);
         }

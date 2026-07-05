@@ -140,8 +140,13 @@ test-hooks: ## Run Git hooks on all files manually
 clean-all: clean rust-clean ## Clean everything
 	@echo "All clean!"
 
+.PHONY: test-oracle
+test-oracle: release ## Run Python-based differential tests with NetworkX
+	@echo "Running Python-based differential tests..."
+	@source .venv/bin/activate && pytest test/test_differential.py
+
 .PHONY: check
-check: rust-lint rust-test ## Run all checks (linting and tests)
+check: rust-lint rust-test test-oracle ## Run all checks (linting, tests, and differential tests)
 	@echo "All checks passed!"
 
 
