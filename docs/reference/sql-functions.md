@@ -116,7 +116,7 @@ Complete reference for all Onager SQL functions.
 |-----------------------------------------------|------------|-------------------------|
 | `onager_sub_ego_graph(edges, center, radius)` | `src, dst` | Ego graph around a node |
 | `onager_sub_k_hop(edges, start, k)`           | `node_id`  | Nodes within k hops     |
-| `onager_sub_induced(edges, nodes)`            | `src, dst` | Induced subgraph        |
+| `onager_sub_induced(edges_with_filter)`        | `src, dst` | Induced subgraph        |
 
 ## Parallel Algorithms
 
