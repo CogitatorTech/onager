@@ -86,3 +86,19 @@ jobs:
         run: |
           make release
           make test
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install Python dependencies
+        run: |
+          uv sync --extra dev
+
+      - name: Run differential tests
+        run: |
+          make test-oracle
