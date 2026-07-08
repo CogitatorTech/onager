@@ -31,7 +31,8 @@ jobs:
       ci_tools_version: main
       extension_name: onager
       enable_rust: true
-      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
+      # wasm_threads stays excluded until the threaded WASM build (with rayon and pthreads) is validated
+      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_threads"
 
   duckdb-stable-build:
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.4
@@ -40,7 +41,8 @@ jobs:
       ci_tools_version: v1.5.4
       extension_name: onager
       enable_rust: true
-      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_mvp;wasm_eh;wasm_threads"
+      # wasm_threads stays excluded until the threaded WASM build (with rayon plus pthreads) is validated
+      exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_threads"
 
   create-release-draft:
     name: Create draft release with built binaries
