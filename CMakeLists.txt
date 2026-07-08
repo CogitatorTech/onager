@@ -36,8 +36,9 @@ endif()
 set(OS_ARCH "${_ONAGER_OS_ARCH}")
 
 # Derive DUCKDB_PLATFORM if missing (this is a rough heuristic mirroring DuckDB naming convention)
-# Valid values: linux_amd64, linux_arm64, osx_amd64, osx_arm64, osx_universal, windows_amd64
-# Note: we do not currently handle Windows ARM (windows_arm64) as DuckDB does not provide such builds.
+# Valid values: linux_amd64, linux_arm64, osx_amd64, osx_arm64, osx_universal, windows_amd64, windows_arm64
+# Note: windows_arm64 is built natively on an arm64 runner (aarch64-pc-windows-msvc), so the fallback
+# detection below does not need a dedicated branch for it.
 # Note: we do not currently handle musl vs gnu variants on Linux; users can manually set DUCKDB_PLATFORM if needed.
 # Note: we do not currently handle wasm variants; users can manually set DUCKDB_PLATFORM if needed.
 set(DUCKDB_PLATFORM "${DUCKDB_PLATFORM}")
