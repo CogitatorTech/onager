@@ -84,8 +84,6 @@ make release
 > After building from source, the Onager binary will be `build/release/extension/onager/onager.duckdb_extension`.
 > You can load it using the `load 'build/release/extension/onager/onager.duckdb_extension';` in the DuckDB shell.
 > Note that the extension binary will only work with the DuckDB version that it was built against.
-> You can download the pre-built binaries from the [releases page](https://github.com/CogitatorTech/onager/releases) for
-> your platform.
 
 #### Trying Onager
 
