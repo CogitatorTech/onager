@@ -424,7 +424,7 @@ dependencies = [
 
 [[package]]
 name = "onager"
-version = "0.1.0-alpha.6"
+version = "0.1.0"
 dependencies = [
  "graphina",
  "once_cell",

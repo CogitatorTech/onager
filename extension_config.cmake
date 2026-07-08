@@ -68,7 +68,11 @@ if (EXISTS ${ONAGER_RUST_LIB})
 
     # Create an imported target for the Rust library
     add_library(onager_rust STATIC IMPORTED GLOBAL)
-    if(UNIX)
+    if(EMSCRIPTEN)
+        # Emscripten provides libm and libdl implicitly, and -lpthread would force the
+        # threaded (wasm_threads) ABI. Link only the Rust static library on WASM.
+        set(_ONAGER_RUST_LINK_LIBS "")
+    elseif(UNIX)
         # We always use pthread, dl, and m on Unix
         set(_ONAGER_RUST_LINK_LIBS "pthread;dl;m")
     else()
@@ -80,7 +84,9 @@ if (EXISTS ${ONAGER_RUST_LIB})
     )
 
     # Add the Rust library to global link libraries so it gets linked to everything
-    if(UNIX)
+    if(EMSCRIPTEN)
+        link_libraries(${ONAGER_RUST_LIB})
+    elseif(UNIX)
         link_libraries(${ONAGER_RUST_LIB} pthread dl m)
     else()
         link_libraries(${ONAGER_RUST_LIB})
@@ -103,7 +109,9 @@ if (EXISTS ${ONAGER_RUST_LIB})
         message(STATUS "[onager] Linked Rust library to onager_loadable_extension")
     endif()
 
-    if(UNIX)
+    if(EMSCRIPTEN)
+        add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>:${ONAGER_RUST_LIB}>)
+    elseif(UNIX)
         add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>:${ONAGER_RUST_LIB}>)
         add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>:-lpthread>)
         add_link_options($<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>:-ldl>)
