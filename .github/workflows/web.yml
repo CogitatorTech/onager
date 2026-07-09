@@ -35,7 +35,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download WASM extension artifacts
+      - name: Download Wasm extension artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: onager-v1.5.4-extension-wasm_*
@@ -48,7 +48,7 @@ jobs:
           mkdir -p playground/extensions/duckdb-wasm
           # Static app files.
           cp -R web/. playground/
-          # DuckDB-WASM requests <repo>/duckdb-wasm/<version>/<platform>/onager.duckdb_extension.wasm.
+          # DuckDB-Wasm requests <repo>/duckdb-wasm/<version>/<platform>/onager.duckdb_extension.wasm.
           # The downloaded artifacts preserve the <version>/<platform>/*.wasm repository layout, so
           # copy them under the duckdb-wasm/ prefix the browser expects.
           cp -R wasm-extensions/. playground/extensions/duckdb-wasm/

@@ -1,4 +1,4 @@
-// Onager Playground: run graph analytics in the browser via DuckDB-WASM.
+// Onager Playground: run graph analytics in the browser via DuckDB-Wasm.
 // The Onager extension is served same-origin from ./extensions, so no CORS setup is needed.
 
 import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.33.1-dev57.0/+esm";
@@ -124,7 +124,7 @@ async function init() {
       "error",
       "Failed to initialize the playground.\n" +
         String(err && err.message ? err.message : err) +
-        "\n\nThe Onager WASM extension may not be deployed yet, or your browser may not support DuckDB-WASM."
+        "\n\nThe Onager Wasm extension may not be deployed yet, or your browser may not support DuckDB-Wasm."
     );
   }
 }
