@@ -311,7 +311,7 @@ mod tests {
 
         // All Jaccard coefficients should be in [0, 1]
         for &score in &result.scores {
-            assert!(score >= 0.0 && score <= 1.0);
+            assert!((0.0..=1.0).contains(&score));
         }
     }
 

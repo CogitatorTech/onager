@@ -505,7 +505,7 @@ mod tests {
 
         // All coefficients should be in [0, 1]
         for &coef in &result.coefficients {
-            assert!(coef >= 0.0 && coef <= 1.0);
+            assert!((0.0..=1.0).contains(&coef));
         }
 
         // Triangle has perfect clustering

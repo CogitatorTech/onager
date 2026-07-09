@@ -402,7 +402,7 @@ mod tests {
         let result = compute_assortativity(&src, &dst).unwrap();
 
         // Assortativity should be in [-1, 1]
-        assert!(result >= -1.0 && result <= 1.0);
+        assert!((-1.0..=1.0).contains(&result));
     }
 
     #[test]
