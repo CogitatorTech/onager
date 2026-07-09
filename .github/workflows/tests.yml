@@ -46,7 +46,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc curl pkg-config libssl-dev make liblzma-dev
-          cargo install cargo-tarpaulin --locked || true
+
+      # cargo-tarpaulin requires a newer rustc than the 1.86.0 pinned in rust-toolchain.toml
+      - name: Install cargo-tarpaulin
+        run: |
+          rustup toolchain install stable --profile minimal
+          cargo +stable install cargo-tarpaulin --locked
 
       - name: Run Rust tests
         run: |
