@@ -31,6 +31,8 @@ jobs:
     name: Assemble and upload playground
     needs: build-extension
     runs-on: ubuntu-latest
+    env:
+      DUCKDB_VERSION: v1.5.4
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,20 +40,28 @@ jobs:
       - name: Download Wasm extension artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: onager-v1.5.4-extension-wasm_*
+          pattern: onager-${{ env.DUCKDB_VERSION }}-extension-wasm_*
           path: wasm-extensions
-          merge-multiple: true
 
       - name: Assemble playground tree
         run: |
           set -euo pipefail
-          mkdir -p playground/extensions/duckdb-wasm
-          # Static app files.
+          # With a custom custom_extension_repository, DuckDB-Wasm requests the extension at
+          # <repo>/<version>/<platform>/<name>.duckdb_extension.wasm (no "duckdb-wasm/" segment;
+          # that prefix only applies to the default repository layout). Build that path exactly.
+          mkdir -p playground
           cp -R web/. playground/
-          # DuckDB-Wasm requests <repo>/duckdb-wasm/<version>/<platform>/onager.duckdb_extension.wasm.
-          # The downloaded artifacts preserve the <version>/<platform>/*.wasm repository layout, so
-          # copy them under the duckdb-wasm/ prefix the browser expects.
-          cp -R wasm-extensions/. playground/extensions/duckdb-wasm/
+          for platform in wasm_eh wasm_mvp; do
+            src=$(find "wasm-extensions/onager-${DUCKDB_VERSION}-extension-${platform}" \
+              -name '*.duckdb_extension.wasm' | head -n1)
+            if [ -z "$src" ]; then
+              echo "::error::No ${platform} extension found in downloaded artifacts"
+              exit 1
+            fi
+            dest="playground/extensions/${DUCKDB_VERSION}/${platform}"
+            mkdir -p "$dest"
+            cp "$src" "$dest/onager.duckdb_extension.wasm"
+          done
           echo "Assembled playground tree:"
           find playground -type f | sort
 
