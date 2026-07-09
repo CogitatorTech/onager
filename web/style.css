@@ -1,0 +1,149 @@
+/* Onager Playground styles. Palette matches the docs (deep purple + amber). */
+:root {
+  --purple: #6c4bd1;
+  --purple-dark: #4d33a3;
+  --amber: #ffb300;
+  --bg: #ffffff;
+  --bg-soft: #f6f4fb;
+  --fg: #1c1a24;
+  --fg-soft: #5a5568;
+  --border: #e3dff0;
+  --ok: #2e7d32;
+  --err: #c62828;
+  --radius: 8px;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17151f;
+    --bg-soft: #201d2b;
+    --fg: #ece9f5;
+    --fg-soft: #a9a2c0;
+    --border: #322c45;
+    --ok: #81c784;
+    --err: #ef9a9a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.55;
+}
+
+a { color: var(--purple); }
+@media (prefers-color-scheme: dark) { a { color: #b9a6f2; } }
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(90deg, var(--purple-dark), var(--purple));
+  color: #fff;
+}
+.brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: #fff; }
+.brand-logo {
+  background: #fff;
+  border-radius: 6px;
+  padding: 3px;
+}
+.brand-name { font-weight: 600; font-size: 1.1rem; }
+.brand-sub { font-weight: 400; opacity: 0.85; }
+.site-nav a { color: #fff; text-decoration: none; margin-left: 1rem; opacity: 0.9; }
+.site-nav a:hover { opacity: 1; text-decoration: underline; }
+
+.layout { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+.intro h1 { font-size: 1.7rem; margin: 0.5rem 0 0.5rem; }
+.intro p { color: var(--fg-soft); }
+
+h2 { font-size: 1.15rem; margin: 1.75rem 0 0.6rem; }
+
+.status {
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+}
+.status-loading { background: var(--bg-soft); color: var(--fg-soft); }
+.status-ready { background: rgba(46, 125, 50, 0.12); color: var(--ok); border-color: rgba(46, 125, 50, 0.35); }
+.status-error { background: rgba(198, 40, 40, 0.12); color: var(--err); border-color: rgba(198, 40, 40, 0.35); white-space: pre-wrap; }
+
+.demo-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.demo-desc { color: var(--fg-soft); min-height: 1.4em; margin: 0.6rem 0 0; font-size: 0.92rem; }
+
+.btn {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--fg);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover:not(:disabled) { border-color: var(--purple); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+.btn-primary:hover:not(:disabled) { background: var(--purple-dark); }
+.demo-buttons .btn.active { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255, 179, 0, 0.35); }
+
+.sql-input {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  color: var(--fg);
+  tab-size: 2;
+}
+.sql-input:focus { outline: 2px solid var(--purple); outline-offset: 1px; }
+
+.editor-actions { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.hint { color: var(--fg-soft); font-size: 0.85rem; }
+kbd {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 0.35em;
+}
+
+.result-meta { color: var(--fg-soft); font-size: 0.85rem; margin: 1rem 0 0.4rem; }
+.result-table { overflow-x: auto; border-radius: var(--radius); }
+table.grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+table.grid th, table.grid td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+  white-space: nowrap;
+}
+table.grid th { background: var(--bg-soft); position: sticky; top: 0; }
+table.grid td.num { text-align: right; }
+table.grid tbody tr:nth-child(even) { background: var(--bg-soft); }
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--fg-soft);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1.25rem;
+}

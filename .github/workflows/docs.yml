@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - develop
     tags:
       - 'v*'
 
@@ -42,6 +41,16 @@ jobs:
         run: |
           pip install uv && uv sync --extra dev
           source .venv/bin/activate && make docs
+
+      - name: Download playground artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: web.yml
+          workflow_conclusion: success
+          name: playground
+          path: ./site/playground
+          if_no_artifact_found: warn
+          allow_forks: false
 
       - name: Upload documentation artifact
         uses: actions/upload-pages-artifact@v3

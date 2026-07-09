@@ -10,6 +10,7 @@
 [![Examples](https://img.shields.io/badge/examples-view-green?style=flat&labelColor=282c34&logo=github)](https://cogitatortech.github.io/onager/examples/basic/)
 [![Docs](https://img.shields.io/badge/docs-read-blue?style=flat&labelColor=282c34&logo=read-the-docs)](https://cogitatortech.github.io/onager/)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?style=flat&labelColor=282c34&logo=open-source-initiative)](https://github.com/CogitatorTech/onager)
+[![Playground](https://img.shields.io/badge/playground-browser-507ec6?style=flat&labelColor=282c34&logo=webassembly)](https://cogitatortech.github.io/onager/playground)
 
 A Graph Analytics Toolbox for DuckDB
 
@@ -84,8 +85,6 @@ make release
 > After building from source, the Onager binary will be `build/release/extension/onager/onager.duckdb_extension`.
 > You can load it using the `load 'build/release/extension/onager/onager.duckdb_extension';` in the DuckDB shell.
 > Note that the extension binary will only work with the DuckDB version that it was built against.
-> You can download the pre-built binaries from the [releases page](https://github.com/CogitatorTech/onager/releases) for
-> your platform.
 
 #### Trying Onager
 
