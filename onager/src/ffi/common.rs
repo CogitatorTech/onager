@@ -9,6 +9,28 @@ use std::panic;
 
 use crate::graph;
 
+/// Builds the global rayon pool with the current thread as its only worker.
+///
+/// Emscripten builds without threads cannot spawn rayon workers: the stubbed
+/// pthread_create fails with EAGAIN, which std reports as WouldBlock, so rayon's
+/// own single-threaded WebAssembly fallback (which requires ErrorKind::Unsupported)
+/// is never taken and the first parallel algorithm panics. Building the pool
+/// explicitly makes parallel algorithms run serially on the calling thread.
+#[cfg(all(target_os = "emscripten", not(target_feature = "atomics")))]
+fn ensure_rayon_pool() {
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        let _ = rayon::ThreadPoolBuilder::new()
+            .num_threads(1)
+            .use_current_thread()
+            .build_global();
+    });
+}
+
+#[cfg(not(all(target_os = "emscripten", not(target_feature = "atomics"))))]
+fn ensure_rayon_pool() {}
+
 /// Wraps an FFI function body with catch_unwind to prevent panics from crossing FFI boundary.
 /// Returns the provided error_value if a panic occurs.
 ///
@@ -19,6 +41,7 @@ pub fn catch_unwind_ffi<F, T>(error_value: T, f: F) -> T
 where
     F: FnOnce() -> T + panic::UnwindSafe,
 {
+    ensure_rayon_pool();
     match panic::catch_unwind(f) {
         Ok(result) => result,
         Err(panic_info) => {

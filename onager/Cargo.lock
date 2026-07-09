@@ -431,6 +431,7 @@ dependencies = [
  "ordered-float",
  "parking_lot",
  "proptest",
+ "rayon",
  "serde",
  "serde_json",
  "tempfile",

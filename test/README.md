@@ -5,7 +5,7 @@ These tests are different than other tests like Rust tests for the [onager](../o
 
 ### Prerequisites
 
-- Rust (nightly version).
+- Rust 1.86.0 (installed automatically via `rust-toolchain.toml`).
 - GNU Make, CMake, and a modern C++ compiler.
 - Python 3.10+ (optional; only needed for test written in Python).
 

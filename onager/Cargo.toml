@@ -2,6 +2,7 @@
 name = "onager"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.86"
 publish = false
 description = "A Graph Analytics Toolbox for DuckDB"
 
@@ -23,6 +24,11 @@ serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 ordered-float = "5"
+
+# This is used to configure the global rayon pool for single-threaded WebAssembly builds.
+# Note that the version must stay in sync with the rayon version used by Graphina.
+[target.'cfg(target_os = "emscripten")'.dependencies]
+rayon = "1.10.0"
 
 [dev-dependencies]
 tempfile = "3.10"

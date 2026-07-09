@@ -1,9 +1,23 @@
 include_directories(${CMAKE_CURRENT_LIST_DIR}/onager/bindings/include)
 
-duckdb_extension_load(onager
-    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}
-    LOAD_TESTS
-)
+# On Emscripten the loadable extension target is a static archive, and the final
+# .duckdb_extension.wasm is produced by a post-build "emcc -sSIDE_MODULE=2" command that
+# links only the libraries listed in LINKED_LIBS. target_link_libraries on the extension
+# targets has no effect on that link, so the Rust static library must be passed here.
+# The library is built for wasm32-unknown-emscripten by the rust-build-wasm Makefile
+# target, which runs before the wasm CMake configuration (see wasm_pre_build_step).
+if(EMSCRIPTEN)
+    duckdb_extension_load(onager
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}
+        LOAD_TESTS
+        LINKED_LIBS "${CMAKE_CURRENT_LIST_DIR}/onager/target/wasm32-unknown-emscripten/release/libonager.a"
+    )
+else()
+    duckdb_extension_load(onager
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}
+        LOAD_TESTS
+    )
+endif()
 
 # Manually link the pre-built Rust static library into the generated extension targets.
 # The Rust library is built beforehand by the Makefile (cargo build --release --features duckdb_extension).
@@ -11,6 +25,11 @@ set(ONAGER_RUST_LIB ${CMAKE_CURRENT_LIST_DIR}/onager/target/release/libonager.a)
 
 # Collect candidate paths in priority order
 set(_ONAGER_RUST_CANDIDATES)
+
+# 0. Emscripten target directory when building for wasm
+if(EMSCRIPTEN)
+    list(APPEND _ONAGER_RUST_CANDIDATES ${CMAKE_CURRENT_LIST_DIR}/onager/target/wasm32-unknown-emscripten/release/libonager.a)
+endif()
 
 # 1. If CARGO_TARGET_DIR env var set (relative like target/<triple> or absolute) add its release path
 if(DEFINED ENV{CARGO_TARGET_DIR})

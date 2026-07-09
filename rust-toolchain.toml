@@ -1,3 +1,4 @@
 [toolchain]
-channel = "nightly-2025-09-25"
+channel = "1.86.0"
 components = ["rustfmt", "clippy", "rust-analyzer"]
+targets = ["wasm32-unknown-emscripten"]
