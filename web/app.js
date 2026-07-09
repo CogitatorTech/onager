@@ -120,12 +120,33 @@ async function init() {
     selectDemo(0, false);
     await runQuery();
   } catch (err) {
+    console.error("Onager playground init failed:", err);
     setStatus(
       "error",
       "Failed to initialize the playground.\n" +
-        String(err && err.message ? err.message : err) +
+        formatError(err) +
         "\n\nThe Onager Wasm extension may not be deployed yet, or your browser may not support DuckDB-Wasm."
     );
+  }
+}
+
+// Turn any thrown value into a readable message plus stack for the on-page box.
+function formatError(err) {
+  if (err == null) return "Unknown error.";
+  const msg = err.message ? String(err.message) : String(err);
+  const stack = err.stack ? String(err.stack) : "";
+  // Some stacks already start with the message; avoid duplicating it.
+  if (stack && !stack.startsWith(msg)) return `${msg}\n\n${stack}`;
+  return stack || msg;
+}
+
+// Read one cell defensively. Different duckdb-wasm/arrow builds expose values in
+// slightly different shapes, so never let a single value break the whole render.
+function readCell(vector, i) {
+  try {
+    return vector.get(i);
+  } catch {
+    return undefined;
   }
 }
 
@@ -133,9 +154,9 @@ async function init() {
 async function scalar(sql, col) {
   try {
     const res = await conn.query(sql);
-    const rows = res.toArray();
-    if (rows.length === 0) return null;
-    const v = rows[0][col];
+    if (res.numRows === 0) return null;
+    const child = res.getChild(col);
+    const v = child ? child.get(0) : null;
     return v == null ? null : String(v);
   } catch {
     return null;
@@ -145,6 +166,16 @@ async function scalar(sql, col) {
 function formatValue(v) {
   if (v === null || v === undefined) return "NULL";
   if (typeof v === "bigint") return v.toString();
+  if (typeof v === "object") {
+    // DECIMAL, nested, or other structured values: prefer a JSON-ish string.
+    try {
+      return typeof v.toString === "function" && v.toString !== Object.prototype.toString
+        ? v.toString()
+        : JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
+  }
   return String(v);
 }
 
@@ -152,9 +183,11 @@ function isNumeric(v) {
   return typeof v === "number" || typeof v === "bigint";
 }
 
+// Render an Arrow Table by reading column vectors directly (no row-proxy objects).
 function renderTable(res) {
   const fields = res.schema.fields.map((f) => f.name);
-  const rows = res.toArray();
+  const vectors = fields.map((_, c) => res.getChildAt(c));
+  const nrows = res.numRows;
 
   const table = document.createElement("table");
   table.className = "grid";
@@ -168,19 +201,18 @@ function renderTable(res) {
   }
 
   const tbody = table.createTBody();
-  for (const row of rows) {
+  for (let i = 0; i < nrows; i++) {
     const tr = tbody.insertRow();
-    for (const name of fields) {
+    for (let c = 0; c < fields.length; c++) {
       const td = tr.insertCell();
-      const value = row[name];
+      const value = vectors[c] ? readCell(vectors[c], i) : undefined;
       td.textContent = formatValue(value);
       if (isNumeric(value)) td.className = "num";
     }
   }
 
   resultEl.replaceChildren(table);
-  const count = rows.length;
-  resultMetaEl.textContent = `${count} row${count === 1 ? "" : "s"}, ${fields.length} column${
+  resultMetaEl.textContent = `${nrows} row${nrows === 1 ? "" : "s"}, ${fields.length} column${
     fields.length === 1 ? "" : "s"
   }.`;
 }
@@ -196,13 +228,14 @@ async function runQuery() {
     renderTable(res);
     setStatus("ready", "Query finished.");
   } catch (err) {
+    console.error("Onager playground query failed:", err);
     resultEl.replaceChildren();
     resultMetaEl.textContent = "";
     const detail = await scalar("select onager_last_error() as onager_last_error;", "onager_last_error");
     setStatus(
       "error",
       "Query failed.\n" +
-        String(err && err.message ? err.message : err) +
+        formatError(err) +
         (detail ? `\n\nOnager: ${detail}` : "")
     );
   } finally {
@@ -249,6 +282,14 @@ sqlEl.addEventListener("keydown", (e) => {
     e.preventDefault();
     runQuery();
   }
+});
+
+// Surface anything that escapes the try/catch blocks so it never fails silently.
+window.addEventListener("error", (e) => {
+  console.error("Onager playground uncaught error:", e.error || e.message);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("Onager playground unhandled rejection:", e.reason);
 });
 
 buildDemoButtons();
