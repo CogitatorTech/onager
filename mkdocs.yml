@@ -114,6 +114,8 @@ nav:
   - API Reference:
       - SQL Functions: reference/sql-functions.md
       - Input Formats: reference/input-formats.md
+  # Playground app (built by web.yml and served at /onager/playground/)
+  - Playground: https://cogitatortech.github.io/onager/playground/
 
 markdown_extensions:
   # Python Markdown

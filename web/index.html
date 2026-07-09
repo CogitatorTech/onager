@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Onager Playground</title>
+  <meta name="description" content="Run Onager graph analytics in your browser with DuckDB-WASM. No install required.">
+  <link rel="icon" href="logo.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../">
+      <img class="brand-logo" src="logo.svg" alt="Onager logo" width="32" height="32">
+      <span class="brand-name">Onager <span class="brand-sub">Playground</span></span>
+    </a>
+    <nav class="site-nav">
+      <a href="../">Docs</a>
+      <a href="https://github.com/CogitatorTech/onager" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <section class="intro">
+      <h1>Run Graph Analytics in Your Browser</h1>
+      <p>
+        This playground runs <a href="../">Onager</a> entirely in your browser using
+        <a href="https://duckdb.org/docs/stable/clients/wasm/overview" rel="noopener">DuckDB-WASM</a>.
+        Nothing is sent to a server. A small sample graph named <code>edges</code> is loaded for you;
+        pick a demo below or write your own SQL.
+      </p>
+    </section>
+
+    <div id="status" class="status status-loading" role="status" aria-live="polite">
+      Loading DuckDB-WASM and the Onager extension&hellip;
+    </div>
+
+    <section class="demos" aria-label="Guided demos">
+      <h2>Guided Demos</h2>
+      <div id="demo-buttons" class="demo-buttons"><!-- populated by app.js --></div>
+      <p id="demo-desc" class="demo-desc"></p>
+    </section>
+
+    <section class="editor" aria-label="SQL editor">
+      <h2>SQL Editor</h2>
+      <textarea id="sql" class="sql-input" spellcheck="false" autocapitalize="off" autocomplete="off"
+        placeholder="Write SQL here, for example: select * from edges;"></textarea>
+      <div class="editor-actions">
+        <button id="run" class="btn btn-primary" disabled>Run</button>
+        <button id="reset" class="btn" disabled title="Recreate the sample edges table">Reset Sample Data</button>
+        <span class="hint">Tip: press <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> to run.</span>
+      </div>
+    </section>
+
+    <section class="results" aria-label="Query results">
+      <div id="result-meta" class="result-meta"></div>
+      <div id="result" class="result-table" tabindex="0"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Powered by DuckDB-WASM and Onager. All queries run locally in your browser.</span>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
