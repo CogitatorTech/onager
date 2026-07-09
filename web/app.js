@@ -86,7 +86,13 @@ function setBusy(busy) {
 async function init() {
   try {
     const bundles = duckdb.getJsDelivrBundles();
-    const bundle = await duckdb.selectBundle(bundles);
+    // Force the MVP (non-exception) bundle instead of letting selectBundle pick "eh".
+    // The Onager extension embeds Rust code compiled for wasm32-unknown-emscripten, whose
+    // exception model does not match DuckDB-Wasm's native-wasm-exceptions ("eh") runtime.
+    // Mixing them makes function pointers mismatch at call time, surfacing as
+    // "indirect call signature mismatch" / "index out of bounds" once a query runs. The MVP
+    // runtime and the wasm_mvp extension share a consistent ABI, so pin to it.
+    const bundle = await duckdb.selectBundle({ mvp: bundles.mvp });
 
     // Workers cannot be loaded cross-origin directly; wrap the CDN worker in a same-origin blob.
     const workerUrl = URL.createObjectURL(
