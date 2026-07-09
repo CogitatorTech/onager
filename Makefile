@@ -44,6 +44,18 @@ rust-build-debug: ## Build Onager in debug mode
 	@echo "Building Onager in debug mode..."
 	@cd onager && cargo build --features "duckdb_extension"
 
+# The wasm extension is linked as an Emscripten side module, which requires
+# position-independent code, so the Rust library is built with relocation-model=pic.
+# Only the static library is built: the cdylib crate type does not link for
+# wasm32-unknown-emscripten and is not needed there.
+.PHONY: rust-build-wasm
+rust-build-wasm: ## Build Onager for wasm32-unknown-emscripten in release mode
+	@echo "Building Onager for WASM in release mode..."
+	@cd onager && RUSTFLAGS="-C relocation-model=pic" cargo rustc --release --target wasm32-unknown-emscripten --features "duckdb_extension" --crate-type staticlib
+
+# extension-ci-tools runs this hook before the wasm_mvp, wasm_eh, and wasm_threads builds.
+wasm_pre_build_step: rust-build-wasm
+
 .PHONY: rust-format
 rust-format: ## Format Rust files
 	@echo "Formatting Rust files..."

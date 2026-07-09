@@ -2,6 +2,7 @@
 name = "onager"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.86"
 publish = false
 description = "A Graph Analytics Toolbox for DuckDB"
 

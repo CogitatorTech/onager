@@ -69,7 +69,7 @@ pub fn generate_watts_strogatz(
     if n == 0 {
         return Err(OnagerError::InvalidArgument("n must be > 0".to_string()));
     }
-    if !k.is_multiple_of(2) || k >= n {
+    if k % 2 != 0 || k >= n {
         return Err(OnagerError::InvalidArgument(
             "k must be even and < n".to_string(),
         ));
