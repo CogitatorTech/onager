@@ -11,8 +11,6 @@ on:
       - '**.md'
       - 'docs/**'
   push:
-    branches:
-      - develop
     tags:
       - 'v*'
 
