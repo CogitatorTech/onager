@@ -1,4 +1,4 @@
-name: Build Web Playground
+name: Publish Playground App
 
 on:
   workflow_dispatch:
@@ -17,9 +17,6 @@ permissions:
   contents: read
 
 jobs:
-  # Build only the browser (WASM) variants of the Onager extension against the stable DuckDB
-  # release. upload_all_extensions keeps the DuckDB "repository" directory layout, which already
-  # contains the version segment the browser requests, so the assemble step does not hardcode it.
   build-extension:
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.4
     with:
@@ -28,8 +25,6 @@ jobs:
       extension_name: onager
       enable_rust: true
       upload_all_extensions: true
-      # Leave only wasm_eh and wasm_mvp: exclude every native arch and the threaded WASM build
-      # (wasm_threads stays excluded until the threaded rayon/pthreads path is validated).
       exclude_archs: "linux_amd64;linux_arm64;linux_amd64_musl;linux_arm64_musl;osx_amd64;osx_arm64;windows_amd64;windows_amd64_mingw;wasm_threads"
 
   assemble:
