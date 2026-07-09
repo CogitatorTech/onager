@@ -45,16 +45,13 @@ jobs:
       - name: Assemble playground tree
         run: |
           set -euo pipefail
-          # With a custom custom_extension_repository, DuckDB-Wasm requests the extension at
-          # <repo>/<version>/<platform>/<name>.duckdb_extension.wasm (no "duckdb-wasm/" segment;
-          # that prefix only applies to the default repository layout). Build that path exactly.
           mkdir -p playground
           cp -R web/. playground/
           for platform in wasm_eh wasm_mvp; do
             src=$(find "wasm-extensions/onager-${DUCKDB_VERSION}-extension-${platform}" \
-              -name '*.duckdb_extension.wasm' | head -n1)
+              -name 'onager.duckdb_extension.wasm' | head -n1)
             if [ -z "$src" ]; then
-              echo "::error::No ${platform} extension found in downloaded artifacts"
+              echo "::error::No ${platform} onager extension found in downloaded artifacts"
               exit 1
             fi
             dest="playground/extensions/${DUCKDB_VERSION}/${platform}"
