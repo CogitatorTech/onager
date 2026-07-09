@@ -31,9 +31,7 @@ jobs:
       ci_tools_version: main
       extension_name: onager
       enable_rust: true
-      # windows_arm64 is opt-in in the DuckDB distribution matrix; build it natively on the arm64 runner
       opt_in_archs: "windows_arm64"
-      # wasm_threads stays excluded until the threaded WASM build (with rayon and pthreads) is validated
       exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_threads"
 
   duckdb-stable-build:
@@ -43,9 +41,7 @@ jobs:
       ci_tools_version: v1.5.4
       extension_name: onager
       enable_rust: true
-      # windows_arm64 is opt-in in the DuckDB distribution matrix; build it natively on the arm64 runner
       opt_in_archs: "windows_arm64"
-      # wasm_threads stays excluded until the threaded WASM build (with rayon plus pthreads) is validated
       exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_threads"
 
   create-release-draft:
