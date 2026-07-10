@@ -517,6 +517,16 @@ async function getExtensionRepository() {
   return localRepo;
 }
 
+function updateFooterVersions(duckdbVersion, onagerVersion) {
+  const footerNote = document.getElementById("footer-note");
+  if (!footerNote) return;
+  const duckdbLabel = duckdbVersion ? `DuckDB-Wasm (${duckdbVersion})` : "DuckDB-Wasm";
+  const onagerLabel = onagerVersion ? `Onager (${onagerVersion})` : "Onager";
+  footerNote.textContent =
+    `This playground app is powered by ${duckdbLabel} and ${onagerLabel}, ` +
+    "and everything (including the queries) runs safely in your browser.";
+}
+
 function setStatus(kind, text) {
   statusEl.className = `status status-${kind}`;
   if (kind === "loading") {
@@ -579,6 +589,8 @@ async function init() {
     await conn.query(`load onager;`);
 
     const version = await scalar("select onager_version() as v;", "v");
+    const duckdbVersion = await scalar("select version() as v;", "v");
+    updateFooterVersions(duckdbVersion, version);
     await conn.query(SAMPLE_EDGES);
 
     // Populate initial textareas
