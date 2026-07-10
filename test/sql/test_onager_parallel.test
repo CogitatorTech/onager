@@ -98,6 +98,35 @@ select count(*) > 0 from onager_par_triangles((select src, dst from test_edges))
 ----
 1
 
+# =============================================================================
+# Directed Parameter
+# =============================================================================
+
+# Directed parallel BFS from the end of a directed path reaches only itself
+query I
+select count(*) from onager_par_bfs((select * from (values
+    (1::bigint, 2::bigint), (2, 3)
+  ) t(src, dst)), source := 3, directed := true)
+----
+1
+
+# Directed parallel shortest paths on the cycle 1 -> 2 -> 3 -> 1 go the long way
+query I
+select distance from onager_par_shortest_paths((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)), source := 1, directed := true)
+where node_id = 3
+----
+2.0
+
+# Batch mode also accepts the directed parameter
+query I
+select count(distinct source) from onager_par_bfs((select * from (values
+    (1::bigint, 2::bigint), (2, 3)
+  ) t(src, dst)), sources := [1, 3], directed := true)
+----
+2
+
 # Cleanup
 statement ok
 drop table test_edges

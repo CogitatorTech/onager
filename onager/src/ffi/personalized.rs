@@ -16,6 +16,7 @@ pub extern "C" fn onager_compute_personalized_pagerank(
     damping: f64,
     max_iter: usize,
     tolerance: f64,
+    directed: bool,
     out_nodes: *mut i64,
     out_scores: *mut f64,
 ) -> i64 {
@@ -49,6 +50,7 @@ pub extern "C" fn onager_compute_personalized_pagerank(
             damping,
             max_iter,
             tolerance,
+            directed,
         ) {
             Ok(result) => {
                 let n = result.node_ids.len();

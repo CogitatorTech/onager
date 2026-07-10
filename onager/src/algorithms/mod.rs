@@ -7,6 +7,7 @@
 #![allow(clippy::map_entry)]
 
 pub mod approximation;
+pub(crate) mod builder;
 pub mod centrality;
 pub mod community;
 pub mod generators;

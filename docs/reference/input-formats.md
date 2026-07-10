@@ -35,7 +35,7 @@ select onager_node_in_degree('social', 1);
     Node IDs must be `bigint` integers. They do not need to be continuous or start from zero. Any integer value works, like `1, 2, 3` or `100, 200, 500`.
 
 !!! note "Directed vs undirected"
-    Most functions treat graphs as undirected by default. Use the `directed := true` parameter where available to treat edges as one-way.
+    Every function treats the edge list as undirected by default. Direction-sensitive functions (centrality, traversal, shortest paths, distance metrics, and the parallel BFS and shortest path variants) accept `directed := true` to treat each edge row as one-way. See the [SQL Function Reference](sql-functions.md) for the functions that take the parameter. Note that edges are not deduplicated, so passing both `(1, 2)` and `(2, 1)` to an undirected function creates two parallel edges between the nodes.
 
 !!! note "Weighted functions"
     Some functions accept edge weights as a third column. These include:

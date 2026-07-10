@@ -17,6 +17,7 @@ struct PersonalizedPageRankBindData : public TableFunctionData {
   double damping = 0.85;
   int64_t max_iter = 100;
   double tolerance = 1e-6;
+  bool directed = false;
 };
 struct PersonalizedPageRankGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
@@ -33,6 +34,7 @@ static unique_ptr<FunctionData> PersonalizedPageRankBind(ClientContext &ctx, Tab
     if (kv.first == "damping") bd->damping = kv.second.GetValue<double>();
     if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
     if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
+    if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("score");
@@ -95,13 +97,13 @@ static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ct
     int64_t nc = ::onager::onager_compute_personalized_pagerank(
       gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(),
       gs.pers_nodes.data(), gs.pers_weights.data(), gs.pers_nodes.size(),
-      bd.damping, bd.max_iter, bd.tolerance, nullptr, nullptr);
+      bd.damping, bd.max_iter, bd.tolerance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Personalized PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_scores.resize(nc);
     ::onager::onager_compute_personalized_pagerank(
       gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(),
       gs.pers_nodes.data(), gs.pers_weights.data(), gs.pers_nodes.size(),
-      bd.damping, bd.max_iter, bd.tolerance, gs.result_nodes.data(), gs.result_scores.data());
+      bd.damping, bd.max_iter, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_scores.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -130,6 +132,7 @@ void RegisterPersonalizedFunctions(ExtensionLoader &loader) {
   pers_pr.named_parameters["damping"] = LogicalType::DOUBLE;
   pers_pr.named_parameters["max_iter"] = LogicalType::BIGINT;
   pers_pr.named_parameters["tolerance"] = LogicalType::DOUBLE;
+  pers_pr.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(pers_pr);
   loader.RegisterFunction(pers_pr);
 }

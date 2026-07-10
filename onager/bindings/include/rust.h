@@ -133,6 +133,7 @@ int64_t onager_compute_betweenness(const int64_t *src_ptr,
                                    const int64_t *dst_ptr,
                                    uintptr_t edge_count,
                                    bool normalized,
+                                   bool directed,
                                    int64_t *out_nodes,
                                    double *out_centralities);
 
@@ -143,6 +144,7 @@ int64_t onager_compute_betweenness(const int64_t *src_ptr,
 int64_t onager_compute_closeness(const int64_t *src_ptr,
                                  const int64_t *dst_ptr,
                                  uintptr_t edge_count,
+                                 bool directed,
                                  int64_t *out_nodes,
                                  double *out_centralities);
 
@@ -155,6 +157,7 @@ int64_t onager_compute_eigenvector(const int64_t *src_ptr,
                                    uintptr_t edge_count,
                                    uintptr_t max_iter,
                                    double tolerance,
+                                   bool directed,
                                    int64_t *out_nodes,
                                    double *out_centralities);
 
@@ -169,6 +172,7 @@ int64_t onager_compute_katz(const int64_t *src_ptr,
                             double beta,
                             uintptr_t max_iter,
                             double tolerance,
+                            bool directed,
                             int64_t *out_nodes,
                             double *out_centralities);
 
@@ -179,6 +183,7 @@ int64_t onager_compute_katz(const int64_t *src_ptr,
 int64_t onager_compute_harmonic(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
+                                bool directed,
                                 int64_t *out_nodes,
                                 double *out_centralities);
 
@@ -190,6 +195,7 @@ int64_t onager_compute_voterank(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
                                 uintptr_t num_seeds,
+                                bool directed,
                                 int64_t *out_nodes);
 
 /**
@@ -200,6 +206,7 @@ int64_t onager_compute_local_reaching(const int64_t *src_ptr,
                                       const int64_t *dst_ptr,
                                       uintptr_t edge_count,
                                       uintptr_t distance,
+                                      bool directed,
                                       int64_t *out_nodes,
                                       double *out_centralities);
 
@@ -210,6 +217,7 @@ int64_t onager_compute_local_reaching(const int64_t *src_ptr,
 int64_t onager_compute_laplacian(const int64_t *src_ptr,
                                  const int64_t *dst_ptr,
                                  uintptr_t edge_count,
+                                 bool directed,
                                  int64_t *out_nodes,
                                  double *out_centralities);
 
@@ -453,7 +461,8 @@ int64_t onager_compute_common_neighbors(const int64_t *src_ptr,
 
 int64_t onager_compute_diameter(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
-                                uintptr_t edge_count);
+                                uintptr_t edge_count,
+                                bool directed);
 
 /**
  * Compute graph radius.
@@ -461,7 +470,8 @@ int64_t onager_compute_diameter(const int64_t *src_ptr,
 
 int64_t onager_compute_radius(const int64_t *src_ptr,
                               const int64_t *dst_ptr,
-                              uintptr_t edge_count);
+                              uintptr_t edge_count,
+                              bool directed);
 
 /**
  * Compute average clustering coefficient.
@@ -477,7 +487,8 @@ double onager_compute_avg_clustering(const int64_t *src_ptr,
 
 double onager_compute_avg_path_length(const int64_t *src_ptr,
                                       const int64_t *dst_ptr,
-                                      uintptr_t edge_count);
+                                      uintptr_t edge_count,
+                                      bool directed);
 
 /**
  * Compute transitivity.
@@ -503,7 +514,8 @@ int64_t onager_compute_triangle_count(const int64_t *src_ptr,
 
 double onager_compute_assortativity(const int64_t *src_ptr,
                                     const int64_t *dst_ptr,
-                                    uintptr_t edge_count);
+                                    uintptr_t edge_count,
+                                    bool directed);
 
 /**
  * Compute graph density.
@@ -550,6 +562,7 @@ int64_t onager_compute_bfs_parallel(const int64_t *src_ptr,
                                     const int64_t *dst_ptr,
                                     uintptr_t edge_count,
                                     int64_t source,
+                                    bool directed,
                                     int64_t *out_order);
 
 /**
@@ -560,6 +573,7 @@ int64_t onager_compute_shortest_paths_parallel(const int64_t *src_ptr,
                                                const int64_t *dst_ptr,
                                                uintptr_t edge_count,
                                                int64_t source,
+                                               bool directed,
                                                int64_t *out_nodes,
                                                double *out_distances);
 
@@ -574,6 +588,7 @@ int64_t onager_compute_bfs_parallel_multi(const int64_t *src_ptr,
                                           uintptr_t edge_count,
                                           const int64_t *sources_ptr,
                                           uintptr_t sources_count,
+                                          bool directed,
                                           int64_t *out_sources,
                                           int64_t *out_nodes);
 
@@ -588,6 +603,7 @@ int64_t onager_compute_shortest_paths_parallel_multi(const int64_t *src_ptr,
                                                      uintptr_t edge_count,
                                                      const int64_t *sources_ptr,
                                                      uintptr_t sources_count,
+                                                     bool directed,
                                                      int64_t *out_sources,
                                                      int64_t *out_nodes,
                                                      double *out_distances);
@@ -635,6 +651,7 @@ int64_t onager_compute_personalized_pagerank(const int64_t *src_ptr,
                                              double damping,
                                              uintptr_t max_iter,
                                              double tolerance,
+                                             bool directed,
                                              int64_t *out_nodes,
                                              double *out_scores);
 
@@ -683,6 +700,7 @@ int64_t onager_compute_dijkstra(const int64_t *src_ptr,
                                 const double *weights_ptr,
                                 uintptr_t weights_count,
                                 int64_t source_node,
+                                bool directed,
                                 int64_t *out_nodes,
                                 double *out_distances);
 
@@ -694,6 +712,7 @@ int64_t onager_compute_bfs(const int64_t *src_ptr,
                            const int64_t *dst_ptr,
                            uintptr_t edge_count,
                            int64_t source_node,
+                           bool directed,
                            int64_t *out_order);
 
 /**
@@ -704,6 +723,7 @@ int64_t onager_compute_dfs(const int64_t *src_ptr,
                            const int64_t *dst_ptr,
                            uintptr_t edge_count,
                            int64_t source_node,
+                           bool directed,
                            int64_t *out_order);
 
 /**
@@ -715,6 +735,7 @@ int64_t onager_compute_bellman_ford(const int64_t *src_ptr,
                                     const double *weight_ptr,
                                     uintptr_t edge_count,
                                     int64_t source,
+                                    bool directed,
                                     int64_t *out_nodes,
                                     double *out_distances);
 
@@ -726,6 +747,7 @@ int64_t onager_compute_floyd_warshall(const int64_t *src_ptr,
                                       const int64_t *dst_ptr,
                                       const double *weight_ptr,
                                       uintptr_t edge_count,
+                                      bool directed,
                                       int64_t *out_src,
                                       int64_t *out_dst,
                                       double *out_distances);
@@ -740,7 +762,8 @@ double onager_compute_shortest_distance(const int64_t *src_ptr,
                                         const double *weights_ptr,
                                         uintptr_t weights_count,
                                         int64_t source_node,
-                                        int64_t target_node);
+                                        int64_t target_node,
+                                        bool directed);
 
 #ifdef __cplusplus
 } // extern "C"

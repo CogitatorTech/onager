@@ -203,6 +203,7 @@ pub extern "C" fn onager_compute_betweenness(
     dst_ptr: *const i64,
     edge_count: usize,
     normalized: bool,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -214,7 +215,7 @@ pub extern "C" fn onager_compute_betweenness(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_betweenness(src, dst, normalized) {
+        match algorithms::compute_betweenness(src, dst, normalized, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {
@@ -239,6 +240,7 @@ pub extern "C" fn onager_compute_closeness(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -250,7 +252,7 @@ pub extern "C" fn onager_compute_closeness(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_closeness(src, dst) {
+        match algorithms::compute_closeness(src, dst, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {
@@ -277,6 +279,7 @@ pub extern "C" fn onager_compute_eigenvector(
     edge_count: usize,
     max_iter: usize,
     tolerance: f64,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -288,7 +291,7 @@ pub extern "C" fn onager_compute_eigenvector(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_eigenvector(src, dst, max_iter, tolerance) {
+        match algorithms::compute_eigenvector(src, dst, max_iter, tolerance, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {
@@ -317,6 +320,7 @@ pub extern "C" fn onager_compute_katz(
     beta: f64,
     max_iter: usize,
     tolerance: f64,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -328,7 +332,7 @@ pub extern "C" fn onager_compute_katz(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_katz(src, dst, alpha, beta, max_iter, tolerance) {
+        match algorithms::compute_katz(src, dst, alpha, beta, max_iter, tolerance, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {
@@ -353,6 +357,7 @@ pub extern "C" fn onager_compute_harmonic(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -364,7 +369,7 @@ pub extern "C" fn onager_compute_harmonic(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_harmonic(src, dst) {
+        match algorithms::compute_harmonic(src, dst, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {
@@ -390,6 +395,7 @@ pub extern "C" fn onager_compute_voterank(
     dst_ptr: *const i64,
     edge_count: usize,
     num_seeds: usize,
+    directed: bool,
     out_nodes: *mut i64,
 ) -> i64 {
     clear_last_error();
@@ -400,7 +406,7 @@ pub extern "C" fn onager_compute_voterank(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_voterank(src, dst, num_seeds) {
+        match algorithms::compute_voterank(src, dst, num_seeds, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() {
@@ -424,6 +430,7 @@ pub extern "C" fn onager_compute_local_reaching(
     dst_ptr: *const i64,
     edge_count: usize,
     distance: usize,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -435,7 +442,7 @@ pub extern "C" fn onager_compute_local_reaching(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_local_reaching(src, dst, distance) {
+        match algorithms::compute_local_reaching(src, dst, distance, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {
@@ -460,6 +467,7 @@ pub extern "C" fn onager_compute_laplacian(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
     out_nodes: *mut i64,
     out_centralities: *mut f64,
 ) -> i64 {
@@ -471,7 +479,7 @@ pub extern "C" fn onager_compute_laplacian(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_laplacian(src, dst) {
+        match algorithms::compute_laplacian(src, dst, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {

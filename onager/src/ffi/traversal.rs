@@ -15,6 +15,7 @@ pub extern "C" fn onager_compute_dijkstra(
     weights_ptr: *const f64,
     weights_count: usize,
     source_node: i64,
+    directed: bool,
     out_nodes: *mut i64,
     out_distances: *mut f64,
 ) -> i64 {
@@ -31,7 +32,7 @@ pub extern "C" fn onager_compute_dijkstra(
         } else {
             unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
         };
-        match algorithms::compute_dijkstra(src, dst, weights, source_node) {
+        match algorithms::compute_dijkstra(src, dst, weights, source_node, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_distances.is_null() {
@@ -57,6 +58,7 @@ pub extern "C" fn onager_compute_bfs(
     dst_ptr: *const i64,
     edge_count: usize,
     source_node: i64,
+    directed: bool,
     out_order: *mut i64,
 ) -> i64 {
     clear_last_error();
@@ -67,7 +69,7 @@ pub extern "C" fn onager_compute_bfs(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_bfs(src, dst, source_node) {
+        match algorithms::compute_bfs(src, dst, source_node, directed) {
             Ok(result) => {
                 let n = result.order.len();
                 if !out_order.is_null() {
@@ -91,6 +93,7 @@ pub extern "C" fn onager_compute_dfs(
     dst_ptr: *const i64,
     edge_count: usize,
     source_node: i64,
+    directed: bool,
     out_order: *mut i64,
 ) -> i64 {
     clear_last_error();
@@ -101,7 +104,7 @@ pub extern "C" fn onager_compute_dfs(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_dfs(src, dst, source_node) {
+        match algorithms::compute_dfs(src, dst, source_node, directed) {
             Ok(result) => {
                 let n = result.order.len();
                 if !out_order.is_null() {
@@ -126,6 +129,7 @@ pub extern "C" fn onager_compute_bellman_ford(
     weight_ptr: *const f64,
     edge_count: usize,
     source: i64,
+    directed: bool,
     out_nodes: *mut i64,
     out_distances: *mut f64,
 ) -> i64 {
@@ -138,7 +142,7 @@ pub extern "C" fn onager_compute_bellman_ford(
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
         let weights = unsafe { std::slice::from_raw_parts(weight_ptr, edge_count) };
-        match algorithms::compute_bellman_ford(src, dst, weights, source) {
+        match algorithms::compute_bellman_ford(src, dst, weights, source, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_distances.is_null() {
@@ -164,6 +168,7 @@ pub extern "C" fn onager_compute_floyd_warshall(
     dst_ptr: *const i64,
     weight_ptr: *const f64,
     edge_count: usize,
+    directed: bool,
     out_src: *mut i64,
     out_dst: *mut i64,
     out_distances: *mut f64,
@@ -177,7 +182,7 @@ pub extern "C" fn onager_compute_floyd_warshall(
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
         let weights = unsafe { std::slice::from_raw_parts(weight_ptr, edge_count) };
-        match algorithms::compute_floyd_warshall(src, dst, weights) {
+        match algorithms::compute_floyd_warshall(src, dst, weights, directed) {
             Ok(result) => {
                 let n = result.src_nodes.len();
                 if !out_src.is_null() && !out_dst.is_null() && !out_distances.is_null() {
@@ -208,6 +213,7 @@ pub extern "C" fn onager_compute_shortest_distance(
     weights_count: usize,
     source_node: i64,
     target_node: i64,
+    directed: bool,
 ) -> f64 {
     clear_last_error();
     crate::ffi_catch_unwind!(f64::NAN, {
@@ -222,7 +228,14 @@ pub extern "C" fn onager_compute_shortest_distance(
         } else {
             unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
         };
-        match algorithms::compute_shortest_distance(src, dst, weights, source_node, target_node) {
+        match algorithms::compute_shortest_distance(
+            src,
+            dst,
+            weights,
+            source_node,
+            target_node,
+            directed,
+        ) {
             Ok(d) => d,
             Err(e) => {
                 set_last_error(&e.to_string());

@@ -12,6 +12,7 @@ pub extern "C" fn onager_compute_diameter(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
 ) -> i64 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
@@ -21,7 +22,7 @@ pub extern "C" fn onager_compute_diameter(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_diameter(src, dst) {
+        match algorithms::compute_diameter(src, dst, directed) {
             Ok(d) => d,
             Err(e) => {
                 set_last_error(&e.to_string());
@@ -37,6 +38,7 @@ pub extern "C" fn onager_compute_radius(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
 ) -> i64 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
@@ -46,7 +48,7 @@ pub extern "C" fn onager_compute_radius(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_radius(src, dst) {
+        match algorithms::compute_radius(src, dst, directed) {
             Ok(r) => r,
             Err(e) => {
                 set_last_error(&e.to_string());
@@ -87,6 +89,7 @@ pub extern "C" fn onager_compute_avg_path_length(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
 ) -> f64 {
     clear_last_error();
     crate::ffi_catch_unwind!(f64::NAN, {
@@ -96,7 +99,7 @@ pub extern "C" fn onager_compute_avg_path_length(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_avg_path_length(src, dst) {
+        match algorithms::compute_avg_path_length(src, dst, directed) {
             Ok(v) => v,
             Err(e) => {
                 set_last_error(&e.to_string());
@@ -173,6 +176,7 @@ pub extern "C" fn onager_compute_assortativity(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    directed: bool,
 ) -> f64 {
     clear_last_error();
     crate::ffi_catch_unwind!(f64::NAN, {
@@ -182,7 +186,7 @@ pub extern "C" fn onager_compute_assortativity(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_assortativity(src, dst) {
+        match algorithms::compute_assortativity(src, dst, directed) {
             Ok(v) => v,
             Err(e) => {
                 set_last_error(&e.to_string());

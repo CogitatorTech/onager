@@ -15,9 +15,9 @@ create or replace table follows as select * from (values
   (1::bigint, 2::bigint), (1, 3), (2, 3), (3, 4), (4, 5), (5, 1), (2, 4), (3, 5)
 ) t(follower, followed);
 
--- Find top influencers by PageRank
+-- Find top influencers by PageRank; follow edges are one-way, so use directed := true
 select node_id as user_id, rank
-from onager_ctr_pagerank((select follower as src, followed as dst from follows))
+from onager_ctr_pagerank((select follower as src, followed as dst from follows), directed := true)
 order by rank desc
 limit 5;
 
@@ -28,15 +28,15 @@ create or replace table interactions as select * from (values
 ) t(src, dst, msg_count);
 
 select node_id as user_id, rank
-from onager_ctr_pagerank((select src, dst, msg_count as weight from interactions))
+from onager_ctr_pagerank((select src, dst, msg_count as weight from interactions), directed := true)
 order by rank desc
 limit 5;
 
 -- Combine multiple centrality metrics
 with centralities as (
   select p.node_id, p.rank as pagerank, d.in_degree
-  from onager_ctr_pagerank((select follower as src, followed as dst from follows)) p
-  join onager_ctr_degree((select follower as src, followed as dst from follows)) d
+  from onager_ctr_pagerank((select follower as src, followed as dst from follows), directed := true) p
+  join onager_ctr_degree((select follower as src, followed as dst from follows), directed := true) d
     on p.node_id = d.node_id
 )
 select *, (pagerank + in_degree/10) as combined_score

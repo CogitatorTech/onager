@@ -177,6 +177,82 @@ select count(*) from onager_ctr_harmonic((select src, dst from test_edges where 
 ----
 0
 
+# =============================================================================
+# Directed Parameter
+# =============================================================================
+
+# Degree defaults to undirected: in_degree equals out_degree for every node
+query I
+select count(*) from onager_ctr_degree((select src, dst from test_edges)) where in_degree <> out_degree
+----
+0
+
+# Directed degree on a star 1 -> {2, 3, 4}: the hub has out_degree 3 and in_degree 0
+query II
+select in_degree, out_degree from onager_ctr_degree((select * from (values
+    (1::bigint, 2::bigint), (1, 3), (1, 4)
+  ) t(src, dst)), directed := true) where node_id = 1
+----
+0	3
+
+# Directed harmonic on a path 1 -> 2 -> 3: node 3 reaches nothing, so it scores zero
+query I
+select harmonic from onager_ctr_harmonic((select * from (values
+    (1::bigint, 2::bigint), (2, 3)
+  ) t(src, dst)), directed := true) where node_id = 3
+----
+0.0
+
+# Directed and undirected PageRank differ on an asymmetric graph
+query I
+select count(*) > 0 from (
+  select node_id, round(rank, 6) as rank from onager_ctr_pagerank((select * from (values
+      (1::bigint, 2::bigint), (1, 3), (2, 3)
+    ) t(src, dst)), directed := true)
+  except
+  select node_id, round(rank, 6) as rank from onager_ctr_pagerank((select * from (values
+      (1::bigint, 2::bigint), (1, 3), (2, 3)
+    ) t(src, dst)))
+)
+----
+1
+
+# The remaining centrality functions accept the directed parameter
+query I
+select count(*) > 0 from onager_ctr_betweenness((select src, dst from test_edges), directed := true)
+----
+1
+
+query I
+select count(*) > 0 from onager_ctr_closeness((select src, dst from test_edges), directed := true)
+----
+1
+
+query I
+select count(*) > 0 from onager_ctr_eigenvector((select src, dst from test_edges), directed := true)
+----
+1
+
+query I
+select count(*) > 0 from onager_ctr_katz((select src, dst from test_edges), alpha := 0.1, directed := true)
+----
+1
+
+query I
+select count(*) > 0 from onager_ctr_voterank((select src, dst from test_edges), num_seeds := 2, directed := true)
+----
+1
+
+query I
+select count(*) > 0 from onager_ctr_local_reaching((select src, dst from test_edges), distance := 2, directed := true)
+----
+1
+
+query I
+select count(*) > 0 from onager_ctr_laplacian((select src, dst from test_edges), directed := true)
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

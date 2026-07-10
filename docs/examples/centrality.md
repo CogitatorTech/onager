@@ -15,16 +15,17 @@ create or replace table citations as select * from (values
   (6, 7), (7, 8), (7, 9), (8, 10), (9, 10)
 ) t(paper_from, paper_to);
 
+-- Citations point from one paper to another, so treat the edges as directed
 -- PageRank: overall importance
-select * from onager_ctr_pagerank((select paper_from, paper_to from citations))
+select * from onager_ctr_pagerank((select paper_from, paper_to from citations), directed := true)
 order by rank desc limit 5;
 
 -- Betweenness: information brokers
-select * from onager_ctr_betweenness((select paper_from, paper_to from citations))
+select * from onager_ctr_betweenness((select paper_from, paper_to from citations), directed := true)
 order by betweenness desc limit 5;
 
 -- Degree: most connected
-select * from onager_ctr_degree((select paper_from, paper_to from citations))
+select * from onager_ctr_degree((select paper_from, paper_to from citations), directed := true)
 order by in_degree + out_degree desc limit 5;
 ```
 
@@ -32,9 +33,9 @@ order by in_degree + out_degree desc limit 5;
 
 ```sql
 with
-  pr as (select node_id, rank from onager_ctr_pagerank((select paper_from, paper_to from citations))),
-  bt as (select node_id, betweenness from onager_ctr_betweenness((select paper_from, paper_to from citations))),
-  dg as (select node_id, in_degree + out_degree as total_degree from onager_ctr_degree((select paper_from, paper_to from citations)))
+  pr as (select node_id, rank from onager_ctr_pagerank((select paper_from, paper_to from citations), directed := true)),
+  bt as (select node_id, betweenness from onager_ctr_betweenness((select paper_from, paper_to from citations), directed := true)),
+  dg as (select node_id, in_degree + out_degree as total_degree from onager_ctr_degree((select paper_from, paper_to from citations), directed := true))
 select pr.node_id, pr.rank, bt.betweenness, dg.total_degree
 from pr
 join bt on pr.node_id = bt.node_id

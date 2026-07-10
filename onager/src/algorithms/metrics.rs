@@ -2,7 +2,7 @@
 //!
 //! Diameter, Radius, Average Clustering, Average Path Length, Transitivity, Triangle Count, Assortativity.
 
-use graphina::core::types::{Graph, NodeId};
+use graphina::core::types::{Directed, Graph, GraphConstructor, NodeId, Undirected};
 use graphina::metrics::{
     assortativity, average_clustering_coefficient, average_path_length, diameter, radius,
     transitivity,
@@ -10,73 +10,52 @@ use graphina::metrics::{
 use graphina::parallel::triangles_parallel;
 use ordered_float::OrderedFloat;
 
+use crate::algorithms::builder::build_graph;
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
 /// Compute graph diameter (longest shortest path).
-pub fn compute_diameter(src: &[i64], dst: &[i64]) -> Result<i64> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+pub fn compute_diameter(src: &[i64], dst: &[i64], directed: bool) -> Result<i64> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    if directed {
+        diameter_impl::<Directed>(src, dst)
+    } else {
+        diameter_impl::<Undirected>(src, dst)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
-    }
-    Ok(diameter(&graph).map(|d| d as i64).unwrap_or(-1))
+fn diameter_impl<Ty: GraphConstructor<i64, OrderedFloat<f64>>>(
+    src: &[i64],
+    dst: &[i64],
+) -> Result<i64> {
+    let g = build_graph::<OrderedFloat<f64>, Ty, _>(src, dst, |_| OrderedFloat(1.0))?;
+    Ok(diameter(&g.graph).map(|d| d as i64).unwrap_or(-1))
 }
 
 /// Compute graph radius.
-pub fn compute_radius(src: &[i64], dst: &[i64]) -> Result<i64> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+pub fn compute_radius(src: &[i64], dst: &[i64], directed: bool) -> Result<i64> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    if directed {
+        radius_impl::<Directed>(src, dst)
+    } else {
+        radius_impl::<Undirected>(src, dst)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
-    }
-    Ok(radius(&graph).map(|v| v as i64).unwrap_or(-1))
+fn radius_impl<Ty: GraphConstructor<i64, OrderedFloat<f64>>>(
+    src: &[i64],
+    dst: &[i64],
+) -> Result<i64> {
+    let g = build_graph::<OrderedFloat<f64>, Ty, _>(src, dst, |_| OrderedFloat(1.0))?;
+    Ok(radius(&g.graph).map(|v| v as i64).unwrap_or(-1))
 }
 
 /// Compute average clustering coefficient.
@@ -113,36 +92,25 @@ pub fn compute_avg_clustering(src: &[i64], dst: &[i64]) -> Result<f64> {
 }
 
 /// Compute average path length.
-pub fn compute_avg_path_length(src: &[i64], dst: &[i64]) -> Result<f64> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+pub fn compute_avg_path_length(src: &[i64], dst: &[i64], directed: bool) -> Result<f64> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    if directed {
+        avg_path_length_impl::<Directed>(src, dst)
+    } else {
+        avg_path_length_impl::<Undirected>(src, dst)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
-    }
-    Ok(average_path_length(&graph).unwrap_or(f64::NAN))
+fn avg_path_length_impl<Ty: GraphConstructor<i64, OrderedFloat<f64>>>(
+    src: &[i64],
+    dst: &[i64],
+) -> Result<f64> {
+    let g = build_graph::<OrderedFloat<f64>, Ty, _>(src, dst, |_| OrderedFloat(1.0))?;
+    Ok(average_path_length(&g.graph).unwrap_or(f64::NAN))
 }
 
 /// Compute transitivity (global clustering coefficient).
@@ -236,36 +204,22 @@ pub fn compute_triangle_count(src: &[i64], dst: &[i64]) -> Result<TriangleResult
 /// Compute assortativity coefficient.
 /// Measures the tendency of nodes to connect to others with similar degree.
 /// Returns a value between -1 (disassortative) and 1 (assortative).
-pub fn compute_assortativity(src: &[i64], dst: &[i64]) -> Result<f64> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+pub fn compute_assortativity(src: &[i64], dst: &[i64], directed: bool) -> Result<f64> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    if directed {
+        assortativity_impl::<Directed>(src, dst)
+    } else {
+        assortativity_impl::<Undirected>(src, dst)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-    Ok(assortativity(&graph))
+fn assortativity_impl<Ty: GraphConstructor<i64, f64>>(src: &[i64], dst: &[i64]) -> Result<f64> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
+    Ok(assortativity(&g.graph))
 }
 
 /// Compute graph density.
@@ -325,7 +279,7 @@ mod tests {
     #[test]
     fn test_diameter_triangle() {
         let (src, dst) = triangle_graph();
-        let result = compute_diameter(&src, &dst).unwrap();
+        let result = compute_diameter(&src, &dst, false).unwrap();
 
         // In a triangle, diameter is 1 (direct connection between all pairs)
         assert_eq!(result, 1);
@@ -334,7 +288,7 @@ mod tests {
     #[test]
     fn test_diameter_path() {
         let (src, dst) = path_graph();
-        let result = compute_diameter(&src, &dst).unwrap();
+        let result = compute_diameter(&src, &dst, false).unwrap();
 
         // In path 1-2-3-4, diameter is 3 (from 1 to 4)
         assert_eq!(result, 3);
@@ -343,7 +297,7 @@ mod tests {
     #[test]
     fn test_radius_triangle() {
         let (src, dst) = triangle_graph();
-        let result = compute_radius(&src, &dst).unwrap();
+        let result = compute_radius(&src, &dst, false).unwrap();
 
         // In a triangle, radius is 1
         assert_eq!(result, 1);
@@ -370,7 +324,7 @@ mod tests {
     #[test]
     fn test_avg_path_length_triangle() {
         let (src, dst) = triangle_graph();
-        let result = compute_avg_path_length(&src, &dst).unwrap();
+        let result = compute_avg_path_length(&src, &dst, false).unwrap();
 
         // In a triangle, average path length is 1 (all nodes directly connected)
         assert!((result - 1.0).abs() < 0.01);
@@ -399,7 +353,7 @@ mod tests {
     #[test]
     fn test_assortativity() {
         let (src, dst) = triangle_graph();
-        let result = compute_assortativity(&src, &dst).unwrap();
+        let result = compute_assortativity(&src, &dst, false).unwrap();
 
         // Assortativity should be in [-1, 1]
         assert!((-1.0..=1.0).contains(&result));
@@ -407,8 +361,8 @@ mod tests {
 
     #[test]
     fn test_empty_graph_errors() {
-        assert!(compute_diameter(&[], &[]).is_err());
-        assert!(compute_radius(&[], &[]).is_err());
+        assert!(compute_diameter(&[], &[], false).is_err());
+        assert!(compute_radius(&[], &[], false).is_err());
         assert!(compute_avg_clustering(&[], &[]).is_err());
         assert!(compute_transitivity(&[], &[]).is_err());
         assert!(compute_triangle_count(&[], &[]).is_err());
@@ -416,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_mismatched_arrays_error() {
-        assert!(compute_diameter(&[1, 2], &[2]).is_err());
+        assert!(compute_diameter(&[1, 2], &[2], false).is_err());
     }
 
     #[test]

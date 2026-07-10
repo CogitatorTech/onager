@@ -62,6 +62,51 @@ select min(density) > 0 from onager_mtr_density((select src, dst from test_edges
 ----
 true
 
+# =============================================================================
+# Directed Parameter
+# =============================================================================
+
+# Directed diameter on the cycle 1 -> 2 -> 3 -> 1 is 2; undirected it is 1
+query I
+select * from onager_mtr_diameter((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)), directed := true)
+----
+2
+
+query I
+select * from onager_mtr_diameter((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)))
+----
+1
+
+# Directed radius on the same cycle is 2
+query I
+select * from onager_mtr_radius((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)), directed := true)
+----
+2
+
+# Directed average path length on the cycle is larger than undirected
+query I
+select d.avg_path_length > u.avg_path_length
+from onager_mtr_avg_path_length((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)), directed := true) d,
+  onager_mtr_avg_path_length((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst))) u
+----
+true
+
+# Assortativity accepts the directed parameter
+query I
+select count(assortativity) from onager_mtr_assortativity((select src, dst from test_edges), directed := true)
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

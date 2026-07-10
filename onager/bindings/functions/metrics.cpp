@@ -24,10 +24,14 @@ struct DiameterGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct DiameterBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<DiameterBindData>();
   CheckInt64Input(input, "onager_mtr_diameter");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("diameter");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> DiameterInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DiameterGlobalState>(); }
 static OperatorResultType DiameterInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -37,11 +41,12 @@ static OperatorResultType DiameterInOut(ExecutionContext &ctx, TableFunctionInpu
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<DiameterBindData>();
   auto &gs = data.global_state->Cast<DiameterGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    gs.result = ::onager::onager_compute_diameter(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
+    gs.result = ::onager::onager_compute_diameter(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
     if (gs.result < 0) throw InvalidInputException("Diameter failed: " + GetOnagerError());
     gs.computed = true;
   }
@@ -63,10 +68,14 @@ struct RadiusGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct RadiusBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<RadiusBindData>();
   CheckInt64Input(input, "onager_mtr_radius");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("radius");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> RadiusInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<RadiusGlobalState>(); }
 static OperatorResultType RadiusInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -76,11 +85,12 @@ static OperatorResultType RadiusInOut(ExecutionContext &ctx, TableFunctionInput 
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<RadiusBindData>();
   auto &gs = data.global_state->Cast<RadiusGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    gs.result = ::onager::onager_compute_radius(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
+    gs.result = ::onager::onager_compute_radius(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
     if (gs.result < 0) throw InvalidInputException("Radius failed: " + GetOnagerError());
     gs.computed = true;
   }
@@ -222,10 +232,14 @@ struct AvgPathLengthGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct AvgPathLengthBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<AvgPathLengthBindData>();
   CheckInt64Input(input, "onager_mtr_avg_path_length");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
   rt.push_back(LogicalType::DOUBLE); nm.push_back("avg_path_length");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> AvgPathLengthInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<AvgPathLengthGlobalState>(); }
 static OperatorResultType AvgPathLengthInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -235,11 +249,12 @@ static OperatorResultType AvgPathLengthInOut(ExecutionContext &ctx, TableFunctio
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<AvgPathLengthBindData>();
   auto &gs = data.global_state->Cast<AvgPathLengthGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    gs.result = ::onager::onager_compute_avg_path_length(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
+    gs.result = ::onager::onager_compute_avg_path_length(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
@@ -260,10 +275,14 @@ struct AssortativityGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct AssortativityBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<AssortativityBindData>();
   CheckInt64Input(input, "onager_mtr_assortativity");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
   rt.push_back(LogicalType::DOUBLE); nm.push_back("assortativity");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> AssortativityInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<AssortativityGlobalState>(); }
 static OperatorResultType AssortativityInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -273,11 +292,12 @@ static OperatorResultType AssortativityInOut(ExecutionContext &ctx, TableFunctio
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<AssortativityBindData>();
   auto &gs = data.global_state->Cast<AssortativityGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    gs.result = ::onager::onager_compute_assortativity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
+    gs.result = ::onager::onager_compute_assortativity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
@@ -341,12 +361,14 @@ void RegisterMetricFunctions(ExtensionLoader &loader) {
   TableFunction diameter("onager_mtr_diameter", {LogicalType::TABLE}, nullptr, DiameterBind, DiameterInitGlobal);
   diameter.in_out_function = DiameterInOut;
   diameter.in_out_function_final = DiameterFinal;
+  diameter.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(diameter);
   loader.RegisterFunction(diameter);
 
   TableFunction radius("onager_mtr_radius", {LogicalType::TABLE}, nullptr, RadiusBind, RadiusInitGlobal);
   radius.in_out_function = RadiusInOut;
   radius.in_out_function_final = RadiusFinal;
+  radius.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(radius);
   loader.RegisterFunction(radius);
 
@@ -371,12 +393,14 @@ void RegisterMetricFunctions(ExtensionLoader &loader) {
   TableFunction avg_path_length("onager_mtr_avg_path_length", {LogicalType::TABLE}, nullptr, AvgPathLengthBind, AvgPathLengthInitGlobal);
   avg_path_length.in_out_function = AvgPathLengthInOut;
   avg_path_length.in_out_function_final = AvgPathLengthFinal;
+  avg_path_length.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(avg_path_length);
   loader.RegisterFunction(avg_path_length);
 
   TableFunction assortativity("onager_mtr_assortativity", {LogicalType::TABLE}, nullptr, AssortativityBind, AssortativityInitGlobal);
   assortativity.in_out_function = AssortativityInOut;
   assortativity.in_out_function_final = AssortativityFinal;
+  assortativity.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(assortativity);
   loader.RegisterFunction(assortativity);
 

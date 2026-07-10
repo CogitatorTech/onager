@@ -14,6 +14,7 @@ pub extern "C" fn onager_compute_bfs_parallel(
     dst_ptr: *const i64,
     edge_count: usize,
     source: i64,
+    directed: bool,
     out_order: *mut i64,
 ) -> i64 {
     clear_last_error();
@@ -24,7 +25,7 @@ pub extern "C" fn onager_compute_bfs_parallel(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_bfs_parallel(src, dst, source) {
+        match algorithms::compute_bfs_parallel(src, dst, source, directed) {
             Ok(result) => {
                 let n = result.order.len();
                 if !out_order.is_null() {
@@ -48,6 +49,7 @@ pub extern "C" fn onager_compute_shortest_paths_parallel(
     dst_ptr: *const i64,
     edge_count: usize,
     source: i64,
+    directed: bool,
     out_nodes: *mut i64,
     out_distances: *mut f64,
 ) -> i64 {
@@ -59,7 +61,7 @@ pub extern "C" fn onager_compute_shortest_paths_parallel(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_shortest_paths_parallel(src, dst, source) {
+        match algorithms::compute_shortest_paths_parallel(src, dst, source, directed) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_distances.is_null() {
@@ -88,6 +90,7 @@ pub extern "C" fn onager_compute_bfs_parallel_multi(
     edge_count: usize,
     sources_ptr: *const i64,
     sources_count: usize,
+    directed: bool,
     out_sources: *mut i64,
     out_nodes: *mut i64,
 ) -> i64 {
@@ -100,7 +103,7 @@ pub extern "C" fn onager_compute_bfs_parallel_multi(
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
         let sources = unsafe { std::slice::from_raw_parts(sources_ptr, sources_count) };
-        match algorithms::compute_bfs_parallel_multi(src, dst, sources) {
+        match algorithms::compute_bfs_parallel_multi(src, dst, sources, directed) {
             Ok(result) => {
                 let n = result.nodes.len();
                 if !out_sources.is_null() && !out_nodes.is_null() {
@@ -129,6 +132,7 @@ pub extern "C" fn onager_compute_shortest_paths_parallel_multi(
     edge_count: usize,
     sources_ptr: *const i64,
     sources_count: usize,
+    directed: bool,
     out_sources: *mut i64,
     out_nodes: *mut i64,
     out_distances: *mut f64,
@@ -142,7 +146,7 @@ pub extern "C" fn onager_compute_shortest_paths_parallel_multi(
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
         let sources = unsafe { std::slice::from_raw_parts(sources_ptr, sources_count) };
-        match algorithms::compute_shortest_paths_parallel_multi(src, dst, sources) {
+        match algorithms::compute_shortest_paths_parallel_multi(src, dst, sources, directed) {
             Ok(result) => {
                 let n = result.nodes.len();
                 if !out_sources.is_null() && !out_nodes.is_null() && !out_distances.is_null() {

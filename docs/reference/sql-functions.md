@@ -7,6 +7,9 @@ description: Complete reference for all Onager SQL functions.
 
 Complete reference for all Onager SQL functions.
 
+Functions whose signature includes `[, directed]` accept a `directed` boolean named parameter.
+The default is `false` for every function, which treats the input edge list as undirected.
+
 ## Graph Management Functions
 
 | Function                                   | Returns   | Description                      |
@@ -30,17 +33,17 @@ Complete reference for all Onager SQL functions.
 
 | Function                                     | Returns                          | Description                    |
 |----------------------------------------------|----------------------------------|--------------------------------|
-| `onager_ctr_pagerank(edges [+ weights])`     | `node_id, rank`                  | PageRank centrality            |
-| `onager_ctr_degree(edges)`                   | `node_id, in_degree, out_degree` | Degree centrality              |
-| `onager_ctr_betweenness(edges)`              | `node_id, betweenness`           | Betweenness centrality         |
-| `onager_ctr_closeness(edges)`                | `node_id, closeness`             | Closeness centrality           |
-| `onager_ctr_eigenvector(edges)`              | `node_id, eigenvector`           | Eigenvector centrality         |
-| `onager_ctr_katz(edges, alpha [, beta])`     | `node_id, katz`                  | Katz centrality                |
-| `onager_ctr_harmonic(edges)`                 | `node_id, harmonic`              | Harmonic centrality            |
-| `onager_ctr_personalized_pagerank(...)`      | `node_id, score`                 | Personalized PageRank          |
-| `onager_ctr_voterank(edges, num_seeds)`      | `node_id`                        | VoteRank influential spreaders |
-| `onager_ctr_local_reaching(edges, distance)` | `node_id, centrality`            | Local reaching centrality      |
-| `onager_ctr_laplacian(edges)`                | `node_id, centrality`            | Laplacian centrality           |
+| `onager_ctr_pagerank(edges [+ weights] [, directed])` | `node_id, rank`                  | PageRank centrality            |
+| `onager_ctr_degree(edges [, directed])`      | `node_id, in_degree, out_degree` | Degree centrality              |
+| `onager_ctr_betweenness(edges [, directed])` | `node_id, betweenness`           | Betweenness centrality         |
+| `onager_ctr_closeness(edges [, directed])`   | `node_id, closeness`             | Closeness centrality           |
+| `onager_ctr_eigenvector(edges [, directed])` | `node_id, eigenvector`           | Eigenvector centrality         |
+| `onager_ctr_katz(edges, alpha [, beta, directed])` | `node_id, katz`                  | Katz centrality                |
+| `onager_ctr_harmonic(edges [, directed])`    | `node_id, harmonic`              | Harmonic centrality            |
+| `onager_ctr_personalized_pagerank(... [, directed])` | `node_id, score`                 | Personalized PageRank          |
+| `onager_ctr_voterank(edges, num_seeds [, directed])` | `node_id`                        | VoteRank influential spreaders |
+| `onager_ctr_local_reaching(edges, distance [, directed])` | `node_id, centrality`            | Local reaching centrality      |
+| `onager_ctr_laplacian(edges [, directed])`   | `node_id, centrality`            | Laplacian centrality           |
 
 ## Community Detection Functions
 
@@ -67,24 +70,24 @@ Complete reference for all Onager SQL functions.
 
 | Function                            | Returns              | Description                      |
 |-------------------------------------|----------------------|----------------------------------|
-| `onager_mtr_diameter(edges)`        | `diameter`           | Graph diameter                   |
-| `onager_mtr_radius(edges)`          | `radius`             | Graph radius                     |
+| `onager_mtr_diameter(edges [, directed])` | `diameter`           | Graph diameter                   |
+| `onager_mtr_radius(edges [, directed])` | `radius`             | Graph radius                     |
 | `onager_mtr_avg_clustering(edges)`  | `avg_clustering`     | Average clustering coefficient   |
-| `onager_mtr_avg_path_length(edges)` | `avg_path_length`    | Average shortest path length     |
+| `onager_mtr_avg_path_length(edges [, directed])` | `avg_path_length`    | Average shortest path length     |
 | `onager_mtr_transitivity(edges)`    | `transitivity`       | Global clustering (transitivity) |
 | `onager_mtr_triangles(edges)`       | `node_id, triangles` | Triangle count per node          |
-| `onager_mtr_assortativity(edges)`   | `assortativity`      | Degree assortativity coefficient |
-| `onager_mtr_density(edges)`         | `density`            | Graph density (0 to 1)           |
+| `onager_mtr_assortativity(edges [, directed])` | `assortativity`      | Degree assortativity coefficient |
+| `onager_mtr_density(edges [, directed])` | `density`            | Graph density (0 to 1)           |
 
 ## Path and Traversal Functions
 
 | Function                                          | Returns              | Description                       |
 |---------------------------------------------------|----------------------|-----------------------------------|
-| `onager_pth_dijkstra(edges [+ weights], source)`  | `node_id, distance`  | Shortest paths from source        |
-| `onager_pth_bellman_ford(weighted_edges, source)` | `node_id, distance`  | Shortest paths (negative weights) |
-| `onager_pth_floyd_warshall(weighted_edges)`       | `src, dst, distance` | All-pairs shortest paths          |
-| `onager_trv_bfs(edges, source)`                   | `node_id`            | Breadth-first traversal           |
-| `onager_trv_dfs(edges, source)`                   | `node_id`            | Depth-first traversal             |
+| `onager_pth_dijkstra(edges [+ weights], source [, directed])` | `node_id, distance`  | Shortest paths from source        |
+| `onager_pth_bellman_ford(weighted_edges, source [, directed])` | `node_id, distance`  | Shortest paths (negative weights) |
+| `onager_pth_floyd_warshall(weighted_edges [, directed])` | `src, dst, distance` | All-pairs shortest paths          |
+| `onager_trv_bfs(edges, source [, directed])`      | `node_id`            | Breadth-first traversal           |
+| `onager_trv_dfs(edges, source [, directed])`      | `node_id`            | Depth-first traversal             |
 
 ## Approximation Functions
 
@@ -122,9 +125,9 @@ Complete reference for all Onager SQL functions.
 
 | Function                                   | Returns                | Description                      |
 |--------------------------------------------|------------------------|----------------------------------|
-| `onager_par_pagerank(edges)`               | `node_id, rank`        | Parallel PageRank                |
-| `onager_par_bfs(edges, source or sources)` | `[source,] node_id`    | Parallel BFS traversal           |
-| `onager_par_shortest_paths(edges, source or sources)` | `[source,] node_id, distance` | Parallel shortest paths |
+| `onager_par_pagerank(edges [, directed])`  | `node_id, rank`        | Parallel PageRank                |
+| `onager_par_bfs(edges, source or sources [, directed])` | `[source,] node_id`    | Parallel BFS traversal           |
+| `onager_par_shortest_paths(edges, source or sources [, directed])` | `[source,] node_id, distance` | Parallel shortest paths |
 | `onager_par_components(edges)`             | `node_id, component`   | Parallel connected components    |
 | `onager_par_clustering(edges)`             | `node_id, coefficient` | Parallel clustering coefficients |
 | `onager_par_triangles(edges)`              | `node_id, triangles`   | Parallel triangle count          |

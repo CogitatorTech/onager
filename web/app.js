@@ -98,6 +98,13 @@ from onager_ctr_pagerank((select src, dst, (src + dst)::double as weight from ed
 order by rank desc;`,
       },
       {
+        label: "Dir. PageRank",
+        desc: "Treat each edge as one-way with directed := true. Most functions accept this parameter; the default is undirected.",
+        sql: `select node_id, round(rank, 4) as rank
+from onager_ctr_pagerank((select src, dst from edges), directed := true)
+order by rank desc;`,
+      },
+      {
         label: "Betweenness",
         desc: "Count how often each node sits on shortest paths between other nodes.",
         sql: `select node_id, round(betweenness, 4) as score

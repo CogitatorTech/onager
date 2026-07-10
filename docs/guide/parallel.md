@@ -49,7 +49,7 @@ Optional parameters:
 - `damping` (default 0.85): Probability of following a link
 - `iterations` (default 100): Maximum iterations
 - `tolerance` (default 1e-6): Convergence threshold for early termination
-- `directed` (default true): Treat graph as directed
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 The parallel implementation treats every edge as having weight 1.0.
 For weighted PageRank, use `onager_ctr_pagerank` with a third `double` column.
@@ -83,6 +83,12 @@ from onager_par_bfs((select src, dst from edges), sources := [1, 2, 3]);
 | source  | bigint | Source node of this traversal   |
 | node_id | bigint | Node visited during BFS         |
 
+Optional parameters:
+
+- `source`: Start node for a single traversal
+- `sources`: List of start nodes for batch traversals
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
 ---
 
 ## Parallel Shortest Paths
@@ -108,6 +114,12 @@ select source, node_id, distance
 from onager_par_shortest_paths((select src, dst from edges), sources := [1, 2, 3])
 order by source, distance;
 ```
+
+Optional parameters:
+
+- `source`: Start node for a single run
+- `sources`: List of start nodes for batch runs
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
