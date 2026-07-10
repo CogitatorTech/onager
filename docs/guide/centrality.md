@@ -242,6 +242,7 @@ order by katz desc;
 Optional parameters:
 
 - `alpha` (default 0.1): Attenuation factor for longer paths
+- `beta` (default 1.0): Constant base weight added to every node's score
 - `max_iter` (default 100): Maximum iterations
 - `tolerance` (default 1e-6): Convergence threshold
 

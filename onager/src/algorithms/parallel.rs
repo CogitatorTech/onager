@@ -26,6 +26,7 @@ pub fn compute_pagerank_parallel(
     weights: &[f64],
     damping: f64,
     iterations: usize,
+    tolerance: f64,
     directed: bool,
 ) -> Result<PageRankResult> {
     if src.len() != dst.len() {
@@ -68,7 +69,7 @@ pub fn compute_pagerank_parallel(
             graph.add_edge(src_id, dst_id, weight);
         }
 
-        let ranks = pagerank_parallel(&graph, damping, iterations, 1e-6, None);
+        let ranks = pagerank_parallel(&graph, damping, iterations, tolerance, None);
         let reverse_map: HashMap<NodeId, i64> = node_set.iter().map(|(&k, &v)| (v, k)).collect();
 
         let mut node_ids = Vec::with_capacity(ranks.len());
@@ -105,7 +106,7 @@ pub fn compute_pagerank_parallel(
             graph.add_edge(src_id, dst_id, weight);
         }
 
-        let ranks = pagerank_parallel(&graph, damping, iterations, 1e-6, None);
+        let ranks = pagerank_parallel(&graph, damping, iterations, tolerance, None);
         let reverse_map: HashMap<NodeId, i64> = node_set.iter().map(|(&k, &v)| (v, k)).collect();
 
         let mut node_ids = Vec::with_capacity(ranks.len());
@@ -123,8 +124,18 @@ pub fn compute_pagerank_parallel(
     }
 }
 
-/// Compute parallel BFS traversal from a single source.
-pub fn compute_bfs_parallel(src: &[i64], dst: &[i64], source: i64) -> Result<BfsResult> {
+/// Result of multi-source parallel BFS, flattened to one row per visited node.
+pub struct MultiBfsResult {
+    pub sources: Vec<i64>,
+    pub nodes: Vec<i64>,
+}
+
+/// Compute parallel BFS traversals from multiple source nodes in one batch.
+pub fn compute_bfs_parallel_multi(
+    src: &[i64],
+    dst: &[i64],
+    sources: &[i64],
+) -> Result<MultiBfsResult> {
     if src.len() != dst.len() {
         return Err(OnagerError::InvalidArgument(
             "src and dst arrays must have same length".to_string(),
@@ -133,6 +144,11 @@ pub fn compute_bfs_parallel(src: &[i64], dst: &[i64], source: i64) -> Result<Bfs
     if src.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
+        ));
+    }
+    if sources.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "At least one source node is required".to_string(),
         ));
     }
 
@@ -157,23 +173,40 @@ pub fn compute_bfs_parallel(src: &[i64], dst: &[i64], source: i64) -> Result<Bfs
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
-    let source_id = node_set
-        .get(&source)
-        .ok_or(OnagerError::NodeNotFound(source))?;
+    let source_ids = sources
+        .iter()
+        .map(|s| {
+            node_set
+                .get(s)
+                .copied()
+                .ok_or(OnagerError::NodeNotFound(*s))
+        })
+        .collect::<Result<Vec<NodeId>>>()?;
 
-    // bfs_parallel takes a slice of sources - we pass a single source
-    let results = bfs_parallel(&graph, &[*source_id]);
-    // Get the first (and only) result
-    let visit_order = results.into_iter().next().unwrap_or_default();
+    let results = bfs_parallel(&graph, &source_ids);
 
-    let order: Vec<i64> = visit_order
-        .into_iter()
-        .filter_map(|node_id| reverse_map.get(&node_id).copied())
-        .collect();
+    let mut out_sources = Vec::new();
+    let mut out_nodes = Vec::new();
+    for (i, visit_order) in results.into_iter().enumerate() {
+        for node_id in visit_order {
+            if let Some(&ext_id) = reverse_map.get(&node_id) {
+                out_sources.push(sources[i]);
+                out_nodes.push(ext_id);
+            }
+        }
+    }
+    Ok(MultiBfsResult {
+        sources: out_sources,
+        nodes: out_nodes,
+    })
+}
 
+/// Compute parallel BFS traversal from a single source.
+pub fn compute_bfs_parallel(src: &[i64], dst: &[i64], source: i64) -> Result<BfsResult> {
+    let multi = compute_bfs_parallel_multi(src, dst, &[source])?;
     Ok(BfsResult {
-        node_ids: order.clone(),
-        order,
+        node_ids: multi.nodes.clone(),
+        order: multi.nodes,
     })
 }
 
@@ -183,12 +216,19 @@ pub struct ShortestPathsParallelResult {
     pub distances: Vec<f64>,
 }
 
-/// Compute parallel shortest paths from a single source.
-pub fn compute_shortest_paths_parallel(
+/// Result of multi-source parallel shortest paths, flattened to one row per reachable node.
+pub struct MultiShortestPathsResult {
+    pub sources: Vec<i64>,
+    pub nodes: Vec<i64>,
+    pub distances: Vec<f64>,
+}
+
+/// Compute parallel shortest paths from multiple source nodes in one batch.
+pub fn compute_shortest_paths_parallel_multi(
     src: &[i64],
     dst: &[i64],
-    source: i64,
-) -> Result<ShortestPathsParallelResult> {
+    sources: &[i64],
+) -> Result<MultiShortestPathsResult> {
     if src.len() != dst.len() {
         return Err(OnagerError::InvalidArgument(
             "src and dst arrays must have same length".to_string(),
@@ -197,6 +237,11 @@ pub fn compute_shortest_paths_parallel(
     if src.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
+        ));
+    }
+    if sources.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "At least one source node is required".to_string(),
         ));
     }
 
@@ -221,25 +266,48 @@ pub fn compute_shortest_paths_parallel(
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
-    let source_id = node_set
-        .get(&source)
-        .ok_or(OnagerError::NodeNotFound(source))?;
+    let source_ids = sources
+        .iter()
+        .map(|s| {
+            node_set
+                .get(s)
+                .copied()
+                .ok_or(OnagerError::NodeNotFound(*s))
+        })
+        .collect::<Result<Vec<NodeId>>>()?;
 
-    // shortest_paths_parallel takes a slice of sources, returns Vec<HashMap<NodeId, usize>>
-    let results = shortest_paths_parallel(&graph, &[*source_id]);
-    let distances_map = results.into_iter().next().unwrap_or_default();
+    // shortest_paths_parallel returns one HashMap<NodeId, usize> per source
+    let results = shortest_paths_parallel(&graph, &source_ids);
 
-    let mut node_ids = Vec::with_capacity(distances_map.len());
-    let mut dist_values = Vec::with_capacity(distances_map.len());
-    for (node_id, dist) in distances_map {
-        if let Some(&ext_id) = reverse_map.get(&node_id) {
-            node_ids.push(ext_id);
-            dist_values.push(dist as f64);
+    let mut out_sources = Vec::new();
+    let mut out_nodes = Vec::new();
+    let mut out_distances = Vec::new();
+    for (i, distances_map) in results.into_iter().enumerate() {
+        for (node_id, dist) in distances_map {
+            if let Some(&ext_id) = reverse_map.get(&node_id) {
+                out_sources.push(sources[i]);
+                out_nodes.push(ext_id);
+                out_distances.push(dist as f64);
+            }
         }
     }
+    Ok(MultiShortestPathsResult {
+        sources: out_sources,
+        nodes: out_nodes,
+        distances: out_distances,
+    })
+}
+
+/// Compute parallel shortest paths from a single source.
+pub fn compute_shortest_paths_parallel(
+    src: &[i64],
+    dst: &[i64],
+    source: i64,
+) -> Result<ShortestPathsParallelResult> {
+    let multi = compute_shortest_paths_parallel_multi(src, dst, &[source])?;
     Ok(ShortestPathsParallelResult {
-        node_ids,
-        distances: dist_values,
+        node_ids: multi.nodes,
+        distances: multi.distances,
     })
 }
 
@@ -417,7 +485,7 @@ mod tests {
     #[test]
     fn test_pagerank_parallel_undirected() {
         let (src, dst) = triangle_graph();
-        let result = compute_pagerank_parallel(&src, &dst, &[], 0.85, 100, false).unwrap();
+        let result = compute_pagerank_parallel(&src, &dst, &[], 0.85, 100, 1e-6, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert_eq!(result.ranks.len(), 3);
@@ -430,7 +498,7 @@ mod tests {
     #[test]
     fn test_pagerank_parallel_directed() {
         let (src, dst) = triangle_graph();
-        let result = compute_pagerank_parallel(&src, &dst, &[], 0.85, 100, true).unwrap();
+        let result = compute_pagerank_parallel(&src, &dst, &[], 0.85, 100, 1e-6, true).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.ranks.is_empty());
@@ -440,7 +508,8 @@ mod tests {
     fn test_pagerank_parallel_with_weights() {
         let (src, dst) = triangle_graph();
         let weights = vec![1.0, 2.0, 1.5];
-        let result = compute_pagerank_parallel(&src, &dst, &weights, 0.85, 100, false).unwrap();
+        let result =
+            compute_pagerank_parallel(&src, &dst, &weights, 0.85, 100, 1e-6, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
     }
@@ -474,6 +543,41 @@ mod tests {
         for &dist in &result.distances {
             assert!(dist >= 0.0);
         }
+    }
+
+    #[test]
+    fn test_bfs_parallel_multi() {
+        let (src, dst) = connected_graph();
+        let result = compute_bfs_parallel_multi(&src, &dst, &[1, 2]).unwrap();
+
+        assert_eq!(result.sources.len(), result.nodes.len());
+        assert!(result.sources.contains(&1));
+        assert!(result.sources.contains(&2));
+
+        // Empty sources and unknown sources must error
+        assert!(compute_bfs_parallel_multi(&src, &dst, &[]).is_err());
+        assert!(compute_bfs_parallel_multi(&src, &dst, &[1, 999]).is_err());
+    }
+
+    #[test]
+    fn test_shortest_paths_parallel_multi() {
+        let (src, dst) = connected_graph();
+        let result = compute_shortest_paths_parallel_multi(&src, &dst, &[1, 2]).unwrap();
+
+        assert_eq!(result.sources.len(), result.nodes.len());
+        assert_eq!(result.nodes.len(), result.distances.len());
+        assert!(result.sources.contains(&1));
+        assert!(result.sources.contains(&2));
+
+        // Batch results must match the single-source results per source
+        let single = compute_shortest_paths_parallel(&src, &dst, 1).unwrap();
+        let batch_from_1 = result
+            .sources
+            .iter()
+            .zip(&result.nodes)
+            .filter(|(&s, _)| s == 1)
+            .count();
+        assert_eq!(batch_from_1, single.node_ids.len());
     }
 
     #[test]
@@ -531,7 +635,7 @@ mod tests {
 
     #[test]
     fn test_empty_graph_errors() {
-        assert!(compute_pagerank_parallel(&[], &[], &[], 0.85, 100, false).is_err());
+        assert!(compute_pagerank_parallel(&[], &[], &[], 0.85, 100, 1e-6, false).is_err());
         assert!(compute_bfs_parallel(&[], &[], 1).is_err());
         assert!(compute_shortest_paths_parallel(&[], &[], 1).is_err());
         assert!(compute_components_parallel(&[], &[]).is_err());
@@ -541,11 +645,13 @@ mod tests {
 
     #[test]
     fn test_mismatched_arrays_error() {
-        assert!(compute_pagerank_parallel(&[1, 2], &[2], &[], 0.85, 100, false).is_err());
+        assert!(compute_pagerank_parallel(&[1, 2], &[2], &[], 0.85, 100, 1e-6, false).is_err());
     }
 
     #[test]
     fn test_mismatched_weights_error() {
-        assert!(compute_pagerank_parallel(&[1, 2], &[2, 3], &[1.0], 0.85, 100, false).is_err());
+        assert!(
+            compute_pagerank_parallel(&[1, 2], &[2, 3], &[1.0], 0.85, 100, 1e-6, false).is_err()
+        );
     }
 }

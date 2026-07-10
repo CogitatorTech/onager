@@ -91,6 +91,22 @@ select count(*) > 0 from onager_ctr_katz((select src, dst from test_edges), alph
 ----
 1
 
+# Test Katz Centrality with a beta named parameter
+query I
+select count(*) > 0 from onager_ctr_katz((select src, dst from test_edges), alpha := 0.1, beta := 2.0)
+----
+1
+
+# Katz with the default beta of 1.0 must match the implicit default
+query I
+select count(*) from (
+  select node_id, round(katz, 6) as katz from onager_ctr_katz((select src, dst from test_edges), alpha := 0.1, beta := 1.0)
+  except
+  select node_id, round(katz, 6) as katz from onager_ctr_katz((select src, dst from test_edges), alpha := 0.1)
+)
+----
+0
+
 # Test Eigenvector Centrality
 query I
 select count(*) > 0 from onager_ctr_eigenvector((select src, dst from test_edges))

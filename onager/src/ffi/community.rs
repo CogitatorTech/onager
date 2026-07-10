@@ -86,6 +86,8 @@ pub extern "C" fn onager_compute_label_propagation(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    max_iter: usize,
+    seed: i64,
     out_node_ids: *mut i64,
     out_labels: *mut i64,
 ) -> i64 {
@@ -97,7 +99,8 @@ pub extern "C" fn onager_compute_label_propagation(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_label_propagation(src, dst) {
+        let seed_opt = if seed < 0 { None } else { Some(seed as u64) };
+        match algorithms::compute_label_propagation(src, dst, max_iter, seed_opt) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_node_ids.is_null() && !out_labels.is_null() {

@@ -19,6 +19,24 @@ select count(*) > 0 from onager_pth_dijkstra((select src, dst from test_edges), 
 ----
 1
 
+# Test weighted Dijkstra accepts a third DOUBLE column and honors weights.
+# Routes from 1 to 3: direct with weight 10, or through 2 with total weight 3.
+query I
+select distance from onager_pth_dijkstra((select * from (values
+    (1::bigint, 3::bigint, 10.0::double), (1, 2, 1.0), (2, 3, 2.0)
+  ) t(src, dst, weight)), source := 1)
+where node_id = 3
+----
+3.0
+
+# Test weighted Dijkstra rejects negative weights
+statement error
+select * from onager_pth_dijkstra((select * from (values
+    (1::bigint, 2::bigint, -1.0::double)
+  ) t(src, dst, weight)), source := 1)
+----
+Invalid Input Error: Dijkstra failed: Invalid argument: Dijkstra requires nonnegative edge weights
+
 # Test BFS
 query I
 select count(*) > 0 from onager_trv_bfs((select src, dst from test_edges), source := 1)

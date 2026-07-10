@@ -73,6 +73,17 @@ order by distance;
 | node_id  | bigint | Node identifier               |
 | distance | double | Shortest distance from source |
 
+The input relation may include a third `double` column with nonnegative edge weights.
+When present, distances follow the weights; otherwise every edge has weight 1.0.
+For negative weights, use `onager_pth_bellman_ford`.
+
+```sql
+-- Weighted shortest distances
+select node_id, distance
+from onager_pth_dijkstra((select src, dst, weight::double as weight from weighted_edges), source := 1::bigint)
+order by distance;
+```
+
 ---
 
 ## Bellman-Ford Algorithm

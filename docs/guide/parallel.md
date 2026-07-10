@@ -48,6 +48,7 @@ Optional parameters:
 
 - `damping` (default 0.85): Probability of following a link
 - `iterations` (default 100): Maximum iterations
+- `tolerance` (default 1e-6): Convergence threshold for early termination
 - `directed` (default true): Treat graph as directed
 
 The parallel implementation treats every edge as having weight 1.0.
@@ -69,6 +70,19 @@ from onager_par_bfs((select src, dst from edges), source := 1);
 |---------|--------|-------------------------|
 | node_id | bigint | Node visited during BFS |
 
+For batch processing, pass a list of source nodes through the `sources` parameter instead of `source`.
+The output then gains a leading `source` column identifying which traversal each row belongs to, and the traversals run in parallel.
+
+```sql
+select source, node_id
+from onager_par_bfs((select src, dst from edges), sources := [1, 2, 3]);
+```
+
+| Column  | Type   | Description                     |
+|---------|--------|---------------------------------|
+| source  | bigint | Source node of this traversal   |
+| node_id | bigint | Node visited during BFS         |
+
 ---
 
 ## Parallel Shortest Paths
@@ -85,6 +99,15 @@ order by distance;
 |----------|--------|-------------------------------|
 | node_id  | bigint | Node identifier               |
 | distance | double | Shortest distance from source |
+
+For batch processing, pass a list of source nodes through the `sources` parameter instead of `source`.
+The output then gains a leading `source` column, with one distance row per source and reachable node.
+
+```sql
+select source, node_id, distance
+from onager_par_shortest_paths((select src, dst from edges), sources := [1, 2, 3])
+order by source, distance;
+```
 
 ---
 

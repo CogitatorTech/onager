@@ -45,6 +45,7 @@ select onager_node_in_degree('social', 1);
     - `onager_mst_kruskal`: Minimum spanning tree (Kruskal's)
     - `onager_mst_prim`: Minimum spanning tree (Prim's)
     - `onager_apx_tsp`: Traveling salesman approximation
+    - `onager_pth_dijkstra`: Shortest paths with nonnegative weights (the weights column is optional)
 
     `onager_ctr_pagerank` also uses a third `double` column as edge weights when it is present, and falls back to weight 1.0 for every edge when it is absent. `onager_par_pagerank` is unweighted.
 

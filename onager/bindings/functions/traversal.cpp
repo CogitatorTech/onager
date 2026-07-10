@@ -15,11 +15,11 @@ using namespace onager;
 // Dijkstra Shortest Paths
 // =============================================================================
 
-struct DijkstraBindData : public TableFunctionData { int64_t source = 0; };
+struct DijkstraBindData : public TableFunctionData { int64_t source = 0; bool weighted = false; };
 struct DijkstraGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
-  std::vector<double> result_distances;
+  std::vector<double> weights, result_distances;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
 };
@@ -27,6 +27,7 @@ struct DijkstraGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DijkstraBindData>();
   CheckInt64Input(input, "onager_pth_dijkstra");
+  bd->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
   for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
@@ -34,9 +35,14 @@ static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBi
 }
 static unique_ptr<GlobalTableFunctionState> DijkstraInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DijkstraGlobalState>(); }
 static OperatorResultType DijkstraInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<DijkstraBindData>();
   auto &gs = data.global_state->Cast<DijkstraGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dijkstra");
+  if (bd.weighted) {
+    AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_pth_dijkstra");
+  } else {
+    AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dijkstra");
+  }
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -44,10 +50,11 @@ static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunc
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
+    const double *w = gs.weights.empty() ? nullptr : gs.weights.data();
+    int64_t nc = ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), w, gs.weights.size(), bd.source, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Dijkstra failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_distances.resize(nc);
-    ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, gs.result_nodes.data(), gs.result_distances.data());
+    ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), w, gs.weights.size(), bd.source, gs.result_nodes.data(), gs.result_distances.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;

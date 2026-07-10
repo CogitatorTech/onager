@@ -78,6 +78,91 @@ pub extern "C" fn onager_compute_shortest_paths_parallel(
     })
 }
 
+/// Compute parallel BFS from multiple sources.
+///
+/// Writes one row per visited node: the source it was reached from and the node itself.
+#[no_mangle]
+pub extern "C" fn onager_compute_bfs_parallel_multi(
+    src_ptr: *const i64,
+    dst_ptr: *const i64,
+    edge_count: usize,
+    sources_ptr: *const i64,
+    sources_count: usize,
+    out_sources: *mut i64,
+    out_nodes: *mut i64,
+) -> i64 {
+    clear_last_error();
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() || sources_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        let sources = unsafe { std::slice::from_raw_parts(sources_ptr, sources_count) };
+        match algorithms::compute_bfs_parallel_multi(src, dst, sources) {
+            Ok(result) => {
+                let n = result.nodes.len();
+                if !out_sources.is_null() && !out_nodes.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_sources, n) }
+                        .copy_from_slice(&result.sources);
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.nodes);
+                }
+                n as i64
+            }
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Compute parallel shortest paths from multiple sources.
+///
+/// Writes one row per reachable node: source, node, and hop distance.
+#[no_mangle]
+pub extern "C" fn onager_compute_shortest_paths_parallel_multi(
+    src_ptr: *const i64,
+    dst_ptr: *const i64,
+    edge_count: usize,
+    sources_ptr: *const i64,
+    sources_count: usize,
+    out_sources: *mut i64,
+    out_nodes: *mut i64,
+    out_distances: *mut f64,
+) -> i64 {
+    clear_last_error();
+    crate::ffi_catch_unwind!(-1, {
+        if src_ptr.is_null() || dst_ptr.is_null() || sources_ptr.is_null() {
+            set_last_error("Null pointer");
+            return -1;
+        }
+        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
+        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
+        let sources = unsafe { std::slice::from_raw_parts(sources_ptr, sources_count) };
+        match algorithms::compute_shortest_paths_parallel_multi(src, dst, sources) {
+            Ok(result) => {
+                let n = result.nodes.len();
+                if !out_sources.is_null() && !out_nodes.is_null() && !out_distances.is_null() {
+                    unsafe { std::slice::from_raw_parts_mut(out_sources, n) }
+                        .copy_from_slice(&result.sources);
+                    unsafe { std::slice::from_raw_parts_mut(out_nodes, n) }
+                        .copy_from_slice(&result.nodes);
+                    unsafe { std::slice::from_raw_parts_mut(out_distances, n) }
+                        .copy_from_slice(&result.distances);
+                }
+                n as i64
+            }
+            Err(e) => {
+                set_last_error(&e.to_string());
+                -1
+            }
+        }
+    })
+}
+
 /// Compute parallel connected components.
 #[no_mangle]
 pub extern "C" fn onager_compute_components_parallel(

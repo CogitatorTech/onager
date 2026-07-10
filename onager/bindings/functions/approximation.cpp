@@ -153,11 +153,17 @@ struct TspGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct TspBindData : public TableFunctionData { int64_t start = 0; bool has_start = false; };
+
 static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<TspBindData>();
   CheckInt64Input(input, "onager_apx_tsp", 3);
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "start") { bd->start = kv.second.GetValue<int64_t>(); bd->has_start = true; }
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("order");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> TspInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<TspGlobalState>(); }
 static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -167,14 +173,15 @@ static OperatorResultType TspInOut(ExecutionContext &ctx, TableFunctionInput &da
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<TspBindData>();
   auto &gs = data.global_state->Cast<TspGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.start, bd.has_start, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("TSP failed: " + GetOnagerError());
     gs.result_tour.resize(nc);
-    ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_tour.data(), &gs.result_cost);
+    ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.start, bd.has_start, gs.result_tour.data(), &gs.result_cost);
     gs.computed = true;
   }
   idx_t rem = gs.result_tour.size() - gs.output_idx;
@@ -214,6 +221,7 @@ void RegisterApproximationFunctions(ExtensionLoader &loader) {
   TableFunction tsp("onager_apx_tsp", {LogicalType::TABLE}, nullptr, TspBind, TspInitGlobal);
   tsp.in_out_function = TspInOut;
   tsp.in_out_function_final = TspFinal;
+  tsp.named_parameters["start"] = LogicalType::BIGINT;
   ONAGER_SET_NO_ORDER(tsp);
   loader.RegisterFunction(tsp);
 }

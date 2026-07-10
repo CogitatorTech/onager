@@ -58,6 +58,8 @@ int64_t onager_compute_tsp(const int64_t *src_ptr,
                            const int64_t *dst_ptr,
                            const double *weight_ptr,
                            uintptr_t edge_count,
+                           int64_t start,
+                           bool has_start,
                            int64_t *out_tour,
                            double *out_cost);
 
@@ -88,6 +90,7 @@ int64_t onager_compute_pagerank_parallel(const int64_t *src_ptr,
                                          uintptr_t weights_count,
                                          double damping,
                                          uintptr_t iterations,
+                                         double tolerance,
                                          bool directed,
                                          int64_t *out_node_ids,
                                          double *out_ranks);
@@ -163,6 +166,7 @@ int64_t onager_compute_katz(const int64_t *src_ptr,
                             const int64_t *dst_ptr,
                             uintptr_t edge_count,
                             double alpha,
+                            double beta,
                             uintptr_t max_iter,
                             double tolerance,
                             int64_t *out_nodes,
@@ -317,6 +321,8 @@ int64_t onager_compute_connected_components(const int64_t *src_ptr,
 int64_t onager_compute_label_propagation(const int64_t *src_ptr,
                                          const int64_t *dst_ptr,
                                          uintptr_t edge_count,
+                                         uintptr_t max_iter,
+                                         int64_t seed,
                                          int64_t *out_node_ids,
                                          int64_t *out_labels);
 
@@ -558,6 +564,35 @@ int64_t onager_compute_shortest_paths_parallel(const int64_t *src_ptr,
                                                double *out_distances);
 
 /**
+ * Compute parallel BFS from multiple sources.
+ *
+ * Writes one row per visited node: the source it was reached from and the node itself.
+ */
+
+int64_t onager_compute_bfs_parallel_multi(const int64_t *src_ptr,
+                                          const int64_t *dst_ptr,
+                                          uintptr_t edge_count,
+                                          const int64_t *sources_ptr,
+                                          uintptr_t sources_count,
+                                          int64_t *out_sources,
+                                          int64_t *out_nodes);
+
+/**
+ * Compute parallel shortest paths from multiple sources.
+ *
+ * Writes one row per reachable node: source, node, and hop distance.
+ */
+
+int64_t onager_compute_shortest_paths_parallel_multi(const int64_t *src_ptr,
+                                                     const int64_t *dst_ptr,
+                                                     uintptr_t edge_count,
+                                                     const int64_t *sources_ptr,
+                                                     uintptr_t sources_count,
+                                                     int64_t *out_sources,
+                                                     int64_t *out_nodes,
+                                                     double *out_distances);
+
+/**
  * Compute parallel connected components.
  */
 
@@ -645,6 +680,8 @@ int64_t onager_compute_induced_subgraph(const int64_t *src_ptr,
 int64_t onager_compute_dijkstra(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
+                                const double *weights_ptr,
+                                uintptr_t weights_count,
                                 int64_t source_node,
                                 int64_t *out_nodes,
                                 double *out_distances);
@@ -700,6 +737,8 @@ int64_t onager_compute_floyd_warshall(const int64_t *src_ptr,
 double onager_compute_shortest_distance(const int64_t *src_ptr,
                                         const int64_t *dst_ptr,
                                         uintptr_t edge_count,
+                                        const double *weights_ptr,
+                                        uintptr_t weights_count,
                                         int64_t source_node,
                                         int64_t target_node);
 

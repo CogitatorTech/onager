@@ -371,10 +371,13 @@ pub struct KatzResult {
 }
 
 /// Compute Katz centrality.
+///
+/// `beta` is a constant weight applied to every node (graphina's default is `1.0`).
 pub fn compute_katz(
     src: &[i64],
     dst: &[i64],
     alpha: f64,
+    beta: f64,
     max_iter: usize,
     tolerance: f64,
 ) -> Result<KatzResult> {
@@ -406,7 +409,8 @@ pub fn compute_katz(
         })?;
         graph.add_edge(src_id, dst_id, 1.0);
     }
-    let centralities = katz_centrality(&graph, alpha, None, max_iter, tolerance)
+    let beta_fn = |_node| beta;
+    let centralities = katz_centrality(&graph, alpha, Some(&beta_fn), max_iter, tolerance)
         .map_err(|e| OnagerError::GraphError(e.to_string()))?;
     let mut result_nodes = Vec::with_capacity(node_set.len());
     let mut result_cent = Vec::with_capacity(node_set.len());
@@ -809,7 +813,7 @@ mod tests {
     #[test]
     fn test_katz() {
         let (src, dst) = triangle_graph();
-        let result = compute_katz(&src, &dst, 0.1, 100, 1e-6).unwrap();
+        let result = compute_katz(&src, &dst, 0.1, 1.0, 100, 1e-6).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.centralities.is_empty());

@@ -289,7 +289,7 @@ static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunc
 // Katz Centrality Table Function
 // =============================================================================
 
-struct KatzBindData : public TableFunctionData { double alpha = 0.1; int64_t max_iter = 100; double tolerance = 1e-6; };
+struct KatzBindData : public TableFunctionData { double alpha = 0.1; double beta = 1.0; int64_t max_iter = 100; double tolerance = 1e-6; };
 struct KatzGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -303,6 +303,7 @@ static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindIn
   CheckInt64Input(input, "onager_katz");
   for (auto &kv : input.named_parameters) {
     if (kv.first == "alpha") bd->alpha = kv.second.GetValue<double>();
+    if (kv.first == "beta") bd->beta = kv.second.GetValue<double>();
     if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
     if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
   }
@@ -322,10 +323,10 @@ static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunction
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.max_iter, bd.tolerance, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.beta, bd.max_iter, bd.tolerance, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Katz failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centralities.resize(nc);
-    ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.max_iter, bd.tolerance, gs.result_nodes.data(), gs.result_centralities.data());
+    ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.beta, bd.max_iter, bd.tolerance, gs.result_nodes.data(), gs.result_centralities.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -435,6 +436,7 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   katz.in_out_function = KatzInOut;
   katz.in_out_function_final = KatzFinal;
   katz.named_parameters["alpha"] = LogicalType::DOUBLE;
+  katz.named_parameters["beta"] = LogicalType::DOUBLE;
   katz.named_parameters["max_iter"] = LogicalType::BIGINT;
   katz.named_parameters["tolerance"] = LogicalType::DOUBLE;
   ONAGER_SET_NO_ORDER(katz);

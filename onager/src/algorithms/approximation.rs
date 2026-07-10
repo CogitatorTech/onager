@@ -181,7 +181,14 @@ pub struct TspResult {
 }
 
 /// Compute Traveling Salesman Problem approximation using greedy nearest-neighbor.
-pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResult> {
+///
+/// When `start` is `None`, the tour starts at the first source node.
+pub fn compute_tsp(
+    src: &[i64],
+    dst: &[i64],
+    weights: &[f64],
+    start: Option<i64>,
+) -> Result<TspResult> {
     if src.len() != dst.len() || src.len() != weights.len() {
         return Err(OnagerError::InvalidArgument(
             "src, dst, and weights arrays must have same length".to_string(),
@@ -213,8 +220,9 @@ pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResul
         graph.add_edge(src_id, dst_id, weights[i]);
     }
 
-    let start_id = *node_set.get(&src[0]).ok_or_else(|| {
-        OnagerError::InvalidArgument(format!("Start node {} not found in graph", src[0]))
+    let start_node = start.unwrap_or(src[0]);
+    let start_id = *node_set.get(&start_node).ok_or_else(|| {
+        OnagerError::InvalidArgument(format!("Start node {} not found in graph", start_node))
     })?;
     let (tour_internal, cost) =
         greedy_tsp(&graph, start_id).map_err(|e| OnagerError::GraphError(e.to_string()))?;
@@ -270,7 +278,7 @@ mod tests {
         let dst = vec![2, 3, 4, 1];
         let weights = vec![1.0, 1.0, 1.0, 1.0];
 
-        let result = compute_tsp(&src, &dst, &weights).unwrap();
+        let result = compute_tsp(&src, &dst, &weights, None).unwrap();
 
         // Tour should include all 4 nodes plus return to start
         assert!(result.tour.len() >= 5);
@@ -281,7 +289,7 @@ mod tests {
 
     #[test]
     fn test_tsp_empty_error() {
-        let result = compute_tsp(&[], &[], &[]);
+        let result = compute_tsp(&[], &[], &[], None);
         assert!(result.is_err());
     }
 
@@ -302,7 +310,7 @@ mod tests {
         assert!(compute_max_clique(&[1, 2], &[2]).is_err());
         assert!(compute_independent_set(&[1, 2], &[2]).is_err());
         assert!(compute_vertex_cover(&[1, 2], &[2]).is_err());
-        assert!(compute_tsp(&[1, 2], &[2], &[1.0, 2.0]).is_err());
-        assert!(compute_tsp(&[1, 2], &[2, 3], &[1.0]).is_err());
+        assert!(compute_tsp(&[1, 2], &[2], &[1.0, 2.0], None).is_err());
+        assert!(compute_tsp(&[1, 2], &[2, 3], &[1.0], None).is_err());
     }
 }

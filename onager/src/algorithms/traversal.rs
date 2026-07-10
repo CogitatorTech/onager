@@ -16,8 +16,33 @@ pub struct DijkstraResult {
     pub distances: Vec<f64>,
 }
 
+/// Validate an optional weights slice for Dijkstra-based algorithms.
+///
+/// Weights must be empty (unweighted) or match the edge count, and every
+/// weight must be nonnegative.
+fn check_dijkstra_weights(weights: &[f64], edge_count: usize) -> Result<()> {
+    if !weights.is_empty() && weights.len() != edge_count {
+        return Err(OnagerError::InvalidArgument(
+            "weights must be empty or same length as edges".to_string(),
+        ));
+    }
+    if weights.iter().any(|w| *w < 0.0 || w.is_nan()) {
+        return Err(OnagerError::InvalidArgument(
+            "Dijkstra requires nonnegative edge weights".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Compute shortest distances from a source node.
-pub fn compute_dijkstra(src: &[i64], dst: &[i64], source_node: i64) -> Result<DijkstraResult> {
+///
+/// When `weights` is empty, every edge gets weight `1.0`.
+pub fn compute_dijkstra(
+    src: &[i64],
+    dst: &[i64],
+    weights: &[f64],
+    source_node: i64,
+) -> Result<DijkstraResult> {
     if src.len() != dst.len() {
         return Err(OnagerError::InvalidArgument(
             "src and dst arrays must have same length".to_string(),
@@ -28,6 +53,7 @@ pub fn compute_dijkstra(src: &[i64], dst: &[i64], source_node: i64) -> Result<Di
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    check_dijkstra_weights(weights, src.len())?;
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
     let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
@@ -44,7 +70,8 @@ pub fn compute_dijkstra(src: &[i64], dst: &[i64], source_node: i64) -> Result<Di
         let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
             OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
         })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
+        let weight = if weights.is_empty() { 1.0 } else { weights[i] };
+        graph.add_edge(src_id, dst_id, OrderedFloat(weight));
     }
 
     let source_id = node_set.get(&source_node).ok_or_else(|| {
@@ -183,6 +210,7 @@ pub fn compute_dfs(src: &[i64], dst: &[i64], source_node: i64) -> Result<DfsResu
 pub fn compute_shortest_distance(
     src: &[i64],
     dst: &[i64],
+    weights: &[f64],
     source_node: i64,
     target_node: i64,
 ) -> Result<f64> {
@@ -196,6 +224,7 @@ pub fn compute_shortest_distance(
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    check_dijkstra_weights(weights, src.len())?;
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
     let mut graph: Graph<i64, OrderedFloat<f64>> = Graph::new();
@@ -212,7 +241,8 @@ pub fn compute_shortest_distance(
         let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
             OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
         })?;
-        graph.add_edge(src_id, dst_id, OrderedFloat(1.0));
+        let weight = if weights.is_empty() { 1.0 } else { weights[i] };
+        graph.add_edge(src_id, dst_id, OrderedFloat(weight));
     }
 
     let source_id = node_set.get(&source_node).ok_or_else(|| {
@@ -395,9 +425,44 @@ mod tests {
         let src = vec![1, 2, 3];
         let dst = vec![2, 3, 4];
 
-        let result = compute_dijkstra(&src, &dst, 1).unwrap();
+        let result = compute_dijkstra(&src, &dst, &[], 1).unwrap();
 
         assert_eq!(result.node_ids.len(), 4);
+    }
+
+    #[test]
+    fn test_dijkstra_weighted() {
+        // Two routes from 1 to 3: direct with weight 10, or through 2 with total weight 3.
+        let src = vec![1, 1, 2];
+        let dst = vec![3, 2, 3];
+        let weights = vec![10.0, 1.0, 2.0];
+
+        let result = compute_dijkstra(&src, &dst, &weights, 1).unwrap();
+        let dist_of = |node: i64| {
+            let idx = result
+                .node_ids
+                .iter()
+                .position(|&n| n == node)
+                .unwrap_or_else(|| panic!("node {node} missing from result"));
+            result.distances[idx]
+        };
+        assert!(
+            (dist_of(3) - 3.0).abs() < 1e-9,
+            "shortest path is via node 2"
+        );
+        assert!((dist_of(2) - 1.0).abs() < 1e-9);
+
+        let direct = compute_shortest_distance(&src, &dst, &weights, 1, 3).unwrap();
+        assert!((direct - 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_dijkstra_invalid_weights() {
+        let src = vec![1, 2];
+        let dst = vec![2, 3];
+        assert!(compute_dijkstra(&src, &dst, &[1.0], 1).is_err());
+        assert!(compute_dijkstra(&src, &dst, &[1.0, -2.0], 1).is_err());
+        assert!(compute_shortest_distance(&src, &dst, &[1.0, -2.0], 1, 3).is_err());
     }
 
     #[test]
@@ -456,7 +521,7 @@ mod tests {
         let src = vec![1, 2, 3];
         let dst = vec![2, 3, 4];
 
-        let dist = compute_shortest_distance(&src, &dst, 1, 4).unwrap();
+        let dist = compute_shortest_distance(&src, &dst, &[], 1, 4).unwrap();
 
         // Path 1 -> 2 -> 3 -> 4 = 3 hops
         assert_eq!(dist, 3.0);
@@ -468,7 +533,7 @@ mod tests {
         let src = vec![1, 3];
         let dst = vec![2, 4];
 
-        let dist = compute_shortest_distance(&src, &dst, 1, 3).unwrap();
+        let dist = compute_shortest_distance(&src, &dst, &[], 1, 3).unwrap();
 
         // Node 3 is unreachable from node 1
         assert!(dist.is_infinite());
@@ -476,17 +541,17 @@ mod tests {
 
     #[test]
     fn test_empty_graph_errors() {
-        assert!(compute_dijkstra(&[], &[], 1).is_err());
+        assert!(compute_dijkstra(&[], &[], &[], 1).is_err());
         assert!(compute_bfs(&[], &[], 1).is_err());
         assert!(compute_dfs(&[], &[], 1).is_err());
         assert!(compute_bellman_ford(&[], &[], &[], 1).is_err());
         assert!(compute_floyd_warshall(&[], &[], &[]).is_err());
-        assert!(compute_shortest_distance(&[], &[], 1, 2).is_err());
+        assert!(compute_shortest_distance(&[], &[], &[], 1, 2).is_err());
     }
 
     #[test]
     fn test_mismatched_arrays_error() {
-        assert!(compute_dijkstra(&[1, 2], &[2], 1).is_err());
+        assert!(compute_dijkstra(&[1, 2], &[2], &[], 1).is_err());
         assert!(compute_bellman_ford(&[1, 2], &[2, 3], &[1.0], 1).is_err());
         assert!(compute_floyd_warshall(&[1, 2], &[2, 3], &[1.0]).is_err());
     }

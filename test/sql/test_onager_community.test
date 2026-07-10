@@ -31,6 +31,28 @@ select count(*) > 0 from onager_cmm_label_prop((select src, dst from test_edges)
 ----
 1
 
+# Test Label Propagation with max_iter and seed named parameters
+query I
+select count(*) > 0 from onager_cmm_label_prop((select src, dst from test_edges), max_iter := 50, seed := 42)
+----
+1
+
+# Seeded label propagation must be deterministic
+query I
+select count(*) from (
+  select * from onager_cmm_label_prop((select src, dst from test_edges), seed := 42)
+  except
+  select * from onager_cmm_label_prop((select src, dst from test_edges), seed := 42)
+)
+----
+0
+
+# Test Label Propagation rejects max_iter of zero
+statement error
+select * from onager_cmm_label_prop((select src, dst from test_edges), max_iter := 0)
+----
+Invalid Input Error: Label propagation failed: Invalid argument: max_iter must be positive
+
 # Test Girvan-Newman community detection
 query I
 select count(*) > 0 from onager_cmm_girvan_newman((select src, dst from test_edges), communities := 2)

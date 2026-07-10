@@ -18,17 +18,61 @@ select count(*) > 0 from onager_par_pagerank((select src, dst from test_edges))
 ----
 1
 
+# Test parallel PageRank with a tolerance named parameter
+query I
+select count(*) > 0 from onager_par_pagerank((select src, dst from test_edges), tolerance := 1e-8)
+----
+1
+
 # Test parallel BFS returns nodes
 query I
 select count(*) > 0 from onager_par_bfs((select src, dst from test_edges), source := 1)
 ----
 1
 
+# Test multi-source parallel BFS returns a source column
+query I
+select count(distinct source) from onager_par_bfs((select src, dst from test_edges), sources := [1, 2])
+----
+2
+
+# Multi-source parallel BFS from one source must match single-source output
+query I
+select count(*) from (
+  select node_id from onager_par_bfs((select src, dst from test_edges), sources := [1])
+  except
+  select node_id from onager_par_bfs((select src, dst from test_edges), source := 1)
+)
+----
+0
+
+# Test parallel BFS rejects passing both source and sources
+statement error
+select * from onager_par_bfs((select src, dst from test_edges), source := 1, sources := [1, 2])
+----
+Binder Error: onager_par_bfs: pass either source or sources, not both
+
 # Test parallel shortest paths returns distances
 query I
 select count(*) > 0 from onager_par_shortest_paths((select src, dst from test_edges), source := 1)
 ----
 1
+
+# Test multi-source parallel shortest paths returns a source column
+query I
+select count(distinct source) from onager_par_shortest_paths((select src, dst from test_edges), sources := [1, 2])
+----
+2
+
+# Multi-source parallel shortest paths from one source must match single-source output
+query I
+select count(*) from (
+  select node_id, distance from onager_par_shortest_paths((select src, dst from test_edges), sources := [1])
+  except
+  select node_id, distance from onager_par_shortest_paths((select src, dst from test_edges), source := 1)
+)
+----
+0
 
 # Test parallel connected components
 query I

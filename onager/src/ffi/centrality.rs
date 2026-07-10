@@ -65,6 +65,7 @@ pub extern "C" fn onager_compute_pagerank_parallel(
     weights_count: usize,
     damping: f64,
     iterations: usize,
+    tolerance: f64,
     directed: bool,
     out_node_ids: *mut i64,
     out_ranks: *mut f64,
@@ -83,7 +84,7 @@ pub extern "C" fn onager_compute_pagerank_parallel(
             unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
         };
         match algorithms::compute_pagerank_parallel(
-            src, dst, weights, damping, iterations, directed,
+            src, dst, weights, damping, iterations, tolerance, directed,
         ) {
             Ok(result) => {
                 let n = result.node_ids.len();
@@ -313,6 +314,7 @@ pub extern "C" fn onager_compute_katz(
     dst_ptr: *const i64,
     edge_count: usize,
     alpha: f64,
+    beta: f64,
     max_iter: usize,
     tolerance: f64,
     out_nodes: *mut i64,
@@ -326,7 +328,7 @@ pub extern "C" fn onager_compute_katz(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_katz(src, dst, alpha, max_iter, tolerance) {
+        match algorithms::compute_katz(src, dst, alpha, beta, max_iter, tolerance) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_centralities.is_null() {

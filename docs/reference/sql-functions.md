@@ -35,7 +35,7 @@ Complete reference for all Onager SQL functions.
 | `onager_ctr_betweenness(edges)`              | `node_id, betweenness`           | Betweenness centrality         |
 | `onager_ctr_closeness(edges)`                | `node_id, closeness`             | Closeness centrality           |
 | `onager_ctr_eigenvector(edges)`              | `node_id, eigenvector`           | Eigenvector centrality         |
-| `onager_ctr_katz(edges, alpha)`              | `node_id, katz`                  | Katz centrality                |
+| `onager_ctr_katz(edges, alpha [, beta])`     | `node_id, katz`                  | Katz centrality                |
 | `onager_ctr_harmonic(edges)`                 | `node_id, harmonic`              | Harmonic centrality            |
 | `onager_ctr_personalized_pagerank(...)`      | `node_id, score`                 | Personalized PageRank          |
 | `onager_ctr_voterank(edges, num_seeds)`      | `node_id`                        | VoteRank influential spreaders |
@@ -48,7 +48,7 @@ Complete reference for all Onager SQL functions.
 |------------------------------------------------|----------------------|---------------------------------|
 | `onager_cmm_louvain(edges [, seed])`           | `node_id, community` | Louvain modularity optimization |
 | `onager_cmm_components(edges)`                 | `node_id, component` | Connected components            |
-| `onager_cmm_label_prop(edges)`                 | `node_id, label`     | Label propagation               |
+| `onager_cmm_label_prop(edges [, max_iter, seed])`                 | `node_id, label`     | Label propagation               |
 | `onager_cmm_girvan_newman(edges, communities)` | `node_id, community` | Girvan-Newman edge betweenness  |
 | `onager_cmm_spectral(edges, k)`                | `node_id, community` | Spectral clustering             |
 | `onager_cmm_infomap(edges)`                    | `node_id, community` | Infomap community detection     |
@@ -80,7 +80,7 @@ Complete reference for all Onager SQL functions.
 
 | Function                                          | Returns              | Description                       |
 |---------------------------------------------------|----------------------|-----------------------------------|
-| `onager_pth_dijkstra(edges, source)`              | `node_id, distance`  | Shortest paths from source        |
+| `onager_pth_dijkstra(edges [+ weights], source)`  | `node_id, distance`  | Shortest paths from source        |
 | `onager_pth_bellman_ford(weighted_edges, source)` | `node_id, distance`  | Shortest paths (negative weights) |
 | `onager_pth_floyd_warshall(weighted_edges)`       | `src, dst, distance` | All-pairs shortest paths          |
 | `onager_trv_bfs(edges, source)`                   | `node_id`            | Breadth-first traversal           |
@@ -93,7 +93,7 @@ Complete reference for all Onager SQL functions.
 | `onager_apx_max_clique(edges)`      | `node_id`        | Maximum clique (approximation)   |
 | `onager_apx_independent_set(edges)` | `node_id`        | Maximum independent set (approx) |
 | `onager_apx_vertex_cover(edges)`    | `node_id`        | Minimum vertex cover (approx)    |
-| `onager_apx_tsp(weighted_edges)`    | `order, node_id` | TSP tour (greedy approx)         |
+| `onager_apx_tsp(weighted_edges [, start])` | `order, node_id` | TSP tour (greedy approx)   |
 
 ## Minimum Spanning Tree
 
@@ -123,8 +123,8 @@ Complete reference for all Onager SQL functions.
 | Function                                   | Returns                | Description                      |
 |--------------------------------------------|------------------------|----------------------------------|
 | `onager_par_pagerank(edges)`               | `node_id, rank`        | Parallel PageRank                |
-| `onager_par_bfs(edges, source)`            | `node_id`              | Parallel BFS traversal           |
-| `onager_par_shortest_paths(edges, source)` | `node_id, distance`    | Parallel shortest paths          |
+| `onager_par_bfs(edges, source or sources)` | `[source,] node_id`    | Parallel BFS traversal           |
+| `onager_par_shortest_paths(edges, source or sources)` | `[source,] node_id, distance` | Parallel shortest paths |
 | `onager_par_components(edges)`             | `node_id, component`   | Parallel connected components    |
 | `onager_par_clustering(edges)`             | `node_id, coefficient` | Parallel clustering coefficients |
 | `onager_par_triangles(edges)`              | `node_id, triangles`   | Parallel triangle count          |

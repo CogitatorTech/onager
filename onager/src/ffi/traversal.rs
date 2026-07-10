@@ -12,6 +12,8 @@ pub extern "C" fn onager_compute_dijkstra(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    weights_ptr: *const f64,
+    weights_count: usize,
     source_node: i64,
     out_nodes: *mut i64,
     out_distances: *mut f64,
@@ -24,7 +26,12 @@ pub extern "C" fn onager_compute_dijkstra(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_dijkstra(src, dst, source_node) {
+        let weights = if weights_ptr.is_null() || weights_count == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
+        };
+        match algorithms::compute_dijkstra(src, dst, weights, source_node) {
             Ok(result) => {
                 let n = result.node_ids.len();
                 if !out_nodes.is_null() && !out_distances.is_null() {
@@ -197,6 +204,8 @@ pub extern "C" fn onager_compute_shortest_distance(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    weights_ptr: *const f64,
+    weights_count: usize,
     source_node: i64,
     target_node: i64,
 ) -> f64 {
@@ -208,7 +217,12 @@ pub extern "C" fn onager_compute_shortest_distance(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_shortest_distance(src, dst, source_node, target_node) {
+        let weights = if weights_ptr.is_null() || weights_count == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
+        };
+        match algorithms::compute_shortest_distance(src, dst, weights, source_node, target_node) {
             Ok(d) => d,
             Err(e) => {
                 set_last_error(&e.to_string());

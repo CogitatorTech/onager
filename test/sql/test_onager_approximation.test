@@ -51,6 +51,19 @@ select count(*) > 0 from onager_apx_tsp((select src, dst, weight from weighted_e
 ----
 1
 
+# Test TSP with an explicit start node: the tour must begin there
+query I
+select node_id from onager_apx_tsp((select src, dst, weight from weighted_edges), start := 3)
+where "order" = 0
+----
+3
+
+# Test TSP with an unknown start node
+statement error
+select * from onager_apx_tsp((select src, dst, weight from weighted_edges), start := 99)
+----
+Invalid Input Error: TSP failed: Invalid argument: Start node 99 not found in graph
+
 # =============================================================================
 # Approximation Empty Graph Edge Cases
 # =============================================================================
