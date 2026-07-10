@@ -55,14 +55,21 @@
         </h2>
         <div class="panel-body">
           <div class="form-group">
-            <label for="graph-template">Sample Graphs</label>
+            <label for="graph-template">Graph Presets</label>
             <select id="graph-template" class="form-control">
               <option value="custom">-- Custom Edges --</option>
-              <option value="kite" selected>Krackhardt Kite (Default)</option>
-              <option value="clique">Complete Graph (Clique K5)</option>
-              <option value="star">Star Graph (6 nodes)</option>
-              <option value="cycle">Cycle Graph (C6)</option>
-              <option value="tree">Binary Tree (7 nodes)</option>
+              <optgroup label="Sample Graphs">
+                <option value="kite" selected>Krackhardt Kite (Default)</option>
+                <option value="clique">Complete Graph (Clique K5)</option>
+                <option value="star">Star Graph (6 nodes)</option>
+                <option value="cycle">Cycle Graph (C6)</option>
+                <option value="tree">Binary Tree (7 nodes)</option>
+              </optgroup>
+              <optgroup label="Generated Graphs">
+                <option value="gen-erdos-renyi">Erdos-Renyi Random (20 nodes)</option>
+                <option value="gen-barabasi-albert">Barabasi-Albert Scale-Free (20 nodes)</option>
+                <option value="gen-watts-strogatz">Watts-Strogatz Small-World (20 nodes)</option>
+              </optgroup>
             </select>
           </div>
           <div class="form-group">

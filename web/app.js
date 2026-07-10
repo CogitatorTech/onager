@@ -51,6 +51,23 @@ const GRAPH_TEMPLATES = {
   tree: `1, 2\n1, 3\n2, 4\n2, 5\n3, 6\n3, 7`
 };
 
+// Generator presets. Each query is seeded, so the same option always produces the
+// same edge list. Generators return edges only, so isolated nodes are not included.
+const GENERATOR_TEMPLATES = {
+  "gen-erdos-renyi": {
+    label: "Erdos-Renyi",
+    sql: "select src, dst from onager_gen_erdos_renyi(20, 0.15, seed := 68) order by src, dst;",
+  },
+  "gen-barabasi-albert": {
+    label: "Barabasi-Albert",
+    sql: "select src, dst from onager_gen_barabasi_albert(20, 2, seed := 68) order by src, dst;",
+  },
+  "gen-watts-strogatz": {
+    label: "Watts-Strogatz",
+    sql: "select src, dst from onager_gen_watts_strogatz(20, 4, 0.2, seed := 68) order by src, dst;",
+  },
+};
+
 // Demos matching standard algorithms
 const DEMOS = [
   {
@@ -412,9 +429,11 @@ async function updateGraphFromInput() {
     // Rerun the editor query so the table and visualization reflect the new graph.
     const ok = await runQuery();
     if (ok) setStatus("ready", `Sample graph updated with ${values.length} edges.`);
+    return ok;
   } catch (err) {
     console.error("Failed to update graph:", err);
     setStatus("error", "Failed to update graph.\n" + String(err));
+    return false;
   } finally {
     setBusy(false);
   }
@@ -1022,6 +1041,41 @@ function downloadFile(content, filename, contentType) {
   URL.revokeObjectURL(url);
 }
 
+// Run a generator preset, fill the edges input with the generated edge list, and
+// rebuild the sample graph from it so the user can inspect and edit the edges.
+async function loadGeneratorTemplate(key) {
+  if (!conn) return;
+  const gen = GENERATOR_TEMPLATES[key];
+
+  setBusy(true);
+  setStatus("loading", `Generating ${gen.label} graph...`);
+
+  try {
+    const res = await conn.query(gen.sql);
+    const srcVec = res.getChildAt(0);
+    const dstVec = res.getChildAt(1);
+    const lines = [];
+    for (let i = 0; i < res.numRows; i++) {
+      const s = cellNumber(srcVec, i);
+      const d = cellNumber(dstVec, i);
+      if (!isNaN(s) && !isNaN(d)) lines.push(`${s}, ${d}`);
+    }
+    if (lines.length === 0) {
+      throw new Error("The generator returned no edges.");
+    }
+    edgesInput.value = lines.join("\n");
+    const ok = await updateGraphFromInput();
+    if (ok) {
+      setStatus("ready", `Generated ${gen.label} graph with ${lines.length} edges.`);
+    }
+  } catch (err) {
+    console.error("Failed to generate graph:", err);
+    setStatus("error", "Failed to generate graph.\n" + String(err));
+  } finally {
+    setBusy(false);
+  }
+}
+
 // Graph Templates
 function setupGraphTemplateListeners() {
   templateSelect.addEventListener("change", () => {
@@ -1030,6 +1084,8 @@ function setupGraphTemplateListeners() {
     if (GRAPH_TEMPLATES[key]) {
       edgesInput.value = GRAPH_TEMPLATES[key];
       updateGraphFromInput();
+    } else if (GENERATOR_TEMPLATES[key]) {
+      loadGeneratorTemplate(key);
     }
   });
 
