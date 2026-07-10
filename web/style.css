@@ -538,6 +538,9 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  /* Let wide query results scroll inside the result table instead of
+     stretching this grid column past the viewport. */
+  min-width: 0;
 }
 
 .editor-panel {

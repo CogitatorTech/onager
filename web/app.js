@@ -293,15 +293,24 @@ function isNumeric(v) {
   return typeof v === "number" || typeof v === "bigint";
 }
 
+// Cap displayed cell text so one long value cannot stretch the table rows.
+// The full value stays available in the tooltip and in exports.
+const MAX_CELL_CHARS = 200;
+
+function formatDuration(ms) {
+  return ms < 1000 ? `${Math.max(1, Math.round(ms))} ms` : `${(ms / 1000).toFixed(2)} s`;
+}
+
 // Render an Arrow Table by reading column vectors directly.
-function renderTable(res) {
+function renderTable(res, elapsedMs) {
   const fields = res.schema.fields.map((f) => f.name);
   const vectors = fields.map((_, c) => res.getChildAt(c));
   const nrows = res.numRows;
+  const timing = elapsedMs == null ? "" : ` Query took ${formatDuration(elapsedMs)}.`;
 
   if (nrows === 0) {
     resultEl.innerHTML = `<div class="empty-state"><p>No rows returned</p></div>`;
-    resultMetaEl.textContent = `0 rows, ${fields.length} columns.`;
+    resultMetaEl.textContent = `0 rows, ${fields.length} columns.${timing}`;
     resultsActions.style.display = "none";
     return;
   }
@@ -324,7 +333,13 @@ function renderTable(res) {
     for (let c = 0; c < fields.length; c++) {
       const td = tr.insertCell();
       const value = vectors[c] ? readCell(vectors[c], i) : undefined;
-      td.textContent = formatValue(value);
+      const text = formatValue(value);
+      if (text.length > MAX_CELL_CHARS) {
+        td.textContent = text.slice(0, MAX_CELL_CHARS) + "…";
+        td.title = text;
+      } else {
+        td.textContent = text;
+      }
       if (isNumeric(value)) td.className = "num";
     }
   }
@@ -332,9 +347,9 @@ function renderTable(res) {
   resultEl.replaceChildren(table);
   const columnsText = `${fields.length} column${fields.length === 1 ? "" : "s"}`;
   resultMetaEl.textContent =
-    nrows > MAX_TABLE_ROWS
+    (nrows > MAX_TABLE_ROWS
       ? `Showing first ${MAX_TABLE_ROWS} of ${nrows} rows, ${columnsText}. Exports include all rows.`
-      : `${nrows} row${nrows === 1 ? "" : "s"}, ${columnsText}.`;
+      : `${nrows} row${nrows === 1 ? "" : "s"}, ${columnsText}.`) + timing;
   resultsActions.style.display = "flex";
 }
 
@@ -345,9 +360,11 @@ async function runQuery() {
   setBusy(true);
   resultMetaEl.textContent = "Running…";
   try {
+    const started = performance.now();
     const res = await conn.query(sql);
+    const elapsedMs = performance.now() - started;
     lastResult = res;
-    renderTable(res);
+    renderTable(res, elapsedMs);
     setStatus("ready", "Query finished.");
     addToHistory(sql);
 
@@ -425,6 +442,14 @@ async function updateGraphFromInput() {
 
     const sql = `create or replace table edges as\nselect * from (values\n  ${values.join(",\n  ")}\n) t(src, dst);`;
     await conn.query(sql);
+
+    // If the editor query does not read from the edges table (for example a graph
+    // generator call), rerunning it would visualize its own result and hide the
+    // updated graph. Point the editor at the new table instead.
+    if (!/\bedges\b/i.test(sqlEl.value)) {
+      sqlEl.value = "select * from edges;";
+      updateHighlight();
+    }
 
     // Rerun the editor query so the table and visualization reflect the new graph.
     const ok = await runQuery();
@@ -1161,6 +1186,12 @@ resetBtn.addEventListener("click", async () => {
     await conn.query(SAMPLE_EDGES);
     edgesInput.value = GRAPH_TEMPLATES.kite;
     templateSelect.value = "kite";
+    // Same guard as updateGraphFromInput: a query that does not read from the
+    // edges table would visualize its own result instead of the reset graph.
+    if (!/\bedges\b/i.test(sqlEl.value)) {
+      sqlEl.value = "select * from edges;";
+      updateHighlight();
+    }
     const ok = await runQuery();
     if (ok) setStatus("ready", "Sample edges table reset to default Krackhardt Kite.");
   } catch (err) {
