@@ -1,98 +1,101 @@
 /* Onager Playground CSS: Premium Modern Design System */
 
+/* Color values mirror Material for MkDocs with the deep purple primary and amber
+   accent used by the docs site (default scheme for light, slate for dark). */
 :root {
-  /* Color Palette (Deep Purple & Amber/Orange Accents closer to MkDocs Material) */
-  --primary: #673ab7;
-  --primary-hover: #5e35b1;
-  --accent: #ffb300;
-  --accent-hover: #ffa000;
-  
-  /* Light Theme Variables matching MkDocs Default */
-  --bg: #f5f7f9;
+  --primary: #7e56c2;
+  --primary-hover: #673ab6;
+  --accent: #ffaa00;
+  --accent-hover: #e69900;
+
+  /* Light theme, matching the Material "default" scheme. */
+  --bg: #ffffff;
   --bg-panel: #ffffff;
-  --bg-soft: #f8f9fa;
-  --fg: #373b44;
-  --fg-soft: #606a7b;
-  --border: #e0e0e0;
-  --border-focus: #673ab7;
-  --focus-ring: rgba(103, 58, 183, 0.15);
-  --primary-soft: rgba(103, 58, 183, 0.05);
-  
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --bg-soft: #f5f5f5;
+  --fg: rgba(0, 0, 0, 0.87);
+  --fg-soft: rgba(0, 0, 0, 0.54);
+  --border: rgba(0, 0, 0, 0.12);
+  --border-focus: #7e56c2;
+  --focus-ring: rgba(126, 86, 194, 0.15);
+  --primary-soft: rgba(126, 86, 194, 0.05);
+
+  --shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0 0.05rem rgba(0, 0, 0, 0.1);
   --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.03);
-  
+
   --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(103, 58, 183, 0.08);
-  
-  --header-bg: #673ab7;
+  --glass-border: rgba(126, 86, 194, 0.08);
+
+  --header-bg: #7e56c2;
   --header-fg: #ffffff;
-  --header-border: #5e35b1;
-  
+  --header-border: #7e56c2;
+
   --ok: #2e7d32;
   --err: #c62828;
-  --status-loading-bg: #f8f9fa;
+  --status-loading-bg: #f5f5f5;
   --status-ready-bg: rgba(46, 125, 50, 0.08);
   --status-ready-border: rgba(46, 125, 50, 0.25);
   --status-error-bg: rgba(198, 40, 40, 0.08);
   --status-error-border: rgba(198, 40, 40, 0.25);
 
   /* Graph Styling */
-  --graph-node: #673ab7;
+  --graph-node: #7e56c2;
   --graph-node-stroke: #ffffff;
   --graph-edge: #ccd0df;
-  --graph-text: #373b44;
-  --graph-node-highlight: #ffb300;
+  --graph-text: rgba(0, 0, 0, 0.87);
+  --graph-node-highlight: #ffaa00;
 
-  /* Fonts & Radius */
+  /* Fonts & Radius (Material uses 2px controls and 4px surfaces) */
   --sans: "Inter", system-ui, -apple-system, sans-serif;
   --mono: "JetBrains Mono", monospace;
-  --radius: 8px;
-  --radius-sm: 4px;
+  --radius: 4px;
+  --radius-sm: 2px;
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.dark-theme {
-  /* Dark Theme Variables matching MkDocs Slate */
-  --bg: #18181e;
-  --bg-panel: #222228;
-  --bg-soft: #2c2c35;
-  --fg: #eceff1;
-  --fg-soft: #90a4ae;
-  --border: #303035;
-  --border-focus: #7e57c2;
-  --focus-ring: rgba(126, 87, 194, 0.25);
-  --primary-soft: rgba(126, 87, 194, 0.08);
-  
-  --shadow: 0 10px 45px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.3);
+  /* Dark theme, matching the Material "slate" scheme (hue 225). */
+  --bg: hsl(225, 15%, 14%);
+  --bg-panel: hsl(225, 15%, 14%);
+  --bg-soft: hsl(225, 15%, 18%);
+  --fg: hsla(225, 15%, 90%, 0.82);
+  --fg-soft: hsla(225, 15%, 90%, 0.56);
+  --border: hsla(225, 15%, 95%, 0.12);
+  --border-focus: #a47bea;
+  --focus-ring: rgba(164, 123, 234, 0.25);
+  --primary-soft: rgba(164, 123, 234, 0.08);
+
+  --shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.25), 0 0 0.05rem rgba(0, 0, 0, 0.25);
   --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  
-  --glass-bg: rgba(34, 34, 40, 0.9);
-  --glass-border: rgba(126, 87, 194, 0.15);
-  
-  --primary: #7e57c2;
-  --primary-hover: #9575cd;
-  --accent: #ffb300;
-  --accent-hover: #ffc107;
-  
-  --header-bg: #222228;
-  --header-fg: #eceff1;
-  --header-border: #303035;
-  
+
+  --glass-bg: hsla(225, 15%, 14%, 0.9);
+  --glass-border: rgba(164, 123, 234, 0.15);
+
+  /* Slate links use the lighter deep purple, as in the docs. */
+  --primary: #a47bea;
+  --primary-hover: #b795f2;
+  --accent: #ffaa00;
+  --accent-hover: #ffbb33;
+
+  /* The docs header keeps the deep purple bar in dark mode too. */
+  --header-bg: #7e56c2;
+  --header-fg: #ffffff;
+  --header-border: #7e56c2;
+
   --ok: #81c784;
   --err: #ef9a9a;
-  --status-loading-bg: #2c2c35;
+  --status-loading-bg: hsl(225, 15%, 18%);
   --status-ready-bg: rgba(129, 199, 132, 0.08);
   --status-ready-border: rgba(129, 199, 132, 0.25);
   --status-error-bg: rgba(239, 154, 154, 0.08);
   --status-error-border: rgba(239, 154, 154, 0.25);
 
   /* Graph Styling Dark Mode */
-  --graph-node: #7e57c2;
-  --graph-node-stroke: #222228;
-  --graph-edge: #433b5c;
-  --graph-text: #eceff1;
-  --graph-node-highlight: #ffb300;
+  --graph-node: #a47bea;
+  --graph-node-stroke: hsl(225, 15%, 14%);
+  --graph-edge: hsla(225, 15%, 90%, 0.25);
+  --graph-text: hsla(225, 15%, 90%, 0.82);
+  --graph-node-highlight: #ffaa00;
 }
 
 /* Reduced Motion Settings */
@@ -216,12 +219,6 @@ a:hover {
 #theme-toggle:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--header-fg);
-}
-body.dark-theme #theme-toggle {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-body.dark-theme #theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Status Indicator */
@@ -422,18 +419,18 @@ body.dark-theme #theme-toggle:hover {
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
-  box-shadow: 0 4px 12px rgba(103, 58, 183, 0.25);
+  box-shadow: 0 4px 12px rgba(126, 86, 194, 0.25);
 }
 
 .btn-accent {
   background: var(--accent);
-  color: #212121;
+  color: rgba(0, 0, 0, 0.87);
   border-color: var(--accent);
 }
 .btn-accent:hover:not(:disabled) {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
-  box-shadow: 0 4px 12px rgba(255, 179, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
 }
 
 .btn-outline {
@@ -641,53 +638,45 @@ kbd {
   word-wrap: normal;
 }
 
-/* Syntax Highlighting Tokens (custom tailored to Onager's theme) */
+/* Syntax highlighting tokens using the Material for MkDocs code colors
+   (slate values for dark, default scheme values for light). */
 .token.keyword {
-  color: #ff79c6;
-  font-weight: 600;
+  color: #6791e0;
 }
 .token.function {
-  color: #8be9fd;
-  font-weight: 500;
+  color: #c973d9;
 }
 .token.string {
-  color: #f1fa8c;
+  color: #2fb170;
 }
 .token.number {
-  color: #bd93f9;
+  color: #e6695b;
 }
 .token.comment {
-  color: #6272a4;
-  font-style: italic;
+  color: var(--fg-soft);
 }
 .token.punctuation {
-  color: var(--fg);
+  color: var(--fg-soft);
 }
 .token.operator {
-  color: #ff79c6;
+  color: var(--fg-soft);
 }
 
 /* Light Theme adjustments for syntax highlighting */
 body:not(.dark-theme) .token.keyword {
-  color: #d73a49;
+  color: #3f6ec6;
 }
 body:not(.dark-theme) .token.function {
-  color: #6f42c1;
+  color: #a846b9;
 }
 body:not(.dark-theme) .token.string {
-  color: #032f62;
+  color: #1c7d4d;
 }
 body:not(.dark-theme) .token.number {
-  color: #005cc5;
+  color: #d52a2a;
 }
 body:not(.dark-theme) .token.comment {
-  color: #6a737d;
-}
-body:not(.dark-theme) .token.punctuation {
-  color: var(--fg);
-}
-body:not(.dark-theme) .token.operator {
-  color: #d73a49;
+  color: var(--fg-soft);
 }
 
 .editor-actions {
@@ -931,7 +920,7 @@ table.grid td.num {
   fill: var(--graph-node-highlight);
   stroke: var(--accent);
   stroke-width: 3;
-  filter: drop-shadow(0 0 6px rgba(255, 179, 0, 0.4));
+  filter: drop-shadow(0 0 6px rgba(255, 170, 0, 0.4));
 }
 
 .graph-node-label {

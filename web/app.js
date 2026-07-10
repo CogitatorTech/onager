@@ -71,29 +71,29 @@ const GENERATOR_TEMPLATES = {
 // Demos matching standard algorithms
 const DEMOS = [
   {
-    label: "PageRank",
-    desc: "Rank nodes by importance using PageRank centrality. Ranks dictate node visual sizing.",
+    label: "Centrality",
+    desc: "Rank nodes by importance using PageRank centrality.",
     sql: `select node_id, round(rank, 4) as rank
 from onager_ctr_pagerank((select src, dst from edges))
 order by rank desc;`,
   },
   {
     label: "Communities",
-    desc: "Detect clusters of densely connected nodes using the Louvain method. Node colors show partition.",
+    desc: "Detect communities using the Louvain algorithm.",
     sql: `select node_id, community
 from onager_cmm_louvain((select src, dst from edges))
 order by community, node_id;`,
   },
   {
     label: "Shortest Paths",
-    desc: "Compute shortest-path distances from node 1 using Dijkstra's algorithm. Colors highlight path distances.",
+    desc: "Compute shortest-path distances from node 1 using Dijkstra's algorithm.",
     sql: `select node_id, distance
 from onager_pth_dijkstra((select src, dst from edges), source := 1::bigint)
 order by distance;`,
   },
   {
     label: "Graph Metrics",
-    desc: "Measure global structural properties of the graph.",
+    desc: "Measure a few (global) structural properties of the graph.",
     sql: `select 'diameter' as metric, diameter::double as value
   from onager_mtr_diameter((select src, dst from edges))
 union all
@@ -105,15 +105,15 @@ select 'triangles', triangles::double
   },
   {
     label: "Link Prediction",
-    desc: "Score candidate links between nodes with the Jaccard coefficient.",
+    desc: "Score candidate links between nodes using the Jaccard coefficient.",
     sql: `select *
 from onager_lnk_jaccard((select src, dst from edges))
 order by 3 desc
 limit 20;`,
   },
   {
-    label: "Generate a Graph",
-    desc: "Generate a random Erdos-Renyi graph. Edges generated are visualized directly.",
+    label: "Graph Generator",
+    desc: "Generate a random Erdos-Renyi graph.",
     sql: `select src, dst
 from onager_gen_erdos_renyi(10, 0.35, seed := 68)
 order by src, dst;`,
@@ -569,7 +569,7 @@ async function loadGraphDataAndVisualize() {
         // Color coding for Louvain communities
         if (commVec) {
           const comms = Array.from(communities).sort((a, b) => a - b);
-          const palette = ["#673ab7", "#36a2eb", "#ff6384", "#4bc0c0", "#ffcd56", "#ff9f40", "#9966ff", "#4caf50", "#ff5722", "#00bcd4"];
+          const palette = ["#7e56c2", "#36a2eb", "#ff6384", "#4bc0c0", "#ffcd56", "#ff9f40", "#9966ff", "#4caf50", "#ff5722", "#00bcd4"];
           legendInfo = {
             title: "Louvain Communities",
             items: comms.map((c, idx) => ({
