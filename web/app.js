@@ -61,7 +61,7 @@ from onager_ctr_pagerank((select src, dst from edges))
 order by rank desc;`,
   },
   {
-    label: "Communities (Louvain)",
+    label: "Communities",
     desc: "Detect clusters of densely connected nodes using the Louvain method. Node colors show partition.",
     sql: `select node_id, community
 from onager_cmm_louvain((select src, dst from edges))
