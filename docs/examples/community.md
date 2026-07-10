@@ -42,4 +42,7 @@ order by members desc;
 
 ```sql
 select * from onager_cmm_label_prop((select user1, user2 from friendships));
+
+-- Pass a seed for reproducible community labels across runs
+select * from onager_cmm_label_prop((select user1, user2 from friendships), seed := 42);
 ```

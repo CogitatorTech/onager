@@ -122,15 +122,15 @@ in `external/duckdb`.
 
 Run the narrowest relevant checks, then expand if the change crosses layers.
 
-| Area                 | Command            | Use When                                                     |
-|----------------------|--------------------|--------------------------------------------------------------|
-| Rust formatting      | `make rust-format` | Any Rust code changed                                        |
-| Rust lint            | `make rust-lint`   | Any Rust code changed                                        |
-| Rust tests           | `make rust-test`   | Rust logic, FFI, graph construction, or algorithms changed   |
-| Extension build      | `make release`     | C++, CMake, linkage, or SQL-facing behavior changed          |
-| SQL tests            | `make test`        | SQL functions, table functions, or DuckDB integration changed|
-| Docs build           | `make docs`        | User-facing docs or examples changed                         |
-| Combined local check | `make check`       | Small Rust-only changes                                      |
+| Area                 | Command            | Use When                                                      |
+|----------------------|--------------------|---------------------------------------------------------------|
+| Rust formatting      | `make rust-format` | Any Rust code changed                                         |
+| Rust lint            | `make rust-lint`   | Any Rust code changed                                         |
+| Rust tests           | `make rust-test`   | Rust logic, FFI, graph construction, or algorithms changed    |
+| Extension build      | `make release`     | C++, CMake, linkage, or SQL-facing behavior changed           |
+| SQL tests            | `make test`        | SQL functions, table functions, or DuckDB integration changed |
+| Docs build           | `make docs`        | User-facing docs or examples changed                          |
+| Combined local check | `make check`       | Small Rust-only changes                                       |
 
 Minimum expectations:
 
@@ -152,7 +152,7 @@ Minimum expectations:
 Before coding:
 
 1. Task classification (Rust core, FFI boundary, C++ DuckDB layer, build wiring, docs, or tests).
-2. Target DuckDB version check (single version or both `main` and `v1.5.2`).
+2. Target DuckDB version check (single version or both `main` and `v1.5.4`).
 3. Movement dependencies check for `rust.h`, docs, and SQL tests.
 4. Safety confirmation under offline test conditions.
 

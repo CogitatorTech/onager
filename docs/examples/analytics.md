@@ -21,6 +21,17 @@ from onager_ctr_pagerank((select follower as src, followed as dst from follows))
 order by rank desc
 limit 5;
 
+-- Weight edges by interaction count so frequent interactions matter more
+create or replace table interactions as select * from (values
+  (1::bigint, 2::bigint, 12.0::double), (1, 3, 3.0), (2, 3, 7.0), (3, 4, 1.0),
+  (4, 5, 9.0), (5, 1, 2.0), (2, 4, 4.0), (3, 5, 6.0)
+) t(src, dst, msg_count);
+
+select node_id as user_id, rank
+from onager_ctr_pagerank((select src, dst, msg_count as weight from interactions))
+order by rank desc
+limit 5;
+
 -- Combine multiple centrality metrics
 with centralities as (
   select p.node_id, p.rank as pagerank, d.in_degree
