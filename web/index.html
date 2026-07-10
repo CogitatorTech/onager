@@ -6,56 +6,182 @@
   <title>Onager Playground</title>
   <meta name="description" content="Run Onager graph analytics in your browser with DuckDB-Wasm. No install required.">
   <link rel="icon" href="logo.svg">
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <script>
+    // Apply the saved or system-preferred theme before first paint to avoid a flash.
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem("onager_theme"); } catch (e) {}
+      if (!theme) theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      if (theme === "dark") document.body.classList.add("dark-theme");
+    })();
+  </script>
   <header class="site-header">
     <a class="brand" href="../">
-      <img class="brand-logo" src="logo.svg" alt="Onager logo" width="32" height="32">
+      <img class="brand-logo" src="logo.svg" alt="Onager logo" width="36" height="36">
       <span class="brand-name">Onager <span class="brand-sub">Playground</span></span>
     </a>
-    <nav class="site-nav">
-      <a href="../">Docs</a>
-      <a href="https://github.com/CogitatorTech/onager" rel="noopener">GitHub</a>
-    </nav>
+    <div class="header-actions">
+      <nav class="site-nav">
+        <a href="../">Docs</a>
+        <a href="https://github.com/CogitatorTech/onager" rel="noopener" target="_blank">GitHub</a>
+      </nav>
+      <button id="theme-toggle" class="btn btn-icon" title="Toggle Light/Dark Theme" aria-label="Toggle Light/Dark Theme">
+        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+    </div>
   </header>
 
-  <main class="layout">
-    <section class="intro">
-      <h1>Run Graph Algorithms in Your Browser</h1>
-    </section>
+  <div id="status" class="status status-loading" role="status" aria-live="polite">
+    <div class="spinner"></div>
+    <span>Initializing DuckDB-Wasm and loading Onager graph engine&hellip;</span>
+  </div>
 
-    <div id="status" class="status status-loading" role="status" aria-live="polite">
-      Loading DuckDB-Wasm and the Onager extension&hellip;
+  <main class="playground-layout">
+    <!-- Left Sidebar: Graph Setup, Demos, History -->
+    <aside class="sidebar">
+      <!-- Section 1: Graph Builder -->
+      <section class="panel graph-builder" aria-labelledby="graph-builder-title">
+        <h2 id="graph-builder-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          Graph Setup
+        </h2>
+        <div class="panel-body">
+          <div class="form-group">
+            <label for="graph-template">Quick Template:</label>
+            <select id="graph-template" class="form-control">
+              <option value="custom">-- Custom Edges --</option>
+              <option value="kite" selected>Krackhardt Kite (Default)</option>
+              <option value="clique">Complete Graph (Clique K5)</option>
+              <option value="star">Star Graph (6 nodes)</option>
+              <option value="cycle">Cycle Graph (C6)</option>
+              <option value="tree">Binary Tree (7 nodes)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="custom-edges-input">Edges (source, target):</label>
+            <textarea id="custom-edges-input" class="form-control mono-input" spellcheck="false" placeholder="1, 2&#10;2, 3&#10;3, 1"></textarea>
+          </div>
+          <div class="builder-actions">
+            <button id="update-graph-btn" class="btn btn-accent btn-sm" disabled>Update Graph</button>
+            <button id="reset" class="btn btn-sm" disabled>Reset Default</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Guided Demos -->
+      <section class="panel" aria-labelledby="demos-title">
+        <h2 id="demos-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          Sample Queries
+        </h2>
+        <div class="panel-body">
+          <div id="demo-buttons" class="demo-buttons"></div>
+          <p id="demo-desc" class="demo-desc"></p>
+        </div>
+      </section>
+
+      <!-- Section 3: History -->
+      <section class="panel" aria-labelledby="history-title">
+        <h2 id="history-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Query History
+        </h2>
+        <div class="panel-body">
+          <div id="query-history" class="history-list">
+            <div class="empty-state">No queries run yet</div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Right Area: Editor and Results -->
+    <div class="main-editor-results">
+      <!-- SQL Editor Panel -->
+      <section class="panel editor-panel" aria-label="SQL Editor">
+        <div class="editor-header">
+          <h3>SQL Editor</h3>
+          <span class="hint">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run</span>
+        </div>
+        <div class="editor-container">
+          <textarea id="sql" class="sql-input" spellcheck="false" autocapitalize="off" autocomplete="off"
+            placeholder="Write SQL here, e.g. select * from edges;"></textarea>
+          <!-- Keep this on one line: whitespace text nodes inside the backdrop render as
+               extra lines under white-space: pre and misalign the overlay. -->
+          <div id="sql-backdrop" class="sql-backdrop" aria-hidden="true"><pre><code id="sql-highlight" class="language-sql"></code></pre></div>
+        </div>
+        <div class="editor-actions">
+          <button id="run" class="btn btn-primary" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Execute Query
+          </button>
+        </div>
+      </section>
+
+      <!-- Results Panel -->
+      <section class="panel results-panel" aria-label="Query Results">
+        <div class="results-header">
+          <div class="tabs" role="tablist">
+            <button id="tab-table" class="tab-btn active" role="tab" aria-selected="true" aria-controls="result-table-container">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>
+              Table View
+            </button>
+            <button id="tab-graph" class="tab-btn" role="tab" aria-selected="false" aria-controls="result-graph-container">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              Graph Visualization
+            </button>
+          </div>
+          <div class="results-actions" id="results-actions-container" style="display:none;">
+            <button id="export-csv" class="btn btn-sm btn-outline" title="Export Results to CSV">CSV</button>
+            <button id="export-json" class="btn btn-sm btn-outline" title="Export Results to JSON">JSON</button>
+          </div>
+        </div>
+
+        <div class="results-body">
+          <div id="result-meta" class="result-meta">Run a query to view results.</div>
+          
+          <!-- Table tab content -->
+          <div id="result-table-container" class="tab-content active" role="tabpanel">
+            <div id="result" class="result-table" tabindex="0">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <p>Execute a SQL query to see tabular results here</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Graph tab content -->
+          <div id="result-graph-container" class="tab-content" role="tabpanel">
+            <div id="graph-visualization" class="graph-canvas-container">
+              <div id="graph-legend" class="graph-legend" style="display: none;"></div>
+              <div id="graph-message" class="graph-message" style="display: none;"></div>
+              <svg id="graph-svg" class="graph-svg" viewBox="0 0 600 400"></svg>
+              <div class="graph-controls">
+                <button id="graph-fit" class="btn btn-sm btn-icon" title="Fit Graph to View" aria-label="Fit Graph to View">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+                </button>
+                <span class="graph-tip">Tip: Click and drag nodes to adjust layout</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <section class="demos" aria-label="Guided demos">
-      <h2>Sample Queries</h2>
-      <div id="demo-buttons" class="demo-buttons"><!-- populated by app.js --></div>
-      <p id="demo-desc" class="demo-desc"></p>
-    </section>
-
-    <section class="editor" aria-label="SQL editor">
-      <h2>SQL Editor</h2>
-      <textarea id="sql" class="sql-input" spellcheck="false" autocapitalize="off" autocomplete="off"
-        placeholder="Write SQL here, for example: select * from edges;"></textarea>
-      <div class="editor-actions">
-        <button id="run" class="btn btn-primary" disabled>Run</button>
-        <button id="reset" class="btn" disabled title="Recreate the sample edges table">Reset Sample Data</button>
-        <span class="hint">Tip: press <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> to run.</span>
-      </div>
-    </section>
-
-    <section class="results" aria-label="Query results">
-      <div id="result-meta" class="result-meta"></div>
-      <div id="result" class="result-table" tabindex="0"></div>
-    </section>
   </main>
 
   <footer class="site-footer">
-    <span>Powered by DuckDB-Wasm and Onager. All queries run locally in your browser.</span>
+    <span>Powered by DuckDB-Wasm and Onager. Queries run securely in your browser.</span>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
