@@ -527,7 +527,9 @@ async function getExtensionRepository() {
 function updateFooterVersions(duckdbVersion, onagerVersion) {
   const footerNote = document.getElementById("footer-note");
   if (!footerNote) return;
-  const duckdbLabel = duckdbVersion ? `DuckDB-Wasm (${duckdbVersion})` : "DuckDB-Wasm";
+  const duckdbLabel = duckdbVersion
+    ? `DuckDB-Wasm (${duckdbVersion.replace(/^v/, "")})`
+    : "DuckDB-Wasm";
   const onagerLabel = onagerVersion ? `Onager (${onagerVersion})` : "Onager";
   footerNote.textContent =
     `This playground app is powered by ${duckdbLabel} and ${onagerLabel}, ` +
@@ -1502,7 +1504,8 @@ function drawSvgGraph() {
     let propVal = "";
     if (node.rank !== undefined) propVal = node.rank.toFixed(3);
     else if (node.distance !== undefined) {
-      propVal = node.distance === Infinity || node.distance > 999999 ? "∞" : `d:${node.distance}`;
+      propVal =
+        node.distance === Infinity || node.distance > 999999 ? "∞" : `d:${node.distance.toFixed(3)}`;
     }
 
     if (propVal) {
