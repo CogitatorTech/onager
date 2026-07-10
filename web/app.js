@@ -91,7 +91,7 @@ from onager_ctr_pagerank((select src, dst from edges))
 order by rank desc;`,
       },
       {
-        label: "Weighted PageRank",
+        label: "Weig. PageRank",
         desc: "Rank nodes with edge weights, so rank flows in proportion to each edge's weight.",
         sql: `select node_id, round(rank, 4) as rank
 from onager_ctr_pagerank((select src, dst, (src + dst)::double as weight from edges))
@@ -153,7 +153,7 @@ from onager_ctr_local_reaching((select src, dst from edges), distance := 2)
 order by score desc;`,
       },
       {
-        label: "Personalized PageRank",
+        label: "Person. PageRank",
         desc: "Bias the PageRank random walk toward node 1. The input adds a personalization node and weight per row.",
         sql: `select node_id, round(score, 4) as score
 from onager_ctr_personalized_pagerank((
