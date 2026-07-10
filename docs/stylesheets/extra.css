@@ -25,3 +25,17 @@ a:hover {
 .md-annotation__index {
   cursor: pointer;
 }
+
+/* Highlight the Playground navigation link in the header tabs and sidebar */
+.md-tabs__link[href*="playground"],
+.md-nav__link[href*="playground"] {
+  color: var(--md-accent-fg-color, #ffaa00) !important;
+}
+
+/* Ensure the hover state has correct styling and remains fully opaque */
+.md-tabs__link[href*="playground"]:hover,
+.md-nav__link[href*="playground"]:hover {
+  color: var(--md-accent-fg-color, #ffaa00) !important;
+  opacity: 1 !important;
+}
+
