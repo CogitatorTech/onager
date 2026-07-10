@@ -16,6 +16,7 @@ const demoDocsLinkEl = document.getElementById("demo-docs-link");
 const functionSearchEl = document.getElementById("function-search");
 const functionListEl = document.getElementById("function-list");
 const shareBtn = document.getElementById("share");
+const clearSqlBtn = document.getElementById("clear-sql");
 const loadCsvBtn = document.getElementById("load-csv-btn");
 const csvFileInput = document.getElementById("csv-file-input");
 const sqlBackdropEl = document.getElementById("sql-backdrop");
@@ -387,6 +388,7 @@ function setBusy(busy) {
   resetBtn.disabled = busy || !conn;
   updateGraphBtn.disabled = busy || !conn;
   shareBtn.disabled = busy || !conn;
+  clearSqlBtn.disabled = busy || !conn;
   loadCsvBtn.disabled = busy || !conn;
 }
 
@@ -1662,6 +1664,12 @@ function renderHistory() {
 
 // Event Listeners
 runBtn.addEventListener("click", runQuery);
+clearSqlBtn.addEventListener("click", () => {
+  sqlEl.value = "";
+  updateHighlight();
+  saveEditorSql();
+  sqlEl.focus();
+});
 shareBtn.addEventListener("click", async () => {
   const url = buildShareLink();
   // Reflect the link in the address bar so it can also be copied from there.

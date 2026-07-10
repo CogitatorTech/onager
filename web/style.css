@@ -221,12 +221,11 @@ a:hover {
   border-color: var(--header-fg);
 }
 
-/* Status Indicator */
+/* Status Indicator (sits between the editor and results panels) */
 .status {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 1.5rem 2rem 0;
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius);
   font-size: 0.9rem;
@@ -249,6 +248,9 @@ a:hover {
   border-color: var(--status-error-border);
   white-space: pre-wrap;
   font-family: var(--mono);
+  /* Keep long error output from pushing the results panel off screen. */
+  max-height: 14rem;
+  overflow-y: auto;
 }
 
 .spinner {
@@ -297,9 +299,6 @@ a:hover {
   .playground-layout {
     padding: 1rem;
     gap: 1rem;
-  }
-  .status {
-    margin: 1rem 1rem 0;
   }
 }
 

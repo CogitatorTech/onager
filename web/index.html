@@ -39,11 +39,6 @@
     </div>
   </header>
 
-  <div id="status" class="status status-loading" role="status" aria-live="polite">
-    <div class="spinner"></div>
-    <span>Initializing DuckDB-Wasm and loading Onager graph engine&hellip;</span>
-  </div>
-
   <main class="playground-layout">
     <!-- Left Sidebar: Graph Setup, Demos, History -->
     <aside class="sidebar">
@@ -150,6 +145,10 @@
           <div id="sql-backdrop" class="sql-backdrop" aria-hidden="true"><pre><code id="sql-highlight" class="language-sql"></code></pre></div>
         </div>
         <div class="editor-actions">
+          <button id="clear-sql" class="btn btn-outline" disabled title="Clear the SQL editor">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            Clear
+          </button>
           <button id="share" class="btn btn-outline" disabled title="Copy a link that restores this query and graph">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             Share Link
@@ -160,6 +159,12 @@
           </button>
         </div>
       </section>
+
+      <!-- Status Messages -->
+      <div id="status" class="status status-loading" role="status" aria-live="polite">
+        <div class="spinner"></div>
+        <span>Initializing DuckDB-Wasm and loading Onager graph engine&hellip;</span>
+      </div>
 
       <!-- Results Panel -->
       <section class="panel results-panel" aria-label="Query Results">
