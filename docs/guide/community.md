@@ -162,6 +162,16 @@ from onager_cmm_infomap((select src, dst from edges))
 order by community, node_id;
 ```
 
+Optional parameters:
+
+- `max_iter` (default 100): Maximum refinement iterations
+- `seed`: Random seed for the node visit order
+
+!!! note "Determinism"
+    As with label propagation, the seed controls the node visit order, but the underlying
+    implementation currently breaks ties nondeterministically, so seeded runs can still
+    differ between sessions.
+
 ---
 
 ## Complete Example: Community Analysis

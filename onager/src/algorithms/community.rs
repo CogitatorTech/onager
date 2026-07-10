@@ -134,6 +134,10 @@ pub struct LabelPropagationResult {
 }
 
 /// Compute label propagation community detection.
+///
+/// The `seed` controls the node visit order, but graphina's `label_propagation`
+/// currently breaks label-frequency ties through `HashMap` iteration order, so
+/// seeded runs are not fully deterministic across processes.
 pub fn compute_label_propagation(
     src: &[i64],
     dst: &[i64],
@@ -338,6 +342,10 @@ pub struct InfomapResult {
 
 /// Compute Infomap community detection.
 /// Uses information-theoretic approach based on the map equation.
+///
+/// The `seed` controls the node visit order, but graphina's `infomap` currently
+/// breaks flow ties through `HashMap` iteration order, so seeded runs are not
+/// fully deterministic across processes.
 pub fn compute_infomap(
     src: &[i64],
     dst: &[i64],
