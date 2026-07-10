@@ -9,7 +9,7 @@ description: Segmenting users into groups.
 
 ```sql
 -- Social connections
-create table friendships as select * from (values
+create or replace table friendships as select * from (values
   -- Group 1: Tight-knit friends
   (1::bigint, 2::bigint), (1, 3), (2, 3),
   -- Group 2: Work colleagues  

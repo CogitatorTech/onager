@@ -9,7 +9,7 @@ description: Friend recommendations using link prediction.
 
 ```sql
 -- Current friendships
-create table current_friends as select * from (values
+create or replace table current_friends as select * from (values
   (1::bigint, 2::bigint), (1, 3), (2, 3), (2, 4),
   (3, 5), (4, 5), (4, 6), (5, 6)
 ) t(user1, user2);

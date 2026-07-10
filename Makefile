@@ -167,8 +167,6 @@ bench-onager: release ## Run Python-based benchmark comparisons against NetworkX
 check: rust-lint rust-test test-oracle ## Run all checks (linting, tests, and differential tests)
 	@echo "All checks passed!"
 
-
-
 .PHONY: docs
 docs: ## Generate Onager MkDocs documentation
 	@echo "Generating MkDocs documentation..."
@@ -178,3 +176,9 @@ docs: ## Generate Onager MkDocs documentation
 docs-serve: ## Serve Onager MkDocs documentation locally
 	@echo "Serving MkDocs documentation locally..."
 	@source .venv/bin/activate && $(PY_DEP_MNGR) run mkdocs serve --config-file mkdocs.yml
+
+.PHONY: playground-serve
+playground-serve: ## Serve the playground app locally
+	@echo "Starting local server for Onager Playground..."
+	@python3 -m http.server --directory web 8000
+
