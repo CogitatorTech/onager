@@ -32,14 +32,15 @@ const svgEl = document.getElementById("graph-svg");
 // Default Krackhardt Kite Graph Edges
 const SAMPLE_EDGES = `create or replace table edges as
 select * from (values
-  (1::bigint, 2::bigint), (1, 3), (2, 3), (2, 4), (3, 4), 
-  (2, 6), (3, 5), (4, 5), (4, 6), (5, 6), 
+  (1::bigint, 2::bigint), (1, 3), (2, 3), (2, 4), (3, 4),
+  (2, 6), (3, 5), (4, 5), (4, 6), (5, 6),
   (5, 7), (6, 7), (7, 8), (8, 9), (9, 10)
 ) t(src, dst);`;
 
 // Rendering caps that keep the UI responsive on large results.
 const MAX_TABLE_ROWS = 1000;
-const MAX_GRAPH_NODES = 300;
+const MAX_GRAPH_NODES = 100;
+const MAX_HISTORY_ITEMS = 5;
 
 // Graph templates configuration
 const GRAPH_TEMPLATES = {
@@ -97,7 +98,7 @@ limit 20;`,
     label: "Generate a Graph",
     desc: "Generate a random Erdos-Renyi graph. Edges generated are visualized directly.",
     sql: `select src, dst
-from onager_gen_erdos_renyi(10, 0.35, seed := 42)
+from onager_gen_erdos_renyi(10, 0.35, seed := 68)
 order by src, dst;`,
   },
 ];
@@ -200,7 +201,7 @@ async function init() {
 
     setStatus("ready", `Ready. Onager ${version ?? ""} loaded. Krackhardt Kite "edges" table created.`);
     setBusy(false);
-    
+
     buildDemoButtons();
     // Show the first demo by default so users see output immediately.
     selectDemo(0, false);
@@ -383,10 +384,10 @@ async function updateGraphFromInput() {
   if (!conn) return;
   const text = edgesInput.value.trim();
   if (!text) return;
-  
+
   setBusy(true);
   setStatus("loading", "Updating sample graph edges...");
-  
+
   try {
     const lines = text.split("\n");
     const values = [];
@@ -400,11 +401,11 @@ async function updateGraphFromInput() {
         }
       }
     });
-    
+
     if (values.length === 0) {
       throw new Error("No valid edges found in input. Format should be: source, target");
     }
-    
+
     const sql = `create or replace table edges as\nselect * from (values\n  ${values.join(",\n  ")}\n) t(src, dst);`;
     await conn.query(sql);
 
@@ -426,14 +427,14 @@ async function getEdgesTable() {
     const fields = res.schema.fields.map(f => f.name.toLowerCase());
     const srcIdx = fields.indexOf("src");
     const dstIdx = fields.indexOf("dst");
-    
+
     const links = [];
     const nodeSet = new Set();
     const nrows = res.numRows;
-    
+
     const srcVector = res.getChildAt(srcIdx >= 0 ? srcIdx : 0);
     const dstVector = res.getChildAt(dstIdx >= 0 ? dstIdx : 1);
-    
+
     for (let i = 0; i < nrows; i++) {
       const src = cellNumber(srcVector, i);
       const dst = cellNumber(dstVector, i);
@@ -443,7 +444,7 @@ async function getEdgesTable() {
         nodeSet.add(dst);
       }
     }
-    
+
     const nodes = Array.from(nodeSet).map(id => ({ id }));
     return { nodes, links };
   } catch (e) {
@@ -488,7 +489,7 @@ async function loadGraphDataAndVisualize() {
       }
       displayNodes = Array.from(nodeSet).map(id => ({ id }));
       displayLinks = links;
-    } 
+    }
     // Case B: Query output has node attributes (e.g. Centrality PageRank, Louvain communities)
     else {
       const nodeColName = fields.find(f => ["node_id", "node", "vertex", "id"].includes(f));
@@ -629,7 +630,7 @@ async function loadGraphDataAndVisualize() {
   // Render Legend
   if (legendInfo && legendInfo.items.length > 0) {
     legendEl.style.display = "flex";
-    legendEl.innerHTML = `<strong>${legendInfo.title}</strong>` + 
+    legendEl.innerHTML = `<strong>${legendInfo.title}</strong>` +
       legendInfo.items.map(item => `
         <div class="legend-item">
           <span class="legend-color" style="background: ${item.color}"></span>
@@ -1041,7 +1042,7 @@ function addToHistory(sql) {
   if (!sql) return;
   queryHistory = queryHistory.filter(item => item !== sql);
   queryHistory.unshift(sql);
-  if (queryHistory.length > 10) queryHistory.pop();
+  queryHistory = queryHistory.slice(0, MAX_HISTORY_ITEMS);
 
   try {
     localStorage.setItem("onager_query_history", JSON.stringify(queryHistory));
@@ -1057,7 +1058,8 @@ function loadHistory() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        queryHistory = parsed.filter(item => typeof item === "string");
+        // Trim in case a previously saved history is longer than the current cap.
+        queryHistory = parsed.filter(item => typeof item === "string").slice(0, MAX_HISTORY_ITEMS);
       }
     }
   } catch (e) {
