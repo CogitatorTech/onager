@@ -117,6 +117,52 @@ order by score desc;`,
         sql: `select node_id
 from onager_ctr_voterank((select src, dst from edges), num_seeds := 3);`,
       },
+      {
+        label: "Eigenvector",
+        desc: "Score nodes by the importance of their neighbors using eigenvector centrality.",
+        sql: `select node_id, round(eigenvector, 4) as score
+from onager_ctr_eigenvector((select src, dst from edges))
+order by score desc;`,
+      },
+      {
+        label: "Katz",
+        desc: "Score nodes by counting all paths, attenuated by alpha, with a constant base weight beta.",
+        sql: `select node_id, round(katz, 4) as score
+from onager_ctr_katz((select src, dst from edges), alpha := 0.1, beta := 1.0)
+order by score desc;`,
+      },
+      {
+        label: "Harmonic",
+        desc: "Score nodes by the sum of inverse distances to every other node. Works on disconnected graphs.",
+        sql: `select node_id, round(harmonic, 4) as score
+from onager_ctr_harmonic((select src, dst from edges))
+order by score desc;`,
+      },
+      {
+        label: "Laplacian",
+        desc: "Score nodes by their contribution to the graph Laplacian energy.",
+        sql: `select node_id, round(centrality, 4) as score
+from onager_ctr_laplacian((select src, dst from edges))
+order by score desc;`,
+      },
+      {
+        label: "Local Reaching",
+        desc: "Score nodes by the fraction of the graph reachable within two hops.",
+        sql: `select node_id, round(centrality, 4) as score
+from onager_ctr_local_reaching((select src, dst from edges), distance := 2)
+order by score desc;`,
+      },
+      {
+        label: "Personalized PageRank",
+        desc: "Bias the PageRank random walk toward node 1. The input adds a personalization node and weight per row.",
+        sql: `select node_id, round(score, 4) as score
+from onager_ctr_personalized_pagerank((
+  select e.src, e.dst, p.node as pers_node, p.weight::double as pers_weight
+  from edges e
+  cross join (values (1::bigint, 1.0::double)) p(node, weight)
+))
+order by score desc;`,
+      },
     ],
   },
   {
@@ -142,6 +188,27 @@ order by community, node_id;`,
         desc: "Find connected components. Try deleting an edge in the builder to split the graph.",
         sql: `select node_id, component as community
 from onager_cmm_components((select src, dst from edges))
+order by community, node_id;`,
+      },
+      {
+        label: "Girvan-Newman",
+        desc: "Split the graph into two communities by removing high-betweenness edges.",
+        sql: `select node_id, community
+from onager_cmm_girvan_newman((select src, dst from edges), communities := 2)
+order by community, node_id;`,
+      },
+      {
+        label: "Spectral",
+        desc: "Cluster nodes into two communities using the graph Laplacian's eigenvectors.",
+        sql: `select node_id, community
+from onager_cmm_spectral((select src, dst from edges), k := 2, seed := 68)
+order by community, node_id;`,
+      },
+      {
+        label: "Infomap",
+        desc: "Detect communities by minimizing the description length of random walks.",
+        sql: `select node_id, community
+from onager_cmm_infomap((select src, dst from edges), seed := 68)
 order by community, node_id;`,
       },
     ],
@@ -177,6 +244,19 @@ from onager_trv_bfs((select src, dst from edges), source := 1);`,
 from onager_pth_floyd_warshall((select src, dst, 1.0::double as weight from edges))
 order by distance desc, node1, node2
 limit 10;`,
+      },
+      {
+        label: "Bellman-Ford",
+        desc: "Compute weighted shortest-path distances from node 1. Unlike Dijkstra, negative weights are allowed.",
+        sql: `select node_id, distance
+from onager_pth_bellman_ford((select src, dst, (src + dst)::double as weight from edges), source := 1)
+order by distance;`,
+      },
+      {
+        label: "DFS Order",
+        desc: "Visit nodes in depth-first order starting from node 1.",
+        sql: `select node_id
+from onager_trv_dfs((select src, dst from edges), source := 1);`,
       },
     ],
   },
@@ -229,6 +309,15 @@ union all
 select 'assortativity', assortativity
   from onager_mtr_assortativity((select src, dst from edges));`,
       },
+      {
+        label: "Distances",
+        desc: "Compare the graph radius with the average shortest-path length.",
+        sql: `select 'radius' as metric, radius::double as value
+  from onager_mtr_radius((select src, dst from edges))
+union all
+select 'avg_path_length', avg_path_length
+  from onager_mtr_avg_path_length((select src, dst from edges));`,
+      },
     ],
   },
   {
@@ -259,6 +348,22 @@ from onager_lnk_common_neighbors((select src, dst from edges))
 order by 3 desc
 limit 15;`,
       },
+      {
+        label: "Preferential Attachment",
+        desc: "Score candidate links by the product of node degrees, favoring hubs.",
+        sql: `select *
+from onager_lnk_pref_attach((select src, dst from edges))
+order by 3 desc
+limit 15;`,
+      },
+      {
+        label: "Resource Allocation",
+        desc: "Score candidate links by resources shared through common neighbors.",
+        sql: `select *
+from onager_lnk_resource_alloc((select src, dst from edges))
+order by 3 desc
+limit 15;`,
+      },
     ],
   },
   {
@@ -277,6 +382,16 @@ from onager_sub_ego_graph((select src, dst from edges), center := 5, radius := 1
         sql: `select node_id
 from onager_sub_k_hop((select src, dst from edges), start := 1, k := 2)
 order by node_id;`,
+      },
+      {
+        label: "Induced Subgraph",
+        desc: "Keep only the edges whose endpoints are both in a given node set. The set arrives as a third input column.",
+        sql: `select src, dst
+from onager_sub_induced((
+  select e.src, e.dst, n.node as filter_node
+  from edges e
+  cross join (values (1::bigint), (2), (3), (4), (5)) n(node)
+));`,
       },
     ],
   },
@@ -297,6 +412,20 @@ order by node_id;`,
         sql: `select node_id
 from onager_apx_vertex_cover((select src, dst from edges))
 order by node_id;`,
+      },
+      {
+        label: "Independent Set",
+        desc: "Approximate the largest set of nodes with no edges between them.",
+        sql: `select node_id
+from onager_apx_independent_set((select src, dst from edges))
+order by node_id;`,
+      },
+      {
+        label: "TSP Tour",
+        desc: "Approximate a traveling salesman tour over the graph, starting from node 1.",
+        sql: `select "order", node_id
+from onager_apx_tsp((select src, dst, (src + dst)::double as weight from edges), start := 1)
+order by "order";`,
       },
     ],
   },
