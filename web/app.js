@@ -178,9 +178,9 @@ order by community, node_id;`,
       },
       {
         label: "Label Propagation",
-        desc: "Detect communities by propagating labels between neighbors. The seed makes the result reproducible.",
+        desc: "Detect communities by propagating labels between neighbors. Results can vary between runs.",
         sql: `select node_id, label as community
-from onager_cmm_label_prop((select src, dst from edges), seed := 68)
+from onager_cmm_label_prop((select src, dst from edges))
 order by community, node_id;`,
       },
       {

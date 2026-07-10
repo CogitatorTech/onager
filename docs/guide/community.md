@@ -103,14 +103,18 @@ order by label, node_id;
 Optional parameters:
 
 - `max_iter` (default 100): Maximum propagation iterations
-- `seed`: Random seed for deterministic label updates
+- `seed`: Random seed for the node visit order
 
 ```sql
--- Deterministic label propagation
 select node_id, label
 from onager_cmm_label_prop((select src, dst from edges), max_iter := 50, seed := 42)
 order by label, node_id;
 ```
+
+!!! note "Determinism"
+    The seed controls the order in which nodes update their labels, but the underlying
+    implementation currently breaks label ties nondeterministically, so seeded runs can
+    still differ between sessions.
 
 ---
 

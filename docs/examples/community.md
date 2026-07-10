@@ -43,6 +43,6 @@ order by members desc;
 ```sql
 select * from onager_cmm_label_prop((select user1, user2 from friendships));
 
--- Pass a seed for reproducible community labels across runs
+-- Pass a seed to control the node visit order
 select * from onager_cmm_label_prop((select user1, user2 from friendships), seed := 42);
 ```
