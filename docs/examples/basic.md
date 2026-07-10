@@ -9,7 +9,7 @@ description: Basic graph analytics workflows using Onager.
 
 ```sql
 -- Create a sample social network
-create table social_edges as
+create or replace table social_edges as
 select *
 from (values (1::bigint, 2::bigint),
              (1, 3),
@@ -57,7 +57,7 @@ from onager_mtr_diameter((select user_from, user_to from social_edges));
 
 ```sql
 -- Create a larger random network for testing
-create table test_network as
+create or replace table test_network as
 select *
 from onager_gen_erdos_renyi(500, 0.02, seed := 42);
 

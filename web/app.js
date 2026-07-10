@@ -11,6 +11,13 @@ const resultEl = document.getElementById("result");
 const resultMetaEl = document.getElementById("result-meta");
 const demoButtonsEl = document.getElementById("demo-buttons");
 const demoDescEl = document.getElementById("demo-desc");
+const demoCategoryEl = document.getElementById("demo-category");
+const demoDocsLinkEl = document.getElementById("demo-docs-link");
+const functionSearchEl = document.getElementById("function-search");
+const functionListEl = document.getElementById("function-list");
+const shareBtn = document.getElementById("share");
+const loadCsvBtn = document.getElementById("load-csv-btn");
+const csvFileInput = document.getElementById("csv-file-input");
 const sqlBackdropEl = document.getElementById("sql-backdrop");
 const sqlHighlightEl = document.getElementById("sql-highlight");
 
@@ -68,55 +75,268 @@ const GENERATOR_TEMPLATES = {
   },
 };
 
-// Demos matching standard algorithms
-const DEMOS = [
+// Example catalog grouped by algorithm category, mirroring the docs guide pages.
+// Every query runs against the editable "edges" table unless noted otherwise.
+const DEMO_CATEGORIES = [
   {
     label: "Centrality",
-    desc: "Rank nodes by importance using PageRank centrality.",
-    sql: `select node_id, round(rank, 4) as rank
+    docs: "../guide/centrality/",
+    demos: [
+      {
+        label: "PageRank",
+        desc: "Rank nodes by importance using PageRank. Node size reflects the score in the graph view.",
+        sql: `select node_id, round(rank, 4) as rank
 from onager_ctr_pagerank((select src, dst from edges))
 order by rank desc;`,
+      },
+      {
+        label: "Betweenness",
+        desc: "Count how often each node sits on shortest paths between other nodes.",
+        sql: `select node_id, round(betweenness, 4) as score
+from onager_ctr_betweenness((select src, dst from edges))
+order by score desc;`,
+      },
+      {
+        label: "Closeness",
+        desc: "Score nodes by how close they are to every other node.",
+        sql: `select node_id, round(closeness, 4) as score
+from onager_ctr_closeness((select src, dst from edges))
+order by score desc;`,
+      },
+      {
+        label: "VoteRank",
+        desc: "Find the three most influential spreader nodes using VoteRank.",
+        sql: `select node_id
+from onager_ctr_voterank((select src, dst from edges), num_seeds := 3);`,
+      },
+    ],
   },
   {
-    label: "Communities",
-    desc: "Detect communities using the Louvain algorithm.",
-    sql: `select node_id, community
+    label: "Community Detection",
+    docs: "../guide/community/",
+    demos: [
+      {
+        label: "Louvain",
+        desc: "Detect communities using Louvain modularity optimization. Colors show the communities in the graph view.",
+        sql: `select node_id, community
 from onager_cmm_louvain((select src, dst from edges))
 order by community, node_id;`,
+      },
+      {
+        label: "Label Propagation",
+        desc: "Detect communities by propagating labels between neighbors.",
+        sql: `select node_id, label as community
+from onager_cmm_label_prop((select src, dst from edges))
+order by community, node_id;`,
+      },
+      {
+        label: "Components",
+        desc: "Find connected components. Try deleting an edge in the builder to split the graph.",
+        sql: `select node_id, component as community
+from onager_cmm_components((select src, dst from edges))
+order by community, node_id;`,
+      },
+    ],
   },
   {
-    label: "Shortest Paths",
-    desc: "Compute shortest-path distances from node 1 using Dijkstra's algorithm.",
-    sql: `select node_id, distance
+    label: "Paths and Traversal",
+    docs: "../guide/traversal/",
+    demos: [
+      {
+        label: "Dijkstra",
+        desc: "Compute shortest-path distances from node 1 using Dijkstra's algorithm.",
+        sql: `select node_id, distance
 from onager_pth_dijkstra((select src, dst from edges), source := 1::bigint)
 order by distance;`,
+      },
+      {
+        label: "BFS Order",
+        desc: "Visit nodes in breadth-first order starting from node 1.",
+        sql: `select node_id
+from onager_trv_bfs((select src, dst from edges), source := 1);`,
+      },
+      {
+        label: "All-Pairs Distances",
+        desc: "Compute distances between every pair of nodes with Floyd-Warshall, using weight 1 per edge. The table shows the farthest pairs.",
+        sql: `select src as node1, dst as node2, distance
+from onager_pth_floyd_warshall((select src, dst, 1.0::double as weight from edges))
+order by distance desc, node1, node2
+limit 10;`,
+      },
+    ],
+  },
+  {
+    label: "Minimum Spanning Tree",
+    docs: "../guide/mst/",
+    demos: [
+      {
+        label: "Kruskal",
+        desc: "Build a minimum spanning tree with Kruskal's algorithm. Weights are synthesized from node ids, and the graph view shows the tree.",
+        sql: `select src, dst, round(weight, 1) as weight
+from onager_mst_kruskal((select src, dst, (src + dst)::double as weight from edges))
+order by weight;`,
+      },
+      {
+        label: "Prim",
+        desc: "Build a minimum spanning tree with Prim's algorithm on the same synthesized weights.",
+        sql: `select src, dst, round(weight, 1) as weight
+from onager_mst_prim((select src, dst, (src + dst)::double as weight from edges))
+order by weight;`,
+      },
+    ],
   },
   {
     label: "Graph Metrics",
-    desc: "Measure a few (global) structural properties of the graph.",
-    sql: `select 'diameter' as metric, diameter::double as value
+    docs: "../guide/metrics/",
+    demos: [
+      {
+        label: "Summary",
+        desc: "Measure a few global structural properties of the graph.",
+        sql: `select 'diameter' as metric, diameter::double as value
   from onager_mtr_diameter((select src, dst from edges))
 union all
 select 'density', density
   from onager_mtr_density((select src, dst from edges))
 union all
-select 'triangles', triangles::double
+-- Each triangle is counted once per member node, so divide the sum by three.
+select 'triangles', (sum(triangles) / 3)::double
   from onager_mtr_triangles((select src, dst from edges));`,
+      },
+      {
+        label: "Clustering",
+        desc: "Compare transitivity, average clustering, and degree assortativity.",
+        sql: `select 'transitivity' as metric, transitivity as value
+  from onager_mtr_transitivity((select src, dst from edges))
+union all
+select 'avg_clustering', avg_clustering
+  from onager_mtr_avg_clustering((select src, dst from edges))
+union all
+select 'assortativity', assortativity
+  from onager_mtr_assortativity((select src, dst from edges));`,
+      },
+    ],
   },
   {
     label: "Link Prediction",
-    desc: "Score candidate links between nodes using the Jaccard coefficient.",
-    sql: `select *
+    docs: "../guide/links/",
+    demos: [
+      {
+        label: "Jaccard",
+        desc: "Score candidate links between nodes using the Jaccard coefficient.",
+        sql: `select *
 from onager_lnk_jaccard((select src, dst from edges))
 order by 3 desc
 limit 20;`,
+      },
+      {
+        label: "Adamic-Adar",
+        desc: "Score candidate links with the Adamic-Adar index, which favors rare shared neighbors.",
+        sql: `select node1, node2, round(score, 3) as score
+from onager_lnk_adamic_adar((select src, dst from edges))
+order by score desc
+limit 15;`,
+      },
+      {
+        label: "Common Neighbors",
+        desc: "Count shared neighbors for each candidate pair.",
+        sql: `select *
+from onager_lnk_common_neighbors((select src, dst from edges))
+order by 3 desc
+limit 15;`,
+      },
+    ],
   },
   {
-    label: "Graph Generator",
-    desc: "Generate a random Erdos-Renyi graph.",
-    sql: `select src, dst
+    label: "Subgraphs",
+    docs: "../guide/subgraphs/",
+    demos: [
+      {
+        label: "Ego Graph",
+        desc: "Extract the neighborhood around node 5. The graph view shows only the extracted subgraph.",
+        sql: `select src, dst
+from onager_sub_ego_graph((select src, dst from edges), center := 5, radius := 1);`,
+      },
+      {
+        label: "K-Hop Neighbors",
+        desc: "List every node within two hops of node 1.",
+        sql: `select node_id
+from onager_sub_k_hop((select src, dst from edges), start := 1, k := 2)
+order by node_id;`,
+      },
+    ],
+  },
+  {
+    label: "Approximation",
+    docs: "../guide/approximation/",
+    demos: [
+      {
+        label: "Max Clique",
+        desc: "Approximate the largest set of nodes that are all connected to each other.",
+        sql: `select node_id
+from onager_apx_max_clique((select src, dst from edges))
+order by node_id;`,
+      },
+      {
+        label: "Vertex Cover",
+        desc: "Approximate the smallest set of nodes that touches every edge.",
+        sql: `select node_id
+from onager_apx_vertex_cover((select src, dst from edges))
+order by node_id;`,
+      },
+    ],
+  },
+  {
+    label: "Generators",
+    docs: "../guide/generators/",
+    demos: [
+      {
+        label: "Erdos-Renyi",
+        desc: "Generate a random graph. The graph view shows the generated edges instead of the edges table.",
+        sql: `select src, dst
 from onager_gen_erdos_renyi(10, 0.35, seed := 68)
 order by src, dst;`,
+      },
+      {
+        label: "Watts-Strogatz",
+        desc: "Generate a small-world graph: a ring lattice with a few rewired shortcuts.",
+        sql: `select src, dst
+from onager_gen_watts_strogatz(20, 4, 0.2, seed := 68)
+order by src, dst;`,
+      },
+      {
+        label: "Scale-Free Hubs",
+        desc: "Compose a generator with degree centrality to find the hubs of a Barabasi-Albert graph. See the table view.",
+        sql: `select node_id as hub, in_degree + out_degree as degree
+from onager_ctr_degree((select src, dst from onager_gen_barabasi_albert(40, 2, seed := 68)))
+order by degree desc
+limit 10;`,
+      },
+    ],
+  },
+  {
+    label: "Graph Registry",
+    docs: "../guide/graph-registry/",
+    demos: [
+      {
+        label: "1. Create Graph",
+        desc: "Run the registry examples in order. This creates a named graph in the registry (0 means success).",
+        sql: `select onager_create_graph('my_graph', false) as status;`,
+      },
+      {
+        label: "2. Add Edges",
+        desc: "Add three weighted edges to the named graph (run 1. Create Graph first).",
+        sql: `select onager_add_edge('my_graph', 1, 2, 1.0) as e1,
+       onager_add_edge('my_graph', 2, 3, 1.0) as e2,
+       onager_add_edge('my_graph', 3, 1, 1.0) as e3;`,
+      },
+      {
+        label: "3. Inspect",
+        desc: "Inspect the named graph with scalar registry functions.",
+        sql: `select onager_node_count('my_graph') as nodes,
+       onager_edge_count('my_graph') as edges,
+       onager_list_graphs() as graphs;`,
+      },
+    ],
   },
 ];
 
@@ -166,6 +386,8 @@ function setBusy(busy) {
   runBtn.disabled = busy || !conn;
   resetBtn.disabled = busy || !conn;
   updateGraphBtn.disabled = busy || !conn;
+  shareBtn.disabled = busy || !conn;
+  loadCsvBtn.disabled = busy || !conn;
 }
 
 async function init() {
@@ -176,6 +398,7 @@ async function init() {
   setupExporters();
   setupGraphTemplateListeners();
   setupHighlighting();
+  setupCsvUpload();
 
   try {
     const bundles = duckdb.getJsDelivrBundles();
@@ -219,10 +442,46 @@ async function init() {
     setStatus("ready", `Ready. Onager ${version ?? ""} loaded. Krackhardt Kite "edges" table created.`);
     setBusy(false);
 
-    buildDemoButtons();
-    // Show the first demo by default so users see output immediately.
-    selectDemo(0, false);
-    await runQuery();
+    buildDemoCatalog();
+    await loadFunctionList();
+
+    // Restore state in priority order: share link, then the previous session,
+    // then the first demo so new users see output immediately.
+    const shared = parseShareHash();
+    if (shared) {
+      if (shared.edges) {
+        edgesInput.value = shared.edges;
+        templateSelect.value = "custom";
+        await rebuildEdgesTable(shared.edges);
+      }
+      if (shared.sql) {
+        sqlEl.value = shared.sql;
+        updateHighlight();
+      }
+      await runQuery();
+      return;
+    }
+
+    const savedEdges = readLocal("onager_edges_text");
+    if (savedEdges && savedEdges.trim() && savedEdges.trim() !== GRAPH_TEMPLATES.kite) {
+      try {
+        await rebuildEdgesTable(savedEdges);
+        edgesInput.value = savedEdges;
+        templateSelect.value = "custom";
+      } catch (e) {
+        console.warn("Ignoring saved edges from a previous session:", e);
+      }
+    }
+
+    const savedSql = readLocal("onager_editor_sql");
+    if (savedSql && savedSql.trim()) {
+      sqlEl.value = savedSql;
+      updateHighlight();
+      await runQuery();
+    } else {
+      selectDemo(0, false);
+      await runQuery();
+    }
   } catch (err) {
     console.error("Onager playground init failed:", err);
     setStatus(
@@ -242,6 +501,185 @@ function formatError(err) {
   // Some stacks already start with the message; avoid duplicating it.
   if (stack && !stack.startsWith(msg)) return `${msg}\n\n${stack}`;
   return stack || msg;
+}
+
+// localStorage wrappers tolerant of unavailable storage (private browsing).
+function saveLocal(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    // Storage may be unavailable; the value simply is not persisted.
+  }
+}
+
+function readLocal(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveEditorSql() {
+  saveLocal("onager_editor_sql", sqlEl.value);
+}
+
+// URL-safe base64 for share links, UTF-8 aware.
+function b64urlEncode(s) {
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlDecode(s) {
+  let padded = s.replace(/-/g, "+").replace(/_/g, "/");
+  while (padded.length % 4) padded += "=";
+  const bin = atob(padded);
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+// Build a link that restores the current editor query and edge list on load.
+function buildShareLink() {
+  const params = new URLSearchParams();
+  if (sqlEl.value.trim()) params.set("q", b64urlEncode(sqlEl.value));
+  if (edgesInput.value.trim()) params.set("e", b64urlEncode(edgesInput.value));
+  return `${location.origin}${location.pathname}#${params.toString()}`;
+}
+
+function parseShareHash() {
+  if (!location.hash || location.hash.length < 2) return null;
+  try {
+    const params = new URLSearchParams(location.hash.slice(1));
+    // "q" carries base64 (share button links); "sql" carries percent-encoded
+    // plain text so docs links stay human-readable and easy to generate.
+    const sql = params.get("q") ? b64urlDecode(params.get("q")) : params.get("sql");
+    const edges = params.get("e") ? b64urlDecode(params.get("e")) : null;
+    if (!sql && !edges) return null;
+    return { sql, edges };
+  } catch (e) {
+    console.warn("Ignoring malformed share link:", e);
+    return null;
+  }
+}
+
+// Function browser: the list comes from the loaded extension itself, so it stays
+// correct as functions are added or renamed.
+let onagerFunctions = [];
+
+async function loadFunctionList() {
+  try {
+    const res = await conn.query(
+      "select distinct function_name from duckdb_functions() where function_name like 'onager%' order by function_name;"
+    );
+    const vec = res.getChildAt(0);
+    onagerFunctions = [];
+    for (let i = 0; i < res.numRows; i++) {
+      const name = readCell(vec, i);
+      if (name != null) onagerFunctions.push(String(name));
+    }
+  } catch (e) {
+    console.warn("Failed to list Onager functions:", e);
+  }
+  if (onagerFunctions.length > 0) {
+    functionSearchEl.placeholder = `Search ${onagerFunctions.length} functions...`;
+  }
+  functionSearchEl.addEventListener("input", renderFunctionList);
+  renderFunctionList();
+}
+
+function renderFunctionList() {
+  const filter = functionSearchEl.value.trim().toLowerCase();
+  const names = onagerFunctions.filter((n) => n.includes(filter));
+  functionListEl.replaceChildren();
+  if (names.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent =
+      onagerFunctions.length === 0 ? "Function list unavailable" : "No matching functions";
+    functionListEl.appendChild(empty);
+    return;
+  }
+  for (const name of names) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "function-item";
+    item.textContent = name;
+    item.title = `Insert ${name} into the editor`;
+    item.addEventListener("click", () => insertIntoEditor(name));
+    functionListEl.appendChild(item);
+  }
+}
+
+function insertIntoEditor(text) {
+  const start = sqlEl.selectionStart ?? sqlEl.value.length;
+  const end = sqlEl.selectionEnd ?? start;
+  sqlEl.value = sqlEl.value.slice(0, start) + text + sqlEl.value.slice(end);
+  const pos = start + text.length;
+  sqlEl.setSelectionRange(pos, pos);
+  updateHighlight();
+  saveEditorSql();
+  sqlEl.focus();
+}
+
+function editDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] : 1 + Math.min(prev[j - 1], prev[j], cur[j - 1]);
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+// Suggest the closest registered function for unknown onager_ names in a failed query.
+function functionHint(sql) {
+  if (onagerFunctions.length === 0) return null;
+  const known = new Set(onagerFunctions);
+  const tokens = new Set(sql.toLowerCase().match(/onager_[a-z0-9_]+/g) || []);
+  for (const token of tokens) {
+    if (known.has(token)) continue;
+    let best = null;
+    let bestDist = 4; // Suggestions further than three edits away are noise.
+    for (const name of onagerFunctions) {
+      const d = editDistance(token, name);
+      if (d < bestDist) {
+        bestDist = d;
+        best = name;
+      }
+    }
+    if (best) return `${token} is not an Onager function. Did you mean ${best}?`;
+  }
+  return null;
+}
+
+// CSV upload: reuse the edge text pipeline so the file contents stay inspectable
+// and editable in the builder textarea.
+function setupCsvUpload() {
+  loadCsvBtn.addEventListener("click", () => csvFileInput.click());
+  csvFileInput.addEventListener("change", async () => {
+    const file = csvFileInput.files && csvFileInput.files[0];
+    csvFileInput.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const pairs = parseEdgePairs(text);
+      if (pairs.length === 0) {
+        throw new Error("No numeric source, target pairs found in the file.");
+      }
+      edgesInput.value = pairs.map(([s, d]) => `${s}, ${d}`).join("\n");
+      templateSelect.value = "custom";
+      const ok = await updateGraphFromInput();
+      if (ok) setStatus("ready", `Loaded ${pairs.length} edges from ${file.name}.`);
+    } catch (err) {
+      console.error("Failed to load CSV:", err);
+      setStatus("error", `Failed to load edges from ${file.name}.\n` + String(err));
+    }
+  });
 }
 
 // Read one cell defensively. Different duckdb-wasm/arrow builds expose values in
@@ -377,11 +815,13 @@ async function runQuery() {
     resultMetaEl.textContent = "";
     resultsActions.style.display = "none";
     const detail = await scalar("select onager_last_error() as onager_last_error;", "onager_last_error");
+    const hint = functionHint(sql);
     setStatus(
       "error",
       "Query failed.\n" +
         formatError(err) +
-        (detail ? `\n\nOnager: ${detail}` : "")
+        (detail ? `\n\nOnager: ${detail}` : "") +
+        (hint ? `\n\nHint: ${hint}` : "")
     );
     return false;
   } finally {
@@ -389,11 +829,15 @@ async function runQuery() {
   }
 }
 
+let activeCategory = 0;
+
 function selectDemo(index, run = true) {
-  const demo = DEMOS[index];
+  const category = DEMO_CATEGORIES[activeCategory];
+  const demo = category && category.demos[index];
   if (!demo) return;
   sqlEl.value = demo.sql;
   updateHighlight();
+  saveEditorSql();
   demoDescEl.textContent = demo.desc;
   for (const btn of demoButtonsEl.children) {
     btn.classList.toggle("active", Number(btn.dataset.index) === index);
@@ -401,9 +845,10 @@ function selectDemo(index, run = true) {
   if (run) runQuery();
 }
 
-function buildDemoButtons() {
+function renderDemoButtons() {
+  const category = DEMO_CATEGORIES[activeCategory];
   demoButtonsEl.innerHTML = "";
-  DEMOS.forEach((demo, i) => {
+  category.demos.forEach((demo, i) => {
     const btn = document.createElement("button");
     btn.className = "btn";
     btn.textContent = demo.label;
@@ -411,6 +856,55 @@ function buildDemoButtons() {
     btn.addEventListener("click", () => selectDemo(i));
     demoButtonsEl.appendChild(btn);
   });
+  demoDescEl.textContent = "";
+  demoDocsLinkEl.href = category.docs;
+  demoDocsLinkEl.textContent = `Learn more: ${category.label} guide`;
+  demoDocsLinkEl.style.display = "inline-block";
+}
+
+function buildDemoCatalog() {
+  demoCategoryEl.innerHTML = "";
+  DEMO_CATEGORIES.forEach((category, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = category.label;
+    demoCategoryEl.appendChild(opt);
+  });
+  demoCategoryEl.addEventListener("change", () => {
+    activeCategory = Number(demoCategoryEl.value);
+    renderDemoButtons();
+  });
+  renderDemoButtons();
+}
+
+// Parse edge text (one "source, target" pair per line, separated by commas,
+// semicolons, or whitespace) into numeric pairs. Non-numeric lines are skipped,
+// which also drops CSV header rows.
+function parseEdgePairs(text) {
+  const pairs = [];
+  for (const line of text.split("\n")) {
+    const parts = line.split(/[\s,;\t]+/).map(p => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const src = parseInt(parts[0], 10);
+      const dst = parseInt(parts[1], 10);
+      if (!isNaN(src) && !isNaN(dst)) pairs.push([src, dst]);
+    }
+  }
+  return pairs;
+}
+
+// Replace the edges table from edge text and persist the text for the next visit.
+async function rebuildEdgesTable(text) {
+  const pairs = parseEdgePairs(text);
+  if (pairs.length === 0) {
+    throw new Error("No valid edges found in input. Format should be: source, target");
+  }
+  const values = pairs.map(([s, d]) => `(${s}::bigint, ${d}::bigint)`);
+  await conn.query(
+    `create or replace table edges as\nselect * from (values\n  ${values.join(",\n  ")}\n) t(src, dst);`
+  );
+  saveLocal("onager_edges_text", text);
+  return pairs.length;
 }
 
 // Recreate sample graph table from custom text input
@@ -423,25 +917,7 @@ async function updateGraphFromInput() {
   setStatus("loading", "Updating sample graph edges...");
 
   try {
-    const lines = text.split("\n");
-    const values = [];
-    lines.forEach(line => {
-      const parts = line.split(/[\s,;\t]+/).map(p => p.trim()).filter(Boolean);
-      if (parts.length >= 2) {
-        const src = parseInt(parts[0], 10);
-        const dst = parseInt(parts[1], 10);
-        if (!isNaN(src) && !isNaN(dst)) {
-          values.push(`(${src}::bigint, ${dst}::bigint)`);
-        }
-      }
-    });
-
-    if (values.length === 0) {
-      throw new Error("No valid edges found in input. Format should be: source, target");
-    }
-
-    const sql = `create or replace table edges as\nselect * from (values\n  ${values.join(",\n  ")}\n) t(src, dst);`;
-    await conn.query(sql);
+    const edgeCount = await rebuildEdgesTable(text);
 
     // If the editor query does not read from the edges table (for example a graph
     // generator call), rerunning it would visualize its own result and hide the
@@ -453,7 +929,7 @@ async function updateGraphFromInput() {
 
     // Rerun the editor query so the table and visualization reflect the new graph.
     const ok = await runQuery();
-    if (ok) setStatus("ready", `Sample graph updated with ${values.length} edges.`);
+    if (ok) setStatus("ready", `Sample graph updated with ${edgeCount} edges.`);
     return ok;
   } catch (err) {
     console.error("Failed to update graph:", err);
@@ -542,7 +1018,13 @@ async function loadGraphDataAndVisualize() {
         const nodeVec = lastResult.getChildAt(nodeColIdx);
 
         const communityColName = fields.find(f => ["community", "partition", "cluster", "group"].includes(f));
-        const rankColName = fields.find(f => ["rank", "importance", "centrality", "score", "value"].includes(f));
+        // Cover the score column names Onager functions actually return, so node
+        // sizing works for every centrality variant, not only PageRank.
+        const rankColName = fields.find(f => [
+          "rank", "importance", "centrality", "score", "value",
+          "betweenness", "closeness", "eigenvector", "katz", "harmonic",
+          "triangles", "coefficient",
+        ].includes(f));
         const distColName = fields.find(f => ["distance", "cost", "weight"].includes(f));
 
         const commIdx = communityColName ? lastResult.schema.fields.findIndex(f => f.name.toLowerCase() === communityColName) : -1;
@@ -1180,12 +1662,24 @@ function renderHistory() {
 
 // Event Listeners
 runBtn.addEventListener("click", runQuery);
+shareBtn.addEventListener("click", async () => {
+  const url = buildShareLink();
+  // Reflect the link in the address bar so it can also be copied from there.
+  history.replaceState(null, "", url);
+  try {
+    await navigator.clipboard.writeText(url);
+    setStatus("ready", "Share link copied to clipboard.");
+  } catch (e) {
+    setStatus("ready", "Share link placed in the address bar. Copy it from there.");
+  }
+});
 resetBtn.addEventListener("click", async () => {
   setBusy(true);
   try {
     await conn.query(SAMPLE_EDGES);
     edgesInput.value = GRAPH_TEMPLATES.kite;
     templateSelect.value = "kite";
+    saveLocal("onager_edges_text", GRAPH_TEMPLATES.kite);
     // Same guard as updateGraphFromInput: a query that does not read from the
     // edges table would visualize its own result instead of the reset graph.
     if (!/\bedges\b/i.test(sqlEl.value)) {
@@ -1221,6 +1715,7 @@ function setupHighlighting() {
   });
   sqlEl.addEventListener("input", () => {
     updateHighlight();
+    saveEditorSql();
     sqlBackdropEl.scrollTop = sqlEl.scrollTop;
     sqlBackdropEl.scrollLeft = sqlEl.scrollLeft;
   });

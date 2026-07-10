@@ -88,6 +88,10 @@ plugins:
       separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
   - tags
 
+hooks:
+  # This adds "Run in the playground" links to SQL blocks on example pages.
+  - docs/hooks/playground_links.py
+
 nav:
   - Home: index.md
   - Getting Started:

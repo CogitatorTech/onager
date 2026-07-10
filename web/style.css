@@ -455,10 +455,12 @@ a:hover {
 
 .builder-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 .builder-actions button {
   flex: 1;
+  white-space: nowrap;
 }
 
 /* Demo buttons grid */
@@ -491,6 +493,51 @@ a:hover {
   line-height: 1.4;
   border-top: 1px solid var(--border);
   padding-top: 0.5rem;
+}
+.demo-desc a,
+.demo-docs-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.82rem;
+}
+.demo-desc a:hover,
+.demo-docs-link:hover {
+  text-decoration: underline;
+}
+
+/* Function Browser */
+.function-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem;
+  background: var(--bg-soft);
+}
+.function-item {
+  display: block;
+  width: 100%;
+  flex-shrink: 0;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-soft);
+  transition: var(--transition);
+}
+.function-item:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 
 /* History List */

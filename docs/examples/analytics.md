@@ -11,7 +11,7 @@ description: Real-world graph analytics use cases with Onager.
 
 ```sql
 -- Create social network edges
-create table follows as select * from (values
+create or replace table follows as select * from (values
   (1::bigint, 2::bigint), (1, 3), (2, 3), (3, 4), (4, 5), (5, 1), (2, 4), (3, 5)
 ) t(follower, followed);
 
@@ -54,7 +54,7 @@ order by size desc;
 ### Ring Detection With Clustering
 
 ```sql
-create table transactions as select * from (values
+create or replace table transactions as select * from (values
   (100::bigint, 200::bigint), (200, 300), (300, 100), -- Triangle (suspicious)
   (400, 500), (500, 600)                              -- Normal chain
 ) t(sender, receiver);
@@ -78,12 +78,12 @@ where triangles > 0;
 
 ```sql
 -- User interaction graph
-create table interactions as select * from (values
+create or replace table interactions as select * from (values
   (1::bigint, 10::bigint), (1, 20), (2, 10), (2, 30), (3, 20), (3, 30)
 ) t(user_id, item_id);
 
 -- Create edges (user-item bipartite graph)
-create table edges as
+create or replace table edges as
   select user_id as src, item_id + 1000 as dst from interactions;
 
 -- Recommend items for user 1 based on their interactions

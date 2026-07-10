@@ -79,6 +79,8 @@
           <div class="builder-actions">
             <button id="update-graph-btn" class="btn btn-accent btn-sm" disabled>Update Graph</button>
             <button id="reset" class="btn btn-sm" disabled>Reset Default</button>
+            <button id="load-csv-btn" class="btn btn-sm" disabled title="Load an edge list from a CSV file">Load CSV</button>
+            <input id="csv-file-input" type="file" accept=".csv,.tsv,.txt" hidden>
           </div>
         </div>
       </section>
@@ -90,8 +92,31 @@
           Sample Queries
         </h2>
         <div class="panel-body">
+          <div class="form-group">
+            <label for="demo-category">Category</label>
+            <select id="demo-category" class="form-control"></select>
+          </div>
           <div id="demo-buttons" class="demo-buttons"></div>
           <p id="demo-desc" class="demo-desc"></p>
+          <a id="demo-docs-link" class="demo-docs-link" href="#" target="_blank" rel="noopener" style="display:none;">Learn more in the docs</a>
+        </div>
+      </section>
+
+      <!-- Section: Function Browser -->
+      <section class="panel" aria-labelledby="functions-title">
+        <h2 id="functions-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Functions
+        </h2>
+        <div class="panel-body">
+          <div class="form-group">
+            <input id="function-search" class="form-control" type="search" placeholder="Search functions..." autocomplete="off">
+          </div>
+          <div id="function-list" class="function-list">
+            <div class="empty-state">Loading...</div>
+          </div>
+          <p class="demo-desc">Click a name to insert it into the editor. See the
+            <a href="../reference/sql-functions/" target="_blank" rel="noopener">SQL function reference</a> for signatures.</p>
         </div>
       </section>
 
@@ -125,6 +150,10 @@
           <div id="sql-backdrop" class="sql-backdrop" aria-hidden="true"><pre><code id="sql-highlight" class="language-sql"></code></pre></div>
         </div>
         <div class="editor-actions">
+          <button id="share" class="btn btn-outline" disabled title="Copy a link that restores this query and graph">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            Share Link
+          </button>
           <button id="run" class="btn btn-primary" disabled>
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             Execute Query
