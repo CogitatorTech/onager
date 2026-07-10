@@ -22,12 +22,15 @@ pub struct PageRankResult {
 }
 
 /// Compute PageRank on a graph defined by edge arrays.
+///
+/// When `weights` is empty, every edge gets weight `1.0`.
 pub fn compute_pagerank(
     src: &[i64],
     dst: &[i64],
-    _weights: &[f64],
+    weights: &[f64],
     damping: f64,
     iterations: usize,
+    tolerance: f64,
     directed: bool,
 ) -> Result<PageRankResult> {
     if src.len() != dst.len() {
@@ -35,9 +38,13 @@ pub fn compute_pagerank(
             "src and dst arrays must have same length".to_string(),
         ));
     }
+    if !weights.is_empty() && weights.len() != src.len() {
+        return Err(OnagerError::InvalidArgument(
+            "weights must be empty or same length as edges".to_string(),
+        ));
+    }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let tolerance = 1e-6;
 
     if directed {
         let mut graph: Digraph<i64, f64> = Digraph::new();
@@ -57,7 +64,8 @@ pub fn compute_pagerank(
                     dst[i]
                 ))
             })?;
-            graph.add_edge(src_id, dst_id, 1.0);
+            let weight = if weights.is_empty() { 1.0 } else { weights[i] };
+            graph.add_edge(src_id, dst_id, weight);
         }
         let ranks = pagerank(&graph, damping, iterations, tolerance, None)
             .map_err(|e| OnagerError::GraphError(e.to_string()))?;
@@ -89,7 +97,8 @@ pub fn compute_pagerank(
                     dst[i]
                 ))
             })?;
-            graph.add_edge(src_id, dst_id, 1.0);
+            let weight = if weights.is_empty() { 1.0 } else { weights[i] };
+            graph.add_edge(src_id, dst_id, weight);
         }
         let ranks = pagerank(&graph, damping, iterations, tolerance, None)
             .map_err(|e| OnagerError::GraphError(e.to_string()))?;
@@ -695,7 +704,7 @@ mod tests {
     #[test]
     fn test_pagerank_triangle() {
         let (src, dst) = triangle_graph();
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, false).unwrap();
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, 1e-6, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert_eq!(result.ranks.len(), 3);
@@ -707,10 +716,46 @@ mod tests {
     #[test]
     fn test_pagerank_directed() {
         let (src, dst) = triangle_graph();
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, true).unwrap();
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, 1e-6, true).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.ranks.is_empty());
+    }
+
+    #[test]
+    fn test_pagerank_weighted() {
+        // Node 1 points to nodes 2 and 3; the edge to node 3 has a larger weight,
+        // so node 3 must receive a higher rank than node 2.
+        let src = vec![1, 1];
+        let dst = vec![2, 3];
+        let weights = vec![1.0, 10.0];
+        let result = compute_pagerank(&src, &dst, &weights, 0.85, 100, 1e-6, true).unwrap();
+
+        let rank_of = |node: i64| {
+            let idx = result
+                .node_ids
+                .iter()
+                .position(|&n| n == node)
+                .unwrap_or_else(|| panic!("node {node} missing from result"));
+            result.ranks[idx]
+        };
+        assert!(rank_of(3) > rank_of(2), "heavier edge should raise rank");
+
+        // Uniform explicit weights must match the unweighted result.
+        let (tsrc, tdst) = triangle_graph();
+        let uniform =
+            compute_pagerank(&tsrc, &tdst, &[1.0, 1.0, 1.0], 0.85, 100, 1e-6, false).unwrap();
+        let unweighted = compute_pagerank(&tsrc, &tdst, &[], 0.85, 100, 1e-6, false).unwrap();
+        let sum_u: f64 = uniform.ranks.iter().sum();
+        let sum_n: f64 = unweighted.ranks.iter().sum();
+        assert!((sum_u - sum_n).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_pagerank_weights_length_mismatch() {
+        let (src, dst) = triangle_graph();
+        let result = compute_pagerank(&src, &dst, &[1.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -800,14 +845,14 @@ mod tests {
     #[test]
     fn test_empty_graph_returns_empty() {
         // Empty graph returns empty results (not an error)
-        let result = compute_pagerank(&[], &[], &[], 0.85, 100, false).unwrap();
+        let result = compute_pagerank(&[], &[], &[], 0.85, 100, 1e-6, false).unwrap();
         assert!(result.node_ids.is_empty());
         assert!(result.ranks.is_empty());
     }
 
     #[test]
     fn test_mismatched_arrays_error() {
-        let result = compute_pagerank(&[1, 2], &[2], &[], 0.85, 100, false);
+        let result = compute_pagerank(&[1, 2], &[2], &[], 0.85, 100, 1e-6, false);
         assert!(result.is_err());
     }
 

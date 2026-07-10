@@ -48,6 +48,7 @@ Optional parameters:
 
 - `damping` (default 0.85): Probability of following a link vs jumping randomly
 - `iterations` (default 100): Maximum iterations
+- `tolerance` (default 1e-6): Convergence threshold for early termination
 - `directed` (default true): Treat graph as directed
 
 ```sql
@@ -56,6 +57,16 @@ select * from onager_ctr_pagerank(
   (select src, dst from edges),
   damping := 0.9,
   iterations := 50
+);
+```
+
+The input relation may include a third `double` column with edge weights.
+When present, rank flows along edges in proportion to their weights; otherwise every edge has weight 1.0.
+
+```sql
+-- Weighted PageRank
+select * from onager_ctr_pagerank(
+  (select src, dst, weight::double as weight from weighted_edges)
 );
 ```
 

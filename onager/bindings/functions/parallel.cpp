@@ -52,6 +52,8 @@ static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, T
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
+    // graphina's pagerank_parallel ignores edge weights, so no weights are passed here.
+    // Weighted PageRank is available through onager_ctr_pagerank.
     int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_ranks.resize(nc);

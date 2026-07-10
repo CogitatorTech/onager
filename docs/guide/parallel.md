@@ -50,6 +50,9 @@ Optional parameters:
 - `iterations` (default 100): Maximum iterations
 - `directed` (default true): Treat graph as directed
 
+The parallel implementation treats every edge as having weight 1.0.
+For weighted PageRank, use `onager_ctr_pagerank` with a third `double` column.
+
 ---
 
 ## Parallel BFS

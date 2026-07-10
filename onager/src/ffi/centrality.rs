@@ -12,8 +12,11 @@ pub extern "C" fn onager_compute_pagerank(
     src_ptr: *const i64,
     dst_ptr: *const i64,
     edge_count: usize,
+    weights_ptr: *const f64,
+    weights_count: usize,
     damping: f64,
     iterations: usize,
+    tolerance: f64,
     directed: bool,
     out_nodes: *mut i64,
     out_ranks: *mut f64,
@@ -26,7 +29,14 @@ pub extern "C" fn onager_compute_pagerank(
         }
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_pagerank(src, dst, &[], damping, iterations, directed) {
+        let weights = if weights_ptr.is_null() || weights_count == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(weights_ptr, weights_count) }
+        };
+        match algorithms::compute_pagerank(
+            src, dst, weights, damping, iterations, tolerance, directed,
+        ) {
             Ok(result) => {
                 let node_count = result.node_ids.len();
                 if !out_nodes.is_null() && !out_ranks.is_null() {

@@ -16,6 +16,10 @@ use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
 /// Compute PageRank using parallel algorithm.
+///
+/// The `weights` slice is stored on the graph edges, but graphina's
+/// `pagerank_parallel` currently ignores edge weights, so results are always
+/// unweighted. Use [`super::centrality::compute_pagerank`] for weighted PageRank.
 pub fn compute_pagerank_parallel(
     src: &[i64],
     dst: &[i64],

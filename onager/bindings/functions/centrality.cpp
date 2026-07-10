@@ -18,13 +18,16 @@ using namespace onager;
 struct PageRankBindData : public TableFunctionData {
   double damping = 0.85;
   int64_t iterations = 100;
+  double tolerance = 1e-6;
   bool directed = true;
+  bool weighted = false;
 };
 
 struct PageRankGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes;
   std::vector<int64_t> dst_nodes;
+  std::vector<double> weights;
   std::vector<int64_t> result_nodes;
   std::vector<double> result_ranks;
   idx_t output_idx = 0;
@@ -39,9 +42,11 @@ static unique_ptr<FunctionData> PageRankBind(ClientContext &context,
                                               vector<string> &names) {
   auto bind_data = make_uniq<PageRankBindData>();
   CheckInt64Input(input, "onager_pagerank");
+  bind_data->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
   for (auto &kv : input.named_parameters) {
     if (kv.first == "damping") bind_data->damping = kv.second.GetValue<double>();
     else if (kv.first == "iterations") bind_data->iterations = kv.second.GetValue<int64_t>();
+    else if (kv.first == "tolerance") bind_data->tolerance = kv.second.GetValue<double>();
     else if (kv.first == "directed") bind_data->directed = kv.second.GetValue<bool>();
   }
   return_types.push_back(LogicalType::BIGINT); names.push_back("node_id");
@@ -55,9 +60,14 @@ static unique_ptr<GlobalTableFunctionState> PageRankInitGlobal(ClientContext &co
 
 static OperatorResultType PageRankInOut(ExecutionContext &context, TableFunctionInput &data,
                                          DataChunk &input, DataChunk &output) {
+  auto &bind = data.bind_data->Cast<PageRankBindData>();
   auto &gs = data.global_state->Cast<PageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_pagerank");
+  if (bind.weighted) {
+    AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_ctr_pagerank");
+  } else {
+    AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_pagerank");
+  }
   ONAGER_SET_CARDINALITY(output, 0);
   return OperatorResultType::NEED_MORE_INPUT;
 }
@@ -69,12 +79,13 @@ static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, Table
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     size_t ec = gs.src_nodes.size();
-    int64_t nc = ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec,
-        bind.damping, static_cast<size_t>(bind.iterations), bind.directed, nullptr, nullptr);
+    const double *w = gs.weights.empty() ? nullptr : gs.weights.data();
+    int64_t nc = ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec, w, gs.weights.size(),
+        bind.damping, static_cast<size_t>(bind.iterations), bind.tolerance, bind.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(static_cast<size_t>(nc)); gs.result_ranks.resize(static_cast<size_t>(nc));
-    ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec,
-        bind.damping, static_cast<size_t>(bind.iterations), bind.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec, w, gs.weights.size(),
+        bind.damping, static_cast<size_t>(bind.iterations), bind.tolerance, bind.directed, gs.result_nodes.data(), gs.result_ranks.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -389,6 +400,7 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   pagerank.in_out_function_final = PageRankFinal;
   pagerank.named_parameters["damping"] = LogicalType::DOUBLE;
   pagerank.named_parameters["iterations"] = LogicalType::BIGINT;
+  pagerank.named_parameters["tolerance"] = LogicalType::DOUBLE;
   pagerank.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(pagerank);
   loader.RegisterFunction(pagerank);

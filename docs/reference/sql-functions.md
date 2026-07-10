@@ -30,7 +30,7 @@ Complete reference for all Onager SQL functions.
 
 | Function                                     | Returns                          | Description                    |
 |----------------------------------------------|----------------------------------|--------------------------------|
-| `onager_ctr_pagerank(edges)`                 | `node_id, rank`                  | PageRank centrality            |
+| `onager_ctr_pagerank(edges [+ weights])`     | `node_id, rank`                  | PageRank centrality            |
 | `onager_ctr_degree(edges)`                   | `node_id, in_degree, out_degree` | Degree centrality              |
 | `onager_ctr_betweenness(edges)`              | `node_id, betweenness`           | Betweenness centrality         |
 | `onager_ctr_closeness(edges)`                | `node_id, closeness`             | Closeness centrality           |

@@ -38,7 +38,7 @@ mod tests {
     #[test]
     fn test_pagerank_10k_nodes() {
         let (src, dst) = generate_graph_edges(10_000);
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, true);
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, 1e-6, true);
         assert!(result.is_ok(), "PageRank should succeed on 10k nodes");
         let pr = result.unwrap();
         assert_eq!(pr.node_ids.len(), 10_000, "Should return all 10k nodes");
@@ -48,7 +48,7 @@ mod tests {
     #[test]
     fn test_pagerank_15k_nodes() {
         let (src, dst) = generate_graph_edges(15_000);
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, true);
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, 1e-6, true);
         assert!(result.is_ok(), "PageRank should succeed on 15k nodes");
         let pr = result.unwrap();
         assert_eq!(pr.node_ids.len(), 15_000, "Should return all 15k nodes");
@@ -99,7 +99,7 @@ mod tests {
     fn test_exact_boundary_12288_nodes() {
         // This is the exact threshold where crashes were reported
         let (src, dst) = generate_graph_edges(12_288);
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, true);
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, 1e-6, true);
         assert!(
             result.is_ok(),
             "PageRank should succeed at exact 12288 node boundary"
@@ -112,7 +112,7 @@ mod tests {
     fn test_just_above_boundary_12289_nodes() {
         // Just above the boundary
         let (src, dst) = generate_graph_edges(12_289);
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, true);
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 20, 1e-6, true);
         assert!(
             result.is_ok(),
             "PageRank should succeed just above 12288 boundary"
@@ -137,7 +137,7 @@ mod tests {
     fn test_pagerank_50k_nodes() {
         let (src, dst) = generate_graph_edges(50_000);
         // Use fewer iterations for faster test execution
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 10, true);
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 10, 1e-6, true);
         assert!(
             result.is_ok(),
             "PageRank should succeed on 50k nodes (GitHub #3 regression test)"
