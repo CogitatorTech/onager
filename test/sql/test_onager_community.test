@@ -31,6 +31,21 @@ select count(*) > 0 from onager_cmm_label_prop((select src, dst from test_edges)
 ----
 1
 
+# Test Label Propagation with max_iter and seed named parameters
+# Note: the seed controls the node visit order, but graphina's label propagation
+# breaks frequency ties through HashMap iteration order, so seeded runs are not
+# fully deterministic across processes. No determinism assertion here.
+query I
+select count(*) > 0 from onager_cmm_label_prop((select src, dst from test_edges), max_iter := 50, seed := 42)
+----
+1
+
+# Test Label Propagation rejects max_iter of zero
+statement error
+select * from onager_cmm_label_prop((select src, dst from test_edges), max_iter := 0)
+----
+Invalid Input Error: Label propagation failed: Invalid argument: max_iter must be positive
+
 # Test Girvan-Newman community detection
 query I
 select count(*) > 0 from onager_cmm_girvan_newman((select src, dst from test_edges), communities := 2)

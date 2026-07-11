@@ -8,6 +8,7 @@ use graphina::approximation::tsp::greedy_tsp;
 use graphina::approximation::vertex_cover::min_weighted_vertex_cover;
 use graphina::core::types::{Graph, NodeId};
 
+use crate::algorithms::builder::check_weights_no_nan;
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
@@ -23,11 +24,10 @@ pub fn compute_max_clique(src: &[i64], dst: &[i64]) -> Result<CliqueResult> {
             "src and dst arrays must have same length".to_string(),
         ));
     }
-    // Handle empty graph gracefully - return empty clique
     if src.is_empty() {
-        return Ok(CliqueResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -81,9 +81,9 @@ pub fn compute_independent_set(src: &[i64], dst: &[i64]) -> Result<IndependentSe
         ));
     }
     if src.is_empty() {
-        return Ok(IndependentSetResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -134,9 +134,9 @@ pub fn compute_vertex_cover(src: &[i64], dst: &[i64]) -> Result<VertexCoverResul
         ));
     }
     if src.is_empty() {
-        return Ok(VertexCoverResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -181,7 +181,14 @@ pub struct TspResult {
 }
 
 /// Compute Traveling Salesman Problem approximation using greedy nearest-neighbor.
-pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResult> {
+///
+/// When `start` is `None`, the tour starts at the first source node.
+pub fn compute_tsp(
+    src: &[i64],
+    dst: &[i64],
+    weights: &[f64],
+    start: Option<i64>,
+) -> Result<TspResult> {
     if src.len() != dst.len() || src.len() != weights.len() {
         return Err(OnagerError::InvalidArgument(
             "src, dst, and weights arrays must have same length".to_string(),
@@ -192,6 +199,7 @@ pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResul
             "Cannot compute TSP on empty graph".to_string(),
         ));
     }
+    check_weights_no_nan(weights, src.len())?;
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
     let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
@@ -213,8 +221,9 @@ pub fn compute_tsp(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<TspResul
         graph.add_edge(src_id, dst_id, weights[i]);
     }
 
-    let start_id = *node_set.get(&src[0]).ok_or_else(|| {
-        OnagerError::InvalidArgument(format!("Start node {} not found in graph", src[0]))
+    let start_node = start.unwrap_or(src[0]);
+    let start_id = *node_set.get(&start_node).ok_or_else(|| {
+        OnagerError::InvalidArgument(format!("Start node {} not found in graph", start_node))
     })?;
     let (tour_internal, cost) =
         greedy_tsp(&graph, start_id).map_err(|e| OnagerError::GraphError(e.to_string()))?;
@@ -270,7 +279,7 @@ mod tests {
         let dst = vec![2, 3, 4, 1];
         let weights = vec![1.0, 1.0, 1.0, 1.0];
 
-        let result = compute_tsp(&src, &dst, &weights).unwrap();
+        let result = compute_tsp(&src, &dst, &weights, None).unwrap();
 
         // Tour should include all 4 nodes plus return to start
         assert!(result.tour.len() >= 5);
@@ -281,20 +290,15 @@ mod tests {
 
     #[test]
     fn test_tsp_empty_error() {
-        let result = compute_tsp(&[], &[], &[]);
+        let result = compute_tsp(&[], &[], &[], None);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_approximation_empty_graphs() {
-        let max_clique = compute_max_clique(&[], &[]).unwrap();
-        assert!(max_clique.node_ids.is_empty());
-
-        let independent_set = compute_independent_set(&[], &[]).unwrap();
-        assert!(independent_set.node_ids.is_empty());
-
-        let vertex_cover = compute_vertex_cover(&[], &[]).unwrap();
-        assert!(vertex_cover.node_ids.is_empty());
+        assert!(compute_max_clique(&[], &[]).is_err());
+        assert!(compute_independent_set(&[], &[]).is_err());
+        assert!(compute_vertex_cover(&[], &[]).is_err());
     }
 
     #[test]
@@ -302,7 +306,12 @@ mod tests {
         assert!(compute_max_clique(&[1, 2], &[2]).is_err());
         assert!(compute_independent_set(&[1, 2], &[2]).is_err());
         assert!(compute_vertex_cover(&[1, 2], &[2]).is_err());
-        assert!(compute_tsp(&[1, 2], &[2], &[1.0, 2.0]).is_err());
-        assert!(compute_tsp(&[1, 2], &[2, 3], &[1.0]).is_err());
+        assert!(compute_tsp(&[1, 2], &[2], &[1.0, 2.0], None).is_err());
+        assert!(compute_tsp(&[1, 2], &[2, 3], &[1.0], None).is_err());
+    }
+
+    #[test]
+    fn test_tsp_nan_weight_rejected() {
+        assert!(compute_tsp(&[1, 2], &[2, 3], &[f64::NAN, 1.0], None).is_err());
     }
 }

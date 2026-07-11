@@ -100,6 +100,22 @@ order by label, node_id;
 | node_id | bigint | Node identifier |
 | label   | bigint | Community label |
 
+Optional parameters:
+
+- `max_iter` (default 100): Maximum propagation iterations
+- `seed`: Random seed for the node visit order
+
+```sql
+select node_id, label
+from onager_cmm_label_prop((select src, dst from edges), max_iter := 50, seed := 42)
+order by label, node_id;
+```
+
+!!! note "Determinism"
+    The seed controls the order in which nodes update their labels, but the underlying
+    implementation currently breaks label ties nondeterministically, so seeded runs can
+    still differ between sessions.
+
 ---
 
 ## Girvan-Newman
@@ -133,6 +149,11 @@ from onager_cmm_spectral((select src, dst from edges), k := 2)
 order by community, node_id;
 ```
 
+Optional parameters:
+
+- `k` (default 2): Number of clusters
+- `seed`: Random seed for the k-means initialization
+
 ---
 
 ## Infomap
@@ -145,6 +166,16 @@ select node_id, community
 from onager_cmm_infomap((select src, dst from edges))
 order by community, node_id;
 ```
+
+Optional parameters:
+
+- `max_iter` (default 100): Maximum refinement iterations
+- `seed`: Random seed for the node visit order
+
+!!! note "Determinism"
+    As with label propagation, the seed controls the node visit order, but the underlying
+    implementation currently breaks ties nondeterministically, so seeded runs can still
+    differ between sessions.
 
 ---
 

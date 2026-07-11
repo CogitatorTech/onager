@@ -26,6 +26,7 @@ struct KruskalMstGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> KruskalMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   CheckInt64Input(input, "onager_mst_kruskal", 3);
+  CheckColumnType(input, "onager_mst_kruskal", 2, LogicalType::DOUBLE);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("weight");
@@ -46,7 +47,8 @@ static OperatorFinalizeResultType KruskalMstFinal(ExecutionContext &ctx, TableFu
     int64_t ec = ::onager::onager_compute_kruskal_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Kruskal MST failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec); gs.result_weights.resize(ec);
-    ::onager::onager_compute_kruskal_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_src.data(), gs.result_dst.data(), gs.result_weights.data(), &gs.total_weight);
+    int64_t rc = ::onager::onager_compute_kruskal_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_src.data(), gs.result_dst.data(), gs.result_weights.data(), &gs.total_weight);
+    if (rc != ec) throw InvalidInputException("Kruskal MST failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
@@ -73,6 +75,7 @@ struct PrimMstGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> PrimMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   CheckInt64Input(input, "onager_mst_prim", 3);
+  CheckColumnType(input, "onager_mst_prim", 2, LogicalType::DOUBLE);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("weight");
@@ -93,7 +96,8 @@ static OperatorFinalizeResultType PrimMstFinal(ExecutionContext &ctx, TableFunct
     int64_t ec = ::onager::onager_compute_prim_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Prim MST failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec); gs.result_weights.resize(ec);
-    ::onager::onager_compute_prim_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_src.data(), gs.result_dst.data(), gs.result_weights.data(), &gs.total_weight);
+    int64_t rc = ::onager::onager_compute_prim_mst(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_src.data(), gs.result_dst.data(), gs.result_weights.data(), &gs.total_weight);
+    if (rc != ec) throw InvalidInputException("Prim MST failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;

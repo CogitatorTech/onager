@@ -95,6 +95,52 @@ inline std::string GetOnagerError() {
 }
 
 /**
+ * @brief Returns true when the Rust core has a pending error on this thread.
+ *
+ * Every Onager FFI call clears the thread-local error on entry, so checking
+ * immediately after a call on the same thread distinguishes an error sentinel
+ * (NaN or a negative count) from the same value occurring legitimately.
+ */
+inline bool OnagerHasPendingError() {
+  return ::onager::onager_last_error() != nullptr;
+}
+
+/**
+ * @brief Returns a named or positional parameter value, rejecting SQL NULL.
+ */
+template <typename T>
+inline T GetRequiredParam(const std::string &function_name, const std::string &param_name, const Value &value) {
+  if (value.IsNull()) {
+    throw BinderException(function_name + " parameter " + param_name + " cannot be NULL");
+  }
+  return value.GetValue<T>();
+}
+
+/**
+ * @brief Returns a BIGINT parameter value, rejecting SQL NULL and negative values.
+ */
+inline int64_t GetNonNegativeParam(const std::string &function_name, const std::string &param_name, const Value &value) {
+  auto v = GetRequiredParam<int64_t>(function_name, param_name, value);
+  if (v < 0) {
+    throw BinderException(function_name + " parameter " + param_name + " cannot be negative");
+  }
+  return v;
+}
+
+/**
+ * @brief Validates the logical type of an auxiliary input column at bind time.
+ *
+ * Columns past (src, dst) are read through raw typed buffers during
+ * execution, so a mismatched column type would reinterpret or overrun the
+ * underlying vector. This check makes the mismatch a bind-time error.
+ */
+inline void CheckColumnType(TableFunctionBindInput &input, const std::string &name, idx_t col, const LogicalType &expected) {
+  if (input.input_table_types.size() > col && input.input_table_types[col] != expected) {
+    throw InvalidInputException(name + " requires column " + std::to_string(col + 1) + " to be " + expected.ToString() + ". Please cast the column (e.g. column::" + expected.ToString() + "). Found: " + input.input_table_types[col].ToString());
+  }
+}
+
+/**
  * @brief Validates that input table has BIGINT columns for (src, dst).
  * @param input The table function bind input
  * @param name The function name for error messages
@@ -150,13 +196,12 @@ inline void AppendWeightedEdges(DataChunk &input, std::vector<int64_t> &src_node
     if (!src_data.validity.RowIsValid(src_idx) || !dst_data.validity.RowIsValid(dst_idx)) {
       throw InvalidInputException(std::string(function_name) + " does not accept NULL edge endpoints");
     }
+    if (!w_data.validity.RowIsValid(w_idx)) {
+      throw InvalidInputException(std::string(function_name) + " does not accept NULL edge weights");
+    }
     src_nodes.push_back(src[src_idx]);
     dst_nodes.push_back(dst[dst_idx]);
-    if (w_data.validity.RowIsValid(w_idx)) {
-      weights.push_back(w[w_idx]);
-    } else {
-      weights.push_back(0.0);
-    }
+    weights.push_back(w[w_idx]);
   }
 }
 

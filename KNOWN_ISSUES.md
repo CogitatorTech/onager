@@ -8,7 +8,7 @@ This document lists known issues and limitations in the Onager extension.
 
 **Issue:** When using Onager table functions with DuckDB `1.4.x` or older versions, running with multiple threads
 (threads > 1) may cause race
-condition errors during `CREATE TABLE AS SELECT` or when materializing results.
+condition errors during `create table as select` or when materializing results.
 
 See [this issue](https://github.com/CogitatorTech/onager/issues/3) for more details.
 
@@ -27,14 +27,14 @@ table functions that don't preserve insertion order.
 **Workaround:** Set the number of threads to 1 before executing Onager functions:
 
 ```sql
-SET threads TO 1;
+set threads to 1;
 
 -- Then run your Onager queries
-CREATE TABLE results AS
-SELECT * FROM onager_cmm_components((SELECT source, target FROM edges));
+create table results as
+select * from onager_cmm_components((select source, target from edges));
 
 -- Optionally restore threads after
-SET threads TO 4;
+set threads to 4;
 ```
 
 **Solution:** The bug is fixed in DuckDB 1.5.0 and later versions.

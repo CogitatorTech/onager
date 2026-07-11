@@ -18,13 +18,16 @@ using namespace onager;
 struct PageRankBindData : public TableFunctionData {
   double damping = 0.85;
   int64_t iterations = 100;
-  bool directed = true;
+  double tolerance = 1e-6;
+  bool directed = false;
+  bool weighted = false;
 };
 
 struct PageRankGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes;
   std::vector<int64_t> dst_nodes;
+  std::vector<double> weights;
   std::vector<int64_t> result_nodes;
   std::vector<double> result_ranks;
   idx_t output_idx = 0;
@@ -38,11 +41,13 @@ static unique_ptr<FunctionData> PageRankBind(ClientContext &context,
                                               vector<LogicalType> &return_types,
                                               vector<string> &names) {
   auto bind_data = make_uniq<PageRankBindData>();
-  CheckInt64Input(input, "onager_pagerank");
+  CheckInt64Input(input, "onager_ctr_pagerank");
+  bind_data->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "damping") bind_data->damping = kv.second.GetValue<double>();
-    else if (kv.first == "iterations") bind_data->iterations = kv.second.GetValue<int64_t>();
-    else if (kv.first == "directed") bind_data->directed = kv.second.GetValue<bool>();
+    if (kv.first == "damping") bind_data->damping = GetRequiredParam<double>("onager_ctr_pagerank", "damping", kv.second);
+    else if (kv.first == "iterations") bind_data->iterations = GetNonNegativeParam("onager_ctr_pagerank", "iterations", kv.second);
+    else if (kv.first == "tolerance") bind_data->tolerance = GetRequiredParam<double>("onager_ctr_pagerank", "tolerance", kv.second);
+    else if (kv.first == "directed") bind_data->directed = GetRequiredParam<bool>("onager_ctr_pagerank", "directed", kv.second);
   }
   return_types.push_back(LogicalType::BIGINT); names.push_back("node_id");
   return_types.push_back(LogicalType::DOUBLE); names.push_back("rank");
@@ -55,9 +60,14 @@ static unique_ptr<GlobalTableFunctionState> PageRankInitGlobal(ClientContext &co
 
 static OperatorResultType PageRankInOut(ExecutionContext &context, TableFunctionInput &data,
                                          DataChunk &input, DataChunk &output) {
+  auto &bind = data.bind_data->Cast<PageRankBindData>();
   auto &gs = data.global_state->Cast<PageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_pagerank");
+  if (bind.weighted) {
+    AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_ctr_pagerank");
+  } else {
+    AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_ctr_pagerank");
+  }
   ONAGER_SET_CARDINALITY(output, 0);
   return OperatorResultType::NEED_MORE_INPUT;
 }
@@ -69,12 +79,14 @@ static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, Table
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     size_t ec = gs.src_nodes.size();
-    int64_t nc = ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec,
-        bind.damping, static_cast<size_t>(bind.iterations), bind.directed, nullptr, nullptr);
+    const double *w = gs.weights.empty() ? nullptr : gs.weights.data();
+    int64_t nc = ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec, w, gs.weights.size(),
+        bind.damping, static_cast<size_t>(bind.iterations), bind.tolerance, bind.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(static_cast<size_t>(nc)); gs.result_ranks.resize(static_cast<size_t>(nc));
-    ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec,
-        bind.damping, static_cast<size_t>(bind.iterations), bind.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    int64_t rc = ::onager::onager_compute_pagerank(gs.src_nodes.data(), gs.dst_nodes.data(), ec, w, gs.weights.size(),
+        bind.damping, static_cast<size_t>(bind.iterations), bind.tolerance, bind.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    if (rc != nc) throw InvalidInputException("PageRank failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -91,7 +103,7 @@ static OperatorFinalizeResultType PageRankFinal(ExecutionContext &context, Table
 // Degree Centrality Table Function
 // =============================================================================
 
-struct DegreeBindData : public TableFunctionData { bool directed = true; };
+struct DegreeBindData : public TableFunctionData { bool directed = false; };
 struct DegreeGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -102,8 +114,8 @@ struct DegreeGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> DegreeBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DegreeBindData>();
-  CheckInt64Input(input, "onager_degree");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  CheckInt64Input(input, "onager_ctr_degree");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_degree", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("in_degree");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("out_degree");
@@ -124,7 +136,8 @@ static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFuncti
     int64_t nc = ::onager::onager_compute_degree(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Degree failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_in.resize(nc); gs.result_out.resize(nc);
-    ::onager::onager_compute_degree(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, gs.result_nodes.data(), gs.result_in.data(), gs.result_out.data());
+    int64_t rc = ::onager::onager_compute_degree(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, gs.result_nodes.data(), gs.result_in.data(), gs.result_out.data());
+    if (rc != nc) throw InvalidInputException("Degree failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -140,7 +153,7 @@ static OperatorFinalizeResultType DegreeFinal(ExecutionContext &ctx, TableFuncti
 // Betweenness Centrality Table Function
 // =============================================================================
 
-struct BetweennessBindData : public TableFunctionData { bool normalized = true; };
+struct BetweennessBindData : public TableFunctionData { bool normalized = true; bool directed = false; };
 struct BetweennessGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -151,8 +164,11 @@ struct BetweennessGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> BetweennessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BetweennessBindData>();
-  CheckInt64Input(input, "onager_betweenness");
-  for (auto &kv : input.named_parameters) if (kv.first == "normalized") bd->normalized = kv.second.GetValue<bool>();
+  CheckInt64Input(input, "onager_ctr_betweenness");
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "normalized") bd->normalized = GetRequiredParam<bool>("onager_ctr_betweenness", "normalized", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_betweenness", "directed", kv.second);
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("betweenness");
   return std::move(bd);
@@ -169,10 +185,11 @@ static OperatorFinalizeResultType BetweennessFinal(ExecutionContext &ctx, TableF
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_betweenness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.normalized, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_betweenness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.normalized, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Betweenness failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centralities.resize(nc);
-    ::onager::onager_compute_betweenness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.normalized, gs.result_nodes.data(), gs.result_centralities.data());
+    int64_t rc = ::onager::onager_compute_betweenness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.normalized, bd.directed, gs.result_nodes.data(), gs.result_centralities.data());
+    if (rc != nc) throw InvalidInputException("Betweenness failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -196,11 +213,15 @@ struct ClosenessGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct ClosenessBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> ClosenessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  CheckInt64Input(input, "onager_closeness");
+  auto bd = make_uniq<ClosenessBindData>();
+  CheckInt64Input(input, "onager_ctr_closeness");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_closeness", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("closeness");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> ClosenessInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ClosenessGlobalState>(); }
 static OperatorResultType ClosenessInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -210,14 +231,16 @@ static OperatorResultType ClosenessInOut(ExecutionContext &ctx, TableFunctionInp
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ClosenessFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<ClosenessBindData>();
   auto &gs = data.global_state->Cast<ClosenessGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_closeness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_closeness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Closeness failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centralities.resize(nc);
-    ::onager::onager_compute_closeness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_centralities.data());
+    int64_t rc = ::onager::onager_compute_closeness(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, gs.result_nodes.data(), gs.result_centralities.data());
+    if (rc != nc) throw InvalidInputException("Closeness failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -241,11 +264,15 @@ struct HarmonicGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct HarmonicBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> HarmonicBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  CheckInt64Input(input, "onager_harmonic");
+  auto bd = make_uniq<HarmonicBindData>();
+  CheckInt64Input(input, "onager_ctr_harmonic");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_harmonic", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("harmonic");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> HarmonicInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<HarmonicGlobalState>(); }
 static OperatorResultType HarmonicInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -255,14 +282,16 @@ static OperatorResultType HarmonicInOut(ExecutionContext &ctx, TableFunctionInpu
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<HarmonicBindData>();
   auto &gs = data.global_state->Cast<HarmonicGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_harmonic(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_harmonic(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Harmonic failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centralities.resize(nc);
-    ::onager::onager_compute_harmonic(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_centralities.data());
+    int64_t rc = ::onager::onager_compute_harmonic(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, gs.result_nodes.data(), gs.result_centralities.data());
+    if (rc != nc) throw InvalidInputException("Harmonic failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -278,7 +307,7 @@ static OperatorFinalizeResultType HarmonicFinal(ExecutionContext &ctx, TableFunc
 // Katz Centrality Table Function
 // =============================================================================
 
-struct KatzBindData : public TableFunctionData { double alpha = 0.1; int64_t max_iter = 100; double tolerance = 1e-6; };
+struct KatzBindData : public TableFunctionData { double alpha = 0.1; double beta = 1.0; int64_t max_iter = 100; double tolerance = 1e-6; bool directed = false; };
 struct KatzGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -289,11 +318,13 @@ struct KatzGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<KatzBindData>();
-  CheckInt64Input(input, "onager_katz");
+  CheckInt64Input(input, "onager_ctr_katz");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "alpha") bd->alpha = kv.second.GetValue<double>();
-    if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
-    if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
+    if (kv.first == "alpha") bd->alpha = GetRequiredParam<double>("onager_ctr_katz", "alpha", kv.second);
+    if (kv.first == "beta") bd->beta = GetRequiredParam<double>("onager_ctr_katz", "beta", kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_katz", "max_iter", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_katz", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_katz", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("katz");
@@ -311,10 +342,11 @@ static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunction
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.max_iter, bd.tolerance, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.beta, bd.max_iter, bd.tolerance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Katz failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centralities.resize(nc);
-    ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.max_iter, bd.tolerance, gs.result_nodes.data(), gs.result_centralities.data());
+    int64_t rc = ::onager::onager_compute_katz(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.alpha, bd.beta, bd.max_iter, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_centralities.data());
+    if (rc != nc) throw InvalidInputException("Katz failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -330,7 +362,7 @@ static OperatorFinalizeResultType KatzFinal(ExecutionContext &ctx, TableFunction
 // Eigenvector Centrality Table Function
 // =============================================================================
 
-struct EigenvectorBindData : public TableFunctionData { int64_t max_iter = 100; double tolerance = 1e-6; };
+struct EigenvectorBindData : public TableFunctionData { int64_t max_iter = 100; double tolerance = 1e-6; bool directed = false; };
 struct EigenvectorGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -341,10 +373,11 @@ struct EigenvectorGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> EigenvectorBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<EigenvectorBindData>();
-  CheckInt64Input(input, "onager_eigenvector");
+  CheckInt64Input(input, "onager_ctr_eigenvector");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
-    if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_eigenvector", "max_iter", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_eigenvector", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_eigenvector", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("eigenvector");
@@ -362,10 +395,11 @@ static OperatorFinalizeResultType EigenvectorFinal(ExecutionContext &ctx, TableF
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_eigenvector(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.tolerance, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_eigenvector(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.tolerance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Eigenvector failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centralities.resize(nc);
-    ::onager::onager_compute_eigenvector(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.tolerance, gs.result_nodes.data(), gs.result_centralities.data());
+    int64_t rc = ::onager::onager_compute_eigenvector(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_centralities.data());
+    if (rc != nc) throw InvalidInputException("Eigenvector failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -389,6 +423,7 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   pagerank.in_out_function_final = PageRankFinal;
   pagerank.named_parameters["damping"] = LogicalType::DOUBLE;
   pagerank.named_parameters["iterations"] = LogicalType::BIGINT;
+  pagerank.named_parameters["tolerance"] = LogicalType::DOUBLE;
   pagerank.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(pagerank);
   loader.RegisterFunction(pagerank);
@@ -404,18 +439,21 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   betweenness.in_out_function = BetweennessInOut;
   betweenness.in_out_function_final = BetweennessFinal;
   betweenness.named_parameters["normalized"] = LogicalType::BOOLEAN;
+  betweenness.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(betweenness);
   loader.RegisterFunction(betweenness);
 
   TableFunction closeness("onager_ctr_closeness", {LogicalType::TABLE}, nullptr, ClosenessBind, ClosenessInitGlobal);
   closeness.in_out_function = ClosenessInOut;
   closeness.in_out_function_final = ClosenessFinal;
+  closeness.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(closeness);
   loader.RegisterFunction(closeness);
 
   TableFunction harmonic("onager_ctr_harmonic", {LogicalType::TABLE}, nullptr, HarmonicBind, HarmonicInitGlobal);
   harmonic.in_out_function = HarmonicInOut;
   harmonic.in_out_function_final = HarmonicFinal;
+  harmonic.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(harmonic);
   loader.RegisterFunction(harmonic);
 
@@ -423,8 +461,10 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   katz.in_out_function = KatzInOut;
   katz.in_out_function_final = KatzFinal;
   katz.named_parameters["alpha"] = LogicalType::DOUBLE;
+  katz.named_parameters["beta"] = LogicalType::DOUBLE;
   katz.named_parameters["max_iter"] = LogicalType::BIGINT;
   katz.named_parameters["tolerance"] = LogicalType::DOUBLE;
+  katz.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(katz);
   loader.RegisterFunction(katz);
 
@@ -433,6 +473,7 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   eigenvector.in_out_function_final = EigenvectorFinal;
   eigenvector.named_parameters["max_iter"] = LogicalType::BIGINT;
   eigenvector.named_parameters["tolerance"] = LogicalType::DOUBLE;
+  eigenvector.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(eigenvector);
   loader.RegisterFunction(eigenvector);
 }
@@ -456,7 +497,7 @@ namespace duckdb {
 
 using namespace onager;
 
-struct VoteRankBindData : public TableFunctionData { int64_t num_seeds = 10; };
+struct VoteRankBindData : public TableFunctionData { int64_t num_seeds = 10; bool directed = false; };
 struct VoteRankGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -466,9 +507,10 @@ struct VoteRankGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> VoteRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<VoteRankBindData>();
-  CheckInt64Input(input, "onager_voterank");
+  CheckInt64Input(input, "onager_ctr_voterank");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "num_seeds") bd->num_seeds = kv.second.GetValue<int64_t>();
+    if (kv.first == "num_seeds") bd->num_seeds = GetNonNegativeParam("onager_ctr_voterank", "num_seeds", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_voterank", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -485,10 +527,11 @@ static OperatorFinalizeResultType VoteRankFinal(ExecutionContext &ctx, TableFunc
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_voterank(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.num_seeds, nullptr);
+    int64_t nc = ::onager::onager_compute_voterank(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.num_seeds, bd.directed, nullptr);
     if (nc < 0) throw InvalidInputException("VoteRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
-    ::onager::onager_compute_voterank(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.num_seeds, gs.result_nodes.data());
+    int64_t rc = ::onager::onager_compute_voterank(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.num_seeds, bd.directed, gs.result_nodes.data());
+    if (rc != nc) throw InvalidInputException("VoteRank failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -507,6 +550,7 @@ void RegisterVoteRankFunction(ExtensionLoader &loader) {
   voterank.in_out_function = VoteRankInOut;
   voterank.in_out_function_final = VoteRankFinal;
   voterank.named_parameters["num_seeds"] = LogicalType::BIGINT;
+  voterank.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(voterank);
   loader.RegisterFunction(voterank);
 }
@@ -520,7 +564,7 @@ void RegisterVoteRankFunction(ExtensionLoader &loader) {
 namespace duckdb {
 using namespace onager;
 
-struct LocalReachingBindData : public TableFunctionData { int64_t distance = 2; };
+struct LocalReachingBindData : public TableFunctionData { int64_t distance = 2; bool directed = false; };
 struct LocalReachingGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -531,9 +575,10 @@ struct LocalReachingGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<LocalReachingBindData>();
-  CheckInt64Input(input, "onager_local_reaching");
+  CheckInt64Input(input, "onager_ctr_local_reaching");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "distance") bd->distance = kv.second.GetValue<int64_t>();
+    if (kv.first == "distance") bd->distance = GetNonNegativeParam("onager_ctr_local_reaching", "distance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_local_reaching", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
@@ -551,10 +596,11 @@ static OperatorFinalizeResultType LocalReachingFinal(ExecutionContext &ctx, Tabl
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("LocalReaching failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centrality.resize(nc);
-    ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, gs.result_nodes.data(), gs.result_centrality.data());
+    int64_t rc = ::onager::onager_compute_local_reaching(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.distance, bd.directed, gs.result_nodes.data(), gs.result_centrality.data());
+    if (rc != nc) throw InvalidInputException("LocalReaching failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -578,11 +624,15 @@ struct LaplacianGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct LaplacianBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
-  CheckInt64Input(input, "onager_laplacian");
+  auto bd = make_uniq<LaplacianBindData>();
+  CheckInt64Input(input, "onager_ctr_laplacian");
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_laplacian", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> LaplacianInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LaplacianGlobalState>(); }
 static OperatorResultType LaplacianInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -592,14 +642,16 @@ static OperatorResultType LaplacianInOut(ExecutionContext &ctx, TableFunctionInp
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LaplacianFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<LaplacianBindData>();
   auto &gs = data.global_state->Cast<LaplacianGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Laplacian failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_centrality.resize(nc);
-    ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_centrality.data());
+    int64_t rc = ::onager::onager_compute_laplacian(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed, gs.result_nodes.data(), gs.result_centrality.data());
+    if (rc != nc) throw InvalidInputException("Laplacian failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -617,6 +669,7 @@ void RegisterLocalReachingFunction(ExtensionLoader &loader) {
   lr.in_out_function = LocalReachingInOut;
   lr.in_out_function_final = LocalReachingFinal;
   lr.named_parameters["distance"] = LogicalType::BIGINT;
+  lr.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(lr);
   loader.RegisterFunction(lr);
 }
@@ -624,6 +677,7 @@ void RegisterLaplacianFunction(ExtensionLoader &loader) {
   TableFunction lap("onager_ctr_laplacian", {LogicalType::TABLE}, nullptr, LaplacianBind, LaplacianInitGlobal);
   lap.in_out_function = LaplacianInOut;
   lap.in_out_function_final = LaplacianFinal;
+  lap.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(lap);
   loader.RegisterFunction(lap);
 }

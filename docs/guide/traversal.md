@@ -42,6 +42,10 @@ from onager_trv_bfs((select src, dst from edges), source := 1::bigint);
 |-----------|--------|-------------------------------------------|
 | node_id   | bigint | Node reachable from source                |
 
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
 ---
 
 ## Depth-First Search (DFS)
@@ -54,6 +58,10 @@ Useful for topological sorting and cycle detection.
 select node_id
 from onager_trv_dfs((select src, dst from edges), source := 1::bigint);
 ```
+
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -72,6 +80,21 @@ order by distance;
 |----------|--------|-------------------------------|
 | node_id  | bigint | Node identifier               |
 | distance | double | Shortest distance from source |
+
+The input relation may include a third `double` column with nonnegative edge weights.
+When present, distances follow the weights; otherwise every edge has weight 1.0.
+For negative weights, use `onager_pth_bellman_ford`.
+
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+```sql
+-- Weighted shortest distances
+select node_id, distance
+from onager_pth_dijkstra((select src, dst, weight::double as weight from weighted_edges), source := 1::bigint)
+order by distance;
+```
 
 ---
 
@@ -96,6 +119,13 @@ from onager_pth_bellman_ford((select src, dst, weight from weighted_edges), sour
 order by distance;
 ```
 
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+!!! note "Negative weights"
+    In the default undirected mode, any negative edge weight forms a negative cycle (the edge can be traversed back and forth), so the query fails with a negative cycle error. Pass `directed := true` to use negative weights.
+
 ---
 
 ## Floyd-Warshall Algorithm
@@ -118,6 +148,12 @@ order by src, dst;
 | src      | bigint | Source node                    |
 | dst      | bigint | Destination node               |
 | distance | double | Shortest distance between them |
+
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+With `directed := true`, distances are asymmetric, so the row for `(1, 3)` can differ from the row for `(3, 1)`.
 
 ---
 

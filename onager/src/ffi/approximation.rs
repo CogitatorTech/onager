@@ -113,6 +113,8 @@ pub extern "C" fn onager_compute_tsp(
     dst_ptr: *const i64,
     weight_ptr: *const f64,
     edge_count: usize,
+    start: i64,
+    has_start: bool,
     out_tour: *mut i64,
     out_cost: *mut f64,
 ) -> i64 {
@@ -125,7 +127,8 @@ pub extern "C" fn onager_compute_tsp(
         let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
         let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
         let weights = unsafe { std::slice::from_raw_parts(weight_ptr, edge_count) };
-        match algorithms::compute_tsp(src, dst, weights) {
+        let start_opt = if has_start { Some(start) } else { None };
+        match algorithms::compute_tsp(src, dst, weights, start_opt) {
             Ok(result) => {
                 let n = result.tour.len();
                 if !out_tour.is_null() {

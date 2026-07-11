@@ -45,7 +45,8 @@ static OperatorFinalizeResultType JaccardFinal(ExecutionContext &ctx, TableFunct
     int64_t nc = ::onager::onager_compute_jaccard(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Jaccard failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
-    ::onager::onager_compute_jaccard(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    int64_t rc = ::onager::onager_compute_jaccard(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    if (rc != nc) throw InvalidInputException("Jaccard failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
@@ -91,7 +92,8 @@ static OperatorFinalizeResultType AdamicAdarFinal(ExecutionContext &ctx, TableFu
     int64_t nc = ::onager::onager_compute_adamic_adar(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Adamic-Adar failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
-    ::onager::onager_compute_adamic_adar(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    int64_t rc = ::onager::onager_compute_adamic_adar(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    if (rc != nc) throw InvalidInputException("Adamic-Adar failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
@@ -137,7 +139,8 @@ static OperatorFinalizeResultType PrefAttachFinal(ExecutionContext &ctx, TableFu
     int64_t nc = ::onager::onager_compute_preferential_attachment(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Preferential Attachment failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
-    ::onager::onager_compute_preferential_attachment(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    int64_t rc = ::onager::onager_compute_preferential_attachment(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    if (rc != nc) throw InvalidInputException("Preferential Attachment failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
@@ -183,7 +186,8 @@ static OperatorFinalizeResultType ResourceAllocFinal(ExecutionContext &ctx, Tabl
     int64_t nc = ::onager::onager_compute_resource_allocation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Resource Allocation failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_scores.resize(nc);
-    ::onager::onager_compute_resource_allocation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    int64_t rc = ::onager::onager_compute_resource_allocation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_scores.data());
+    if (rc != nc) throw InvalidInputException("Resource Allocation failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;
@@ -228,7 +232,8 @@ static OperatorFinalizeResultType CommonNeighborsFinal(ExecutionContext &ctx, Ta
     int64_t nc = ::onager::onager_compute_common_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("CommonNeighbors failed: " + GetOnagerError());
     gs.result_n1.resize(nc); gs.result_n2.resize(nc); gs.result_counts.resize(nc);
-    ::onager::onager_compute_common_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_counts.data());
+    int64_t rc = ::onager::onager_compute_common_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_n1.data(), gs.result_n2.data(), gs.result_counts.data());
+    if (rc != nc) throw InvalidInputException("CommonNeighbors failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_n1.size() - gs.output_idx;

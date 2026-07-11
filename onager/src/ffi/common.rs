@@ -96,6 +96,25 @@ pub fn clear_last_error() {
     });
 }
 
+/// Converts a C string pointer into a `&str`, setting the last error and
+/// returning `None` when the pointer is null or the bytes are not UTF-8.
+///
+/// # Safety
+/// When non-null, the pointer must reference a valid null-terminated C string.
+unsafe fn name_from_ptr<'a>(ptr: *const c_char) -> Option<&'a str> {
+    if ptr.is_null() {
+        set_last_error("Graph name pointer is null");
+        return None;
+    }
+    match unsafe { CStr::from_ptr(ptr) }.to_str() {
+        Ok(s) => Some(s),
+        Err(_) => {
+            set_last_error("Invalid UTF-8 in graph name");
+            None
+        }
+    }
+}
+
 /// Returns the last error message, or null if no error is set.
 /// Note: The returned pointer is only valid until the next call to
 /// set_last_error or clear_last_error on the same thread.
@@ -136,12 +155,9 @@ pub extern "C" fn onager_get_version() -> *mut c_char {
 pub unsafe extern "C" fn onager_create_graph(name: *const c_char, directed: bool) -> i32 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::create_graph(name, directed) {
             Ok(()) => 0,
@@ -160,12 +176,9 @@ pub unsafe extern "C" fn onager_create_graph(name: *const c_char, directed: bool
 pub unsafe extern "C" fn onager_drop_graph(name: *const c_char) -> i32 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::drop_graph(name) {
             Ok(()) => 0,
@@ -203,12 +216,9 @@ pub extern "C" fn onager_list_graphs() -> *mut c_char {
 pub unsafe extern "C" fn onager_add_node(graph_name: *const c_char, node_id: i64) -> i32 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(graph_name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::add_node(name, node_id) {
             Ok(()) => 0,
@@ -232,12 +242,9 @@ pub unsafe extern "C" fn onager_add_edge(
 ) -> i32 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(graph_name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::add_edge(name, src, dst, weight) {
             Ok(()) => 0,
@@ -256,12 +263,9 @@ pub unsafe extern "C" fn onager_add_edge(
 pub unsafe extern "C" fn onager_node_count(graph_name: *const c_char) -> i64 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(graph_name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::node_count(name) {
             Ok(count) => count as i64,
@@ -280,12 +284,9 @@ pub unsafe extern "C" fn onager_node_count(graph_name: *const c_char) -> i64 {
 pub unsafe extern "C" fn onager_edge_count(graph_name: *const c_char) -> i64 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(graph_name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::edge_count(name) {
             Ok(count) => count as i64,
@@ -304,12 +305,9 @@ pub unsafe extern "C" fn onager_edge_count(graph_name: *const c_char) -> i64 {
 pub unsafe extern "C" fn onager_graph_node_in_degree(graph_name: *const c_char, node: i64) -> i64 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(graph_name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::get_node_in_degree(name, node) {
             Ok(degree) => degree as i64,
@@ -328,12 +326,9 @@ pub unsafe extern "C" fn onager_graph_node_in_degree(graph_name: *const c_char, 
 pub unsafe extern "C" fn onager_graph_node_out_degree(graph_name: *const c_char, node: i64) -> i64 {
     clear_last_error();
     crate::ffi_catch_unwind!(-1, {
-        let name = match unsafe { CStr::from_ptr(graph_name) }.to_str() {
-            Ok(s) => s,
-            Err(_) => {
-                set_last_error("Invalid UTF-8 in graph name");
-                return -1;
-            }
+        let name = match unsafe { name_from_ptr(graph_name) } {
+            Some(s) => s,
+            None => return -1,
         };
         match graph::get_node_out_degree(name, node) {
             Ok(degree) => degree as i64,

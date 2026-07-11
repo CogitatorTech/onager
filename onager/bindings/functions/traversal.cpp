@@ -15,11 +15,11 @@ using namespace onager;
 // Dijkstra Shortest Paths
 // =============================================================================
 
-struct DijkstraBindData : public TableFunctionData { int64_t source = 0; };
+struct DijkstraBindData : public TableFunctionData { int64_t source = 0; bool weighted = false; bool directed = false; };
 struct DijkstraGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
-  std::vector<double> result_distances;
+  std::vector<double> weights, result_distances;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
 };
@@ -27,16 +27,25 @@ struct DijkstraGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DijkstraBindData>();
   CheckInt64Input(input, "onager_pth_dijkstra");
-  for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
+  bd->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_pth_dijkstra", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_dijkstra", "directed", kv.second);
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
   return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> DijkstraInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<DijkstraGlobalState>(); }
 static OperatorResultType DijkstraInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<DijkstraBindData>();
   auto &gs = data.global_state->Cast<DijkstraGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dijkstra");
+  if (bd.weighted) {
+    AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_pth_dijkstra");
+  } else {
+    AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dijkstra");
+  }
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -44,10 +53,12 @@ static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunc
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
+    const double *w = gs.weights.empty() ? nullptr : gs.weights.data();
+    int64_t nc = ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), w, gs.weights.size(), bd.source, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Dijkstra failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_distances.resize(nc);
-    ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, gs.result_nodes.data(), gs.result_distances.data());
+    int64_t rc = ::onager::onager_compute_dijkstra(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), w, gs.weights.size(), bd.source, bd.directed, gs.result_nodes.data(), gs.result_distances.data());
+    if (rc != nc) throw InvalidInputException("Dijkstra failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -63,7 +74,7 @@ static OperatorFinalizeResultType DijkstraFinal(ExecutionContext &ctx, TableFunc
 // BFS Traversal
 // =============================================================================
 
-struct BfsBindData : public TableFunctionData { int64_t source = 0; };
+struct BfsBindData : public TableFunctionData { int64_t source = 0; bool directed = false; };
 struct BfsGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_order;
@@ -74,7 +85,10 @@ struct BfsGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> BfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BfsBindData>();
   CheckInt64Input(input, "onager_trv_bfs");
-  for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_trv_bfs", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_trv_bfs", "directed", kv.second);
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
 }
@@ -82,7 +96,7 @@ static unique_ptr<GlobalTableFunctionState> BfsInitGlobal(ClientContext &ctx, Ta
 static OperatorResultType BfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<BfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_bfs");
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_trv_bfs");
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType BfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -90,10 +104,11 @@ static OperatorFinalizeResultType BfsFinal(ExecutionContext &ctx, TableFunctionI
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_bfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
+    int64_t nc = ::onager::onager_compute_bfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, nullptr);
     if (nc < 0) throw InvalidInputException("BFS failed: " + GetOnagerError());
     gs.result_order.resize(nc);
-    ::onager::onager_compute_bfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, gs.result_order.data());
+    int64_t rc = ::onager::onager_compute_bfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_order.data());
+    if (rc != nc) throw InvalidInputException("BFS failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_order.size() - gs.output_idx;
@@ -109,7 +124,7 @@ static OperatorFinalizeResultType BfsFinal(ExecutionContext &ctx, TableFunctionI
 // DFS Traversal
 // =============================================================================
 
-struct DfsBindData : public TableFunctionData { int64_t source = 0; };
+struct DfsBindData : public TableFunctionData { int64_t source = 0; bool directed = false; };
 struct DfsGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_order;
@@ -120,7 +135,10 @@ struct DfsGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> DfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DfsBindData>();
   CheckInt64Input(input, "onager_trv_dfs");
-  for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_trv_dfs", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_trv_dfs", "directed", kv.second);
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
 }
@@ -128,7 +146,7 @@ static unique_ptr<GlobalTableFunctionState> DfsInitGlobal(ClientContext &ctx, Ta
 static OperatorResultType DfsInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
   auto &gs = data.global_state->Cast<DfsGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_pth_dfs");
+  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_trv_dfs");
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType DfsFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -136,10 +154,11 @@ static OperatorFinalizeResultType DfsFinal(ExecutionContext &ctx, TableFunctionI
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_dfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, nullptr);
+    int64_t nc = ::onager::onager_compute_dfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, nullptr);
     if (nc < 0) throw InvalidInputException("DFS failed: " + GetOnagerError());
     gs.result_order.resize(nc);
-    ::onager::onager_compute_dfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, gs.result_order.data());
+    int64_t rc = ::onager::onager_compute_dfs(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_order.data());
+    if (rc != nc) throw InvalidInputException("DFS failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_order.size() - gs.output_idx;
@@ -155,7 +174,7 @@ static OperatorFinalizeResultType DfsFinal(ExecutionContext &ctx, TableFunctionI
 // Bellman-Ford Shortest Paths (weighted)
 // =============================================================================
 
-struct BellmanFordBindData : public TableFunctionData { int64_t source = 0; };
+struct BellmanFordBindData : public TableFunctionData { int64_t source = 0; bool directed = false; };
 struct BellmanFordGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
@@ -167,7 +186,11 @@ struct BellmanFordGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> BellmanFordBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BellmanFordBindData>();
   CheckInt64Input(input, "onager_pth_bellman_ford", 3);
-  for (auto &kv : input.named_parameters) if (kv.first == "source") bd->source = kv.second.GetValue<int64_t>();
+  CheckColumnType(input, "onager_pth_bellman_ford", 2, LogicalType::DOUBLE);
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_pth_bellman_ford", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_bellman_ford", "directed", kv.second);
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
   return std::move(bd);
@@ -184,10 +207,11 @@ static OperatorFinalizeResultType BellmanFordFinal(ExecutionContext &ctx, TableF
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_bellman_ford(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.source, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_bellman_ford(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.source, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Bellman-Ford failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_distances.resize(nc);
-    ::onager::onager_compute_bellman_ford(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.source, gs.result_nodes.data(), gs.result_distances.data());
+    int64_t rc = ::onager::onager_compute_bellman_ford(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_nodes.data(), gs.result_distances.data());
+    if (rc != nc) throw InvalidInputException("Bellman-Ford failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -211,12 +235,17 @@ struct FloydWarshallGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct FloydWarshallBindData : public TableFunctionData { bool directed = false; };
+
 static unique_ptr<FunctionData> FloydWarshallBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<FloydWarshallBindData>();
   CheckInt64Input(input, "onager_pth_floyd_warshall", 3);
+  CheckColumnType(input, "onager_pth_floyd_warshall", 2, LogicalType::DOUBLE);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_floyd_warshall", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> FloydWarshallInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<FloydWarshallGlobalState>(); }
 static OperatorResultType FloydWarshallInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -226,14 +255,16 @@ static OperatorResultType FloydWarshallInOut(ExecutionContext &ctx, TableFunctio
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType FloydWarshallFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<FloydWarshallBindData>();
   auto &gs = data.global_state->Cast<FloydWarshallGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_floyd_warshall(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), nullptr, nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_floyd_warshall(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.directed, nullptr, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Floyd-Warshall failed: " + GetOnagerError());
     gs.result_src.resize(nc); gs.result_dst.resize(nc); gs.result_distances.resize(nc);
-    ::onager::onager_compute_floyd_warshall(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), gs.result_src.data(), gs.result_dst.data(), gs.result_distances.data());
+    int64_t rc = ::onager::onager_compute_floyd_warshall(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.directed, gs.result_src.data(), gs.result_dst.data(), gs.result_distances.data());
+    if (rc != nc) throw InvalidInputException("Floyd-Warshall failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
@@ -256,6 +287,7 @@ void RegisterTraversalFunctions(ExtensionLoader &loader) {
   dijkstra.in_out_function = DijkstraInOut;
   dijkstra.in_out_function_final = DijkstraFinal;
   dijkstra.named_parameters["source"] = LogicalType::BIGINT;
+  dijkstra.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(dijkstra);
   loader.RegisterFunction(dijkstra);
 
@@ -263,6 +295,7 @@ void RegisterTraversalFunctions(ExtensionLoader &loader) {
   bfs.in_out_function = BfsInOut;
   bfs.in_out_function_final = BfsFinal;
   bfs.named_parameters["source"] = LogicalType::BIGINT;
+  bfs.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(bfs);
   loader.RegisterFunction(bfs);
 
@@ -270,6 +303,7 @@ void RegisterTraversalFunctions(ExtensionLoader &loader) {
   dfs.in_out_function = DfsInOut;
   dfs.in_out_function_final = DfsFinal;
   dfs.named_parameters["source"] = LogicalType::BIGINT;
+  dfs.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(dfs);
   loader.RegisterFunction(dfs);
 
@@ -277,12 +311,14 @@ void RegisterTraversalFunctions(ExtensionLoader &loader) {
   bellman_ford.in_out_function = BellmanFordInOut;
   bellman_ford.in_out_function_final = BellmanFordFinal;
   bellman_ford.named_parameters["source"] = LogicalType::BIGINT;
+  bellman_ford.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(bellman_ford);
   loader.RegisterFunction(bellman_ford);
 
   TableFunction floyd_warshall("onager_pth_floyd_warshall", {LogicalType::TABLE}, nullptr, FloydWarshallBind, FloydWarshallInitGlobal);
   floyd_warshall.in_out_function = FloydWarshallInOut;
   floyd_warshall.in_out_function_final = FloydWarshallFinal;
+  floyd_warshall.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(floyd_warshall);
   loader.RegisterFunction(floyd_warshall);
 }

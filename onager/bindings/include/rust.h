@@ -58,6 +58,8 @@ int64_t onager_compute_tsp(const int64_t *src_ptr,
                            const int64_t *dst_ptr,
                            const double *weight_ptr,
                            uintptr_t edge_count,
+                           int64_t start,
+                           bool has_start,
                            int64_t *out_tour,
                            double *out_cost);
 
@@ -68,8 +70,11 @@ int64_t onager_compute_tsp(const int64_t *src_ptr,
 int64_t onager_compute_pagerank(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
+                                const double *weights_ptr,
+                                uintptr_t weights_count,
                                 double damping,
                                 uintptr_t iterations,
+                                double tolerance,
                                 bool directed,
                                 int64_t *out_nodes,
                                 double *out_ranks);
@@ -85,6 +90,7 @@ int64_t onager_compute_pagerank_parallel(const int64_t *src_ptr,
                                          uintptr_t weights_count,
                                          double damping,
                                          uintptr_t iterations,
+                                         double tolerance,
                                          bool directed,
                                          int64_t *out_node_ids,
                                          double *out_ranks);
@@ -102,24 +108,6 @@ int64_t onager_compute_degree(const int64_t *src_ptr,
                               double *out_out_degree);
 
 /**
- * Compute in-degree of a single node (scalar).
- */
-
-int64_t onager_compute_node_in_degree(const int64_t *src_ptr,
-                                      const int64_t *dst_ptr,
-                                      uintptr_t edge_count,
-                                      int64_t node);
-
-/**
- * Compute out-degree of a single node (scalar).
- */
-
-int64_t onager_compute_node_out_degree(const int64_t *src_ptr,
-                                       const int64_t *dst_ptr,
-                                       uintptr_t edge_count,
-                                       int64_t node);
-
-/**
  * Compute betweenness centrality on edge arrays.
  */
 
@@ -127,6 +115,7 @@ int64_t onager_compute_betweenness(const int64_t *src_ptr,
                                    const int64_t *dst_ptr,
                                    uintptr_t edge_count,
                                    bool normalized,
+                                   bool directed,
                                    int64_t *out_nodes,
                                    double *out_centralities);
 
@@ -137,6 +126,7 @@ int64_t onager_compute_betweenness(const int64_t *src_ptr,
 int64_t onager_compute_closeness(const int64_t *src_ptr,
                                  const int64_t *dst_ptr,
                                  uintptr_t edge_count,
+                                 bool directed,
                                  int64_t *out_nodes,
                                  double *out_centralities);
 
@@ -149,6 +139,7 @@ int64_t onager_compute_eigenvector(const int64_t *src_ptr,
                                    uintptr_t edge_count,
                                    uintptr_t max_iter,
                                    double tolerance,
+                                   bool directed,
                                    int64_t *out_nodes,
                                    double *out_centralities);
 
@@ -160,8 +151,10 @@ int64_t onager_compute_katz(const int64_t *src_ptr,
                             const int64_t *dst_ptr,
                             uintptr_t edge_count,
                             double alpha,
+                            double beta,
                             uintptr_t max_iter,
                             double tolerance,
+                            bool directed,
                             int64_t *out_nodes,
                             double *out_centralities);
 
@@ -172,6 +165,7 @@ int64_t onager_compute_katz(const int64_t *src_ptr,
 int64_t onager_compute_harmonic(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
+                                bool directed,
                                 int64_t *out_nodes,
                                 double *out_centralities);
 
@@ -183,6 +177,7 @@ int64_t onager_compute_voterank(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
                                 uintptr_t num_seeds,
+                                bool directed,
                                 int64_t *out_nodes);
 
 /**
@@ -193,6 +188,7 @@ int64_t onager_compute_local_reaching(const int64_t *src_ptr,
                                       const int64_t *dst_ptr,
                                       uintptr_t edge_count,
                                       uintptr_t distance,
+                                      bool directed,
                                       int64_t *out_nodes,
                                       double *out_centralities);
 
@@ -203,6 +199,7 @@ int64_t onager_compute_local_reaching(const int64_t *src_ptr,
 int64_t onager_compute_laplacian(const int64_t *src_ptr,
                                  const int64_t *dst_ptr,
                                  uintptr_t edge_count,
+                                 bool directed,
                                  int64_t *out_nodes,
                                  double *out_centralities);
 
@@ -314,6 +311,8 @@ int64_t onager_compute_connected_components(const int64_t *src_ptr,
 int64_t onager_compute_label_propagation(const int64_t *src_ptr,
                                          const int64_t *dst_ptr,
                                          uintptr_t edge_count,
+                                         uintptr_t max_iter,
+                                         int64_t seed,
                                          int64_t *out_node_ids,
                                          int64_t *out_labels);
 
@@ -444,7 +443,8 @@ int64_t onager_compute_common_neighbors(const int64_t *src_ptr,
 
 int64_t onager_compute_diameter(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
-                                uintptr_t edge_count);
+                                uintptr_t edge_count,
+                                bool directed);
 
 /**
  * Compute graph radius.
@@ -452,7 +452,8 @@ int64_t onager_compute_diameter(const int64_t *src_ptr,
 
 int64_t onager_compute_radius(const int64_t *src_ptr,
                               const int64_t *dst_ptr,
-                              uintptr_t edge_count);
+                              uintptr_t edge_count,
+                              bool directed);
 
 /**
  * Compute average clustering coefficient.
@@ -468,7 +469,8 @@ double onager_compute_avg_clustering(const int64_t *src_ptr,
 
 double onager_compute_avg_path_length(const int64_t *src_ptr,
                                       const int64_t *dst_ptr,
-                                      uintptr_t edge_count);
+                                      uintptr_t edge_count,
+                                      bool directed);
 
 /**
  * Compute transitivity.
@@ -494,7 +496,8 @@ int64_t onager_compute_triangle_count(const int64_t *src_ptr,
 
 double onager_compute_assortativity(const int64_t *src_ptr,
                                     const int64_t *dst_ptr,
-                                    uintptr_t edge_count);
+                                    uintptr_t edge_count,
+                                    bool directed);
 
 /**
  * Compute graph density.
@@ -541,6 +544,7 @@ int64_t onager_compute_bfs_parallel(const int64_t *src_ptr,
                                     const int64_t *dst_ptr,
                                     uintptr_t edge_count,
                                     int64_t source,
+                                    bool directed,
                                     int64_t *out_order);
 
 /**
@@ -551,8 +555,40 @@ int64_t onager_compute_shortest_paths_parallel(const int64_t *src_ptr,
                                                const int64_t *dst_ptr,
                                                uintptr_t edge_count,
                                                int64_t source,
+                                               bool directed,
                                                int64_t *out_nodes,
                                                double *out_distances);
+
+/**
+ * Compute parallel BFS from multiple sources.
+ *
+ * Writes one row per visited node: the source it was reached from and the node itself.
+ */
+
+int64_t onager_compute_bfs_parallel_multi(const int64_t *src_ptr,
+                                          const int64_t *dst_ptr,
+                                          uintptr_t edge_count,
+                                          const int64_t *sources_ptr,
+                                          uintptr_t sources_count,
+                                          bool directed,
+                                          int64_t *out_sources,
+                                          int64_t *out_nodes);
+
+/**
+ * Compute parallel shortest paths from multiple sources.
+ *
+ * Writes one row per reachable node: source, node, and hop distance.
+ */
+
+int64_t onager_compute_shortest_paths_parallel_multi(const int64_t *src_ptr,
+                                                     const int64_t *dst_ptr,
+                                                     uintptr_t edge_count,
+                                                     const int64_t *sources_ptr,
+                                                     uintptr_t sources_count,
+                                                     bool directed,
+                                                     int64_t *out_sources,
+                                                     int64_t *out_nodes,
+                                                     double *out_distances);
 
 /**
  * Compute parallel connected components.
@@ -597,6 +633,7 @@ int64_t onager_compute_personalized_pagerank(const int64_t *src_ptr,
                                              double damping,
                                              uintptr_t max_iter,
                                              double tolerance,
+                                             bool directed,
                                              int64_t *out_nodes,
                                              double *out_scores);
 
@@ -642,7 +679,10 @@ int64_t onager_compute_induced_subgraph(const int64_t *src_ptr,
 int64_t onager_compute_dijkstra(const int64_t *src_ptr,
                                 const int64_t *dst_ptr,
                                 uintptr_t edge_count,
+                                const double *weights_ptr,
+                                uintptr_t weights_count,
                                 int64_t source_node,
+                                bool directed,
                                 int64_t *out_nodes,
                                 double *out_distances);
 
@@ -654,6 +694,7 @@ int64_t onager_compute_bfs(const int64_t *src_ptr,
                            const int64_t *dst_ptr,
                            uintptr_t edge_count,
                            int64_t source_node,
+                           bool directed,
                            int64_t *out_order);
 
 /**
@@ -664,6 +705,7 @@ int64_t onager_compute_dfs(const int64_t *src_ptr,
                            const int64_t *dst_ptr,
                            uintptr_t edge_count,
                            int64_t source_node,
+                           bool directed,
                            int64_t *out_order);
 
 /**
@@ -675,6 +717,7 @@ int64_t onager_compute_bellman_ford(const int64_t *src_ptr,
                                     const double *weight_ptr,
                                     uintptr_t edge_count,
                                     int64_t source,
+                                    bool directed,
                                     int64_t *out_nodes,
                                     double *out_distances);
 
@@ -686,19 +729,10 @@ int64_t onager_compute_floyd_warshall(const int64_t *src_ptr,
                                       const int64_t *dst_ptr,
                                       const double *weight_ptr,
                                       uintptr_t edge_count,
+                                      bool directed,
                                       int64_t *out_src,
                                       int64_t *out_dst,
                                       double *out_distances);
-
-/**
- * Compute shortest distance between two nodes (scalar).
- */
-
-double onager_compute_shortest_distance(const int64_t *src_ptr,
-                                        const int64_t *dst_ptr,
-                                        uintptr_t edge_count,
-                                        int64_t source_node,
-                                        int64_t target_node);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -10,10 +10,24 @@ use graphina::centrality::harmonic::harmonic_centrality;
 use graphina::centrality::katz::katz_centrality;
 use graphina::centrality::other::{laplacian_centrality, local_reaching_centrality, voterank};
 use graphina::centrality::pagerank::pagerank;
-use graphina::core::types::{Digraph, Graph, NodeId};
+use graphina::core::types::{
+    BaseGraph, Directed, GraphConstructor, GraphinaGraph, NodeId, NodeMap, Undirected,
+};
 
+use crate::algorithms::builder::{build_graph, check_nonnegative_weights};
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
+
+/// Collect a per-node score map into parallel external-id and score vectors.
+fn collect_scores(node_ids: &HashMap<i64, NodeId>, scores: &NodeMap<f64>) -> (Vec<i64>, Vec<f64>) {
+    let mut result_nodes = Vec::with_capacity(node_ids.len());
+    let mut result_scores = Vec::with_capacity(node_ids.len());
+    for (ext_id, int_id) in node_ids {
+        result_nodes.push(*ext_id);
+        result_scores.push(*scores.get(int_id).unwrap_or(&0.0));
+    }
+    (result_nodes, result_scores)
+}
 
 /// Result of PageRank computation.
 pub struct PageRankResult {
@@ -22,88 +36,53 @@ pub struct PageRankResult {
 }
 
 /// Compute PageRank on a graph defined by edge arrays.
+///
+/// When `weights` is empty, every edge gets weight `1.0`.
 pub fn compute_pagerank(
     src: &[i64],
     dst: &[i64],
-    _weights: &[f64],
+    weights: &[f64],
     damping: f64,
     iterations: usize,
+    tolerance: f64,
     directed: bool,
 ) -> Result<PageRankResult> {
-    if src.len() != dst.len() {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
+            "Cannot compute on empty graph".to_string(),
         ));
     }
-
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let tolerance = 1e-6;
-
+    check_nonnegative_weights(weights, src.len())?;
     if directed {
-        let mut graph: Digraph<i64, f64> = Digraph::new();
-        for &node in src.iter().chain(dst.iter()) {
-            if !node_set.contains_key(&node) {
-                let id = graph.add_node(node);
-                node_set.insert(node, id);
-            }
-        }
-        for i in 0..src.len() {
-            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-            })?;
-            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!(
-                    "Destination node {} not found in graph",
-                    dst[i]
-                ))
-            })?;
-            graph.add_edge(src_id, dst_id, 1.0);
-        }
-        let ranks = pagerank(&graph, damping, iterations, tolerance, None)
-            .map_err(|e| OnagerError::GraphError(e.to_string()))?;
-        let mut result_nodes = Vec::with_capacity(node_set.len());
-        let mut result_ranks = Vec::with_capacity(node_set.len());
-        for (ext_id, int_id) in &node_set {
-            result_nodes.push(*ext_id);
-            result_ranks.push(*ranks.get(int_id).unwrap_or(&0.0));
-        }
-        Ok(PageRankResult {
-            node_ids: result_nodes,
-            ranks: result_ranks,
-        })
+        pagerank_impl::<Directed>(src, dst, weights, damping, iterations, tolerance)
     } else {
-        let mut graph: Graph<i64, f64> = Graph::new();
-        for &node in src.iter().chain(dst.iter()) {
-            if !node_set.contains_key(&node) {
-                let id = graph.add_node(node);
-                node_set.insert(node, id);
-            }
-        }
-        for i in 0..src.len() {
-            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-            })?;
-            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!(
-                    "Destination node {} not found in graph",
-                    dst[i]
-                ))
-            })?;
-            graph.add_edge(src_id, dst_id, 1.0);
-        }
-        let ranks = pagerank(&graph, damping, iterations, tolerance, None)
-            .map_err(|e| OnagerError::GraphError(e.to_string()))?;
-        let mut result_nodes = Vec::with_capacity(node_set.len());
-        let mut result_ranks = Vec::with_capacity(node_set.len());
-        for (ext_id, int_id) in &node_set {
-            result_nodes.push(*ext_id);
-            result_ranks.push(*ranks.get(int_id).unwrap_or(&0.0));
-        }
-        Ok(PageRankResult {
-            node_ids: result_nodes,
-            ranks: result_ranks,
-        })
+        pagerank_impl::<Undirected>(src, dst, weights, damping, iterations, tolerance)
     }
+}
+
+fn pagerank_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+    weights: &[f64],
+    damping: f64,
+    iterations: usize,
+    tolerance: f64,
+) -> Result<PageRankResult> {
+    let g = build_graph::<f64, Ty, _>(
+        src,
+        dst,
+        |i| {
+            if weights.is_empty() {
+                1.0
+            } else {
+                weights[i]
+            }
+        },
+    )?;
+    let ranks = pagerank(&g.graph, damping, iterations, tolerance, None)
+        .map_err(|e| OnagerError::GraphError(e.to_string()))?;
+    let (node_ids, ranks) = collect_scores(&g.node_ids, &ranks);
+    Ok(PageRankResult { node_ids, ranks })
 }
 
 /// Result of degree centrality computation.
@@ -115,42 +94,21 @@ pub struct DegreeResult {
 
 /// Compute degree centrality.
 pub fn compute_degree(src: &[i64], dst: &[i64], directed: bool) -> Result<DegreeResult> {
-    if src.len() != dst.len() {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
+            "Cannot compute on empty graph".to_string(),
         ));
     }
-
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-
     if directed {
-        let mut graph: Digraph<i64, f64> = Digraph::new();
-        for &node in src.iter().chain(dst.iter()) {
-            if !node_set.contains_key(&node) {
-                let id = graph.add_node(node);
-                node_set.insert(node, id);
-            }
-        }
-        for i in 0..src.len() {
-            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-            })?;
-            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!(
-                    "Destination node {} not found in graph",
-                    dst[i]
-                ))
-            })?;
-            graph.add_edge(src_id, dst_id, 1.0);
-        }
+        let g = build_graph::<f64, Directed, _>(src, dst, |_| 1.0)?;
         let in_deg =
-            in_degree_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+            in_degree_centrality(&g.graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
         let out_deg =
-            out_degree_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
-        let mut result_nodes = Vec::with_capacity(node_set.len());
-        let mut result_in = Vec::with_capacity(node_set.len());
-        let mut result_out = Vec::with_capacity(node_set.len());
-        for (ext_id, int_id) in &node_set {
+            out_degree_centrality(&g.graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+        let mut result_nodes = Vec::with_capacity(g.node_ids.len());
+        let mut result_in = Vec::with_capacity(g.node_ids.len());
+        let mut result_out = Vec::with_capacity(g.node_ids.len());
+        for (ext_id, int_id) in &g.node_ids {
             result_nodes.push(*ext_id);
             result_in.push(*in_deg.get(int_id).unwrap_or(&0.0));
             result_out.push(*out_deg.get(int_id).unwrap_or(&0.0));
@@ -161,37 +119,14 @@ pub fn compute_degree(src: &[i64], dst: &[i64], directed: bool) -> Result<Degree
             out_degrees: result_out,
         })
     } else {
-        let mut graph: Graph<i64, f64> = Graph::new();
-        for &node in src.iter().chain(dst.iter()) {
-            if !node_set.contains_key(&node) {
-                let id = graph.add_node(node);
-                node_set.insert(node, id);
-            }
-        }
-        for i in 0..src.len() {
-            let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-            })?;
-            let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-                OnagerError::InvalidArgument(format!(
-                    "Destination node {} not found in graph",
-                    dst[i]
-                ))
-            })?;
-            graph.add_edge(src_id, dst_id, 1.0);
-        }
+        let g = build_graph::<f64, Undirected, _>(src, dst, |_| 1.0)?;
         let deg =
-            in_degree_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
-        let mut result_nodes = Vec::with_capacity(node_set.len());
-        let mut result_deg = Vec::with_capacity(node_set.len());
-        for (ext_id, int_id) in &node_set {
-            result_nodes.push(*ext_id);
-            result_deg.push(*deg.get(int_id).unwrap_or(&0.0));
-        }
+            in_degree_centrality(&g.graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+        let (node_ids, degrees) = collect_scores(&g.node_ids, &deg);
         Ok(DegreeResult {
-            node_ids: result_nodes,
-            in_degrees: result_deg.clone(),
-            out_degrees: result_deg,
+            node_ids,
+            in_degrees: degrees.clone(),
+            out_degrees: degrees,
         })
     }
 }
@@ -207,46 +142,32 @@ pub fn compute_betweenness(
     src: &[i64],
     dst: &[i64],
     normalized: bool,
+    directed: bool,
 ) -> Result<BetweennessResult> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute betweenness on empty graph".to_string(),
         ));
     }
+    if directed {
+        betweenness_impl::<Directed>(src, dst, normalized)
+    } else {
+        betweenness_impl::<Undirected>(src, dst, normalized)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-    let centralities = betweenness_centrality(&graph, normalized)
+fn betweenness_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+    normalized: bool,
+) -> Result<BetweennessResult> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
+    let centralities = betweenness_centrality(&g.graph, normalized)
         .map_err(|e| OnagerError::GraphError(e.to_string()))?;
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_cent = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_cent.push(*centralities.get(int_id).unwrap_or(&0.0));
-    }
+    let (node_ids, centralities) = collect_scores(&g.node_ids, &centralities);
     Ok(BetweennessResult {
-        node_ids: result_nodes,
-        centralities: result_cent,
+        node_ids,
+        centralities,
     })
 }
 
@@ -257,46 +178,33 @@ pub struct ClosenessResult {
 }
 
 /// Compute closeness centrality.
-pub fn compute_closeness(src: &[i64], dst: &[i64]) -> Result<ClosenessResult> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+pub fn compute_closeness(src: &[i64], dst: &[i64], directed: bool) -> Result<ClosenessResult> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute closeness on empty graph".to_string(),
         ));
     }
+    if directed {
+        closeness_impl::<Directed>(src, dst)
+    } else {
+        closeness_impl::<Undirected>(src, dst)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
+fn closeness_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+) -> Result<ClosenessResult>
+where
+    BaseGraph<i64, f64, Ty>: GraphinaGraph<i64, f64>,
+{
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
     let centralities =
-        closeness_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_cent = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_cent.push(*centralities.get(int_id).unwrap_or(&0.0));
-    }
+        closeness_centrality(&g.graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+    let (node_ids, centralities) = collect_scores(&g.node_ids, &centralities);
     Ok(ClosenessResult {
-        node_ids: result_nodes,
-        centralities: result_cent,
+        node_ids,
+        centralities,
     })
 }
 
@@ -312,46 +220,33 @@ pub fn compute_eigenvector(
     dst: &[i64],
     max_iter: usize,
     tolerance: f64,
+    directed: bool,
 ) -> Result<EigenvectorResult> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute eigenvector on empty graph".to_string(),
         ));
     }
+    if directed {
+        eigenvector_impl::<Directed>(src, dst, max_iter, tolerance)
+    } else {
+        eigenvector_impl::<Undirected>(src, dst, max_iter, tolerance)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-    let centralities = eigenvector_centrality(&graph, max_iter, tolerance)
+fn eigenvector_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+    max_iter: usize,
+    tolerance: f64,
+) -> Result<EigenvectorResult> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
+    let centralities = eigenvector_centrality(&g.graph, max_iter, tolerance)
         .map_err(|e| OnagerError::GraphError(e.to_string()))?;
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_cent = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_cent.push(*centralities.get(int_id).unwrap_or(&0.0));
-    }
+    let (node_ids, centralities) = collect_scores(&g.node_ids, &centralities);
     Ok(EigenvectorResult {
-        node_ids: result_nodes,
-        centralities: result_cent,
+        node_ids,
+        centralities,
     })
 }
 
@@ -362,52 +257,45 @@ pub struct KatzResult {
 }
 
 /// Compute Katz centrality.
+///
+/// `beta` is a constant weight applied to every node (graphina's default is `1.0`).
 pub fn compute_katz(
     src: &[i64],
     dst: &[i64],
     alpha: f64,
+    beta: f64,
     max_iter: usize,
     tolerance: f64,
+    directed: bool,
 ) -> Result<KatzResult> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute Katz on empty graph".to_string(),
         ));
     }
+    if directed {
+        katz_impl::<Directed>(src, dst, alpha, beta, max_iter, tolerance)
+    } else {
+        katz_impl::<Undirected>(src, dst, alpha, beta, max_iter, tolerance)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-    let centralities = katz_centrality(&graph, alpha, None, max_iter, tolerance)
+fn katz_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+    alpha: f64,
+    beta: f64,
+    max_iter: usize,
+    tolerance: f64,
+) -> Result<KatzResult> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
+    let beta_fn = |_node| beta;
+    let centralities = katz_centrality(&g.graph, alpha, Some(&beta_fn), max_iter, tolerance)
         .map_err(|e| OnagerError::GraphError(e.to_string()))?;
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_cent = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_cent.push(*centralities.get(int_id).unwrap_or(&0.0));
-    }
+    let (node_ids, centralities) = collect_scores(&g.node_ids, &centralities);
     Ok(KatzResult {
-        node_ids: result_nodes,
-        centralities: result_cent,
+        node_ids,
+        centralities,
     })
 }
 
@@ -418,46 +306,30 @@ pub struct HarmonicResult {
 }
 
 /// Compute harmonic centrality.
-pub fn compute_harmonic(src: &[i64], dst: &[i64]) -> Result<HarmonicResult> {
-    if src.len() != dst.len() {
-        return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
-        ));
-    }
-    if src.is_empty() {
+pub fn compute_harmonic(src: &[i64], dst: &[i64], directed: bool) -> Result<HarmonicResult> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute harmonic on empty graph".to_string(),
         ));
     }
+    if directed {
+        harmonic_impl::<Directed>(src, dst)
+    } else {
+        harmonic_impl::<Undirected>(src, dst)
+    }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
+fn harmonic_impl<Ty: GraphConstructor<i64, f64>>(src: &[i64], dst: &[i64]) -> Result<HarmonicResult>
+where
+    BaseGraph<i64, f64, Ty>: GraphinaGraph<i64, f64>,
+{
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
     let centralities =
-        harmonic_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_cent = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_cent.push(*centralities.get(int_id).unwrap_or(&0.0));
-    }
+        harmonic_centrality(&g.graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+    let (node_ids, centralities) = collect_scores(&g.node_ids, &centralities);
     Ok(HarmonicResult {
-        node_ids: result_nodes,
-        centralities: result_cent,
+        node_ids,
+        centralities,
     })
 }
 
@@ -515,46 +387,37 @@ pub struct VoteRankResult {
 }
 
 /// Compute VoteRank to find influential spreaders.
-pub fn compute_voterank(src: &[i64], dst: &[i64], num_seeds: usize) -> Result<VoteRankResult> {
-    if src.len() != dst.len() {
+pub fn compute_voterank(
+    src: &[i64],
+    dst: &[i64],
+    num_seeds: usize,
+    directed: bool,
+) -> Result<VoteRankResult> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
+            "Cannot compute on empty graph".to_string(),
         ));
     }
-    if src.is_empty() {
-        return Ok(VoteRankResult {
-            node_ids: Vec::new(),
-        });
+    if directed {
+        voterank_impl::<Directed>(src, dst, num_seeds)
+    } else {
+        voterank_impl::<Undirected>(src, dst, num_seeds)
     }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-            reverse_map.insert(id, node);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-
-    let seeds = voterank(&graph, num_seeds);
+fn voterank_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+    num_seeds: usize,
+) -> Result<VoteRankResult> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
+    let seeds = voterank(&g.graph, num_seeds);
     let mut result_nodes = Vec::with_capacity(seeds.len());
     for node_id in seeds {
-        if let Some(&ext_id) = reverse_map.get(&node_id) {
+        if let Some(&ext_id) = g.reverse.get(&node_id) {
             result_nodes.push(ext_id);
         }
     }
-
     Ok(VoteRankResult {
         node_ids: result_nodes,
     })
@@ -572,52 +435,32 @@ pub fn compute_local_reaching(
     src: &[i64],
     dst: &[i64],
     distance: usize,
+    directed: bool,
 ) -> Result<LocalReachingResult> {
-    if src.len() != dst.len() {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
+            "Cannot compute on empty graph".to_string(),
         ));
     }
-    if src.is_empty() {
-        return Ok(LocalReachingResult {
-            node_ids: Vec::new(),
-            centrality: Vec::new(),
-        });
+    if directed {
+        local_reaching_impl::<Directed>(src, dst, distance)
+    } else {
+        local_reaching_impl::<Undirected>(src, dst, distance)
     }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-            reverse_map.insert(id, node);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-
-    let centrality_map = local_reaching_centrality(&graph, distance)
+fn local_reaching_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+    distance: usize,
+) -> Result<LocalReachingResult> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
+    let centrality_map = local_reaching_centrality(&g.graph, distance)
         .map_err(|e| OnagerError::GraphError(e.to_string()))?;
-
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_centrality = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_centrality.push(*centrality_map.get(int_id).unwrap_or(&0.0));
-    }
-
+    let (node_ids, centrality) = collect_scores(&g.node_ids, &centrality_map);
     Ok(LocalReachingResult {
-        node_ids: result_nodes,
-        centrality: result_centrality,
+        node_ids,
+        centrality,
     })
 }
 
@@ -629,52 +472,30 @@ pub struct LaplacianResult {
 
 /// Compute Laplacian Centrality.
 /// Based on the Laplacian matrix of the graph.
-pub fn compute_laplacian(src: &[i64], dst: &[i64]) -> Result<LaplacianResult> {
-    if src.len() != dst.len() {
+pub fn compute_laplacian(src: &[i64], dst: &[i64], directed: bool) -> Result<LaplacianResult> {
+    if src.is_empty() && dst.is_empty() {
         return Err(OnagerError::InvalidArgument(
-            "src and dst arrays must have same length".to_string(),
+            "Cannot compute on empty graph".to_string(),
         ));
     }
-    if src.is_empty() {
-        return Ok(LaplacianResult {
-            node_ids: Vec::new(),
-            centrality: Vec::new(),
-        });
+    if directed {
+        laplacian_impl::<Directed>(src, dst)
+    } else {
+        laplacian_impl::<Undirected>(src, dst)
     }
+}
 
-    let mut node_set: HashMap<i64, NodeId> = HashMap::new();
-    let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
-    let mut graph: Graph<i64, f64> = Graph::new();
-    for &node in src.iter().chain(dst.iter()) {
-        if !node_set.contains_key(&node) {
-            let id = graph.add_node(node);
-            node_set.insert(node, id);
-            reverse_map.insert(id, node);
-        }
-    }
-    for i in 0..src.len() {
-        let src_id = *node_set.get(&src[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Source node {} not found in graph", src[i]))
-        })?;
-        let dst_id = *node_set.get(&dst[i]).ok_or_else(|| {
-            OnagerError::InvalidArgument(format!("Destination node {} not found in graph", dst[i]))
-        })?;
-        graph.add_edge(src_id, dst_id, 1.0);
-    }
-
+fn laplacian_impl<Ty: GraphConstructor<i64, f64>>(
+    src: &[i64],
+    dst: &[i64],
+) -> Result<LaplacianResult> {
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
     let centrality_map =
-        laplacian_centrality(&graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
-
-    let mut result_nodes = Vec::with_capacity(node_set.len());
-    let mut result_centrality = Vec::with_capacity(node_set.len());
-    for (ext_id, int_id) in &node_set {
-        result_nodes.push(*ext_id);
-        result_centrality.push(*centrality_map.get(int_id).unwrap_or(&0.0));
-    }
-
+        laplacian_centrality(&g.graph).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+    let (node_ids, centrality) = collect_scores(&g.node_ids, &centrality_map);
     Ok(LaplacianResult {
-        node_ids: result_nodes,
-        centrality: result_centrality,
+        node_ids,
+        centrality,
     })
 }
 
@@ -695,7 +516,7 @@ mod tests {
     #[test]
     fn test_pagerank_triangle() {
         let (src, dst) = triangle_graph();
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, false).unwrap();
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, 1e-6, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert_eq!(result.ranks.len(), 3);
@@ -707,10 +528,46 @@ mod tests {
     #[test]
     fn test_pagerank_directed() {
         let (src, dst) = triangle_graph();
-        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, true).unwrap();
+        let result = compute_pagerank(&src, &dst, &[], 0.85, 100, 1e-6, true).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.ranks.is_empty());
+    }
+
+    #[test]
+    fn test_pagerank_weighted() {
+        // Node 1 points to nodes 2 and 3; the edge to node 3 has a larger weight,
+        // so node 3 must receive a higher rank than node 2.
+        let src = vec![1, 1];
+        let dst = vec![2, 3];
+        let weights = vec![1.0, 10.0];
+        let result = compute_pagerank(&src, &dst, &weights, 0.85, 100, 1e-6, true).unwrap();
+
+        let rank_of = |node: i64| {
+            let idx = result
+                .node_ids
+                .iter()
+                .position(|&n| n == node)
+                .unwrap_or_else(|| panic!("node {node} missing from result"));
+            result.ranks[idx]
+        };
+        assert!(rank_of(3) > rank_of(2), "heavier edge should raise rank");
+
+        // Uniform explicit weights must match the unweighted result.
+        let (tsrc, tdst) = triangle_graph();
+        let uniform =
+            compute_pagerank(&tsrc, &tdst, &[1.0, 1.0, 1.0], 0.85, 100, 1e-6, false).unwrap();
+        let unweighted = compute_pagerank(&tsrc, &tdst, &[], 0.85, 100, 1e-6, false).unwrap();
+        let sum_u: f64 = uniform.ranks.iter().sum();
+        let sum_n: f64 = unweighted.ranks.iter().sum();
+        assert!((sum_u - sum_n).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_pagerank_weights_length_mismatch() {
+        let (src, dst) = triangle_graph();
+        let result = compute_pagerank(&src, &dst, &[1.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -737,16 +594,26 @@ mod tests {
         // Path graph: 1-2-3-4 (node 2 and 3 have high betweenness)
         let src = vec![1, 2, 3];
         let dst = vec![2, 3, 4];
-        let result = compute_betweenness(&src, &dst, true).unwrap();
+        let result = compute_betweenness(&src, &dst, true, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 4);
         assert!(!result.centralities.is_empty());
     }
 
     #[test]
+    fn test_betweenness_directed() {
+        // Directed path 1 -> 2 -> 3 -> 4: middle nodes still lie on paths
+        let src = vec![1, 2, 3];
+        let dst = vec![2, 3, 4];
+        let result = compute_betweenness(&src, &dst, false, true).unwrap();
+
+        assert_eq!(result.node_ids.len(), 4);
+    }
+
+    #[test]
     fn test_closeness() {
         let (src, dst) = triangle_graph();
-        let result = compute_closeness(&src, &dst).unwrap();
+        let result = compute_closeness(&src, &dst, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         // All nodes in triangle should have equal closeness
@@ -755,7 +622,7 @@ mod tests {
     #[test]
     fn test_eigenvector() {
         let (src, dst) = triangle_graph();
-        let result = compute_eigenvector(&src, &dst, 100, 1e-6).unwrap();
+        let result = compute_eigenvector(&src, &dst, 100, 1e-6, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.centralities.is_empty());
@@ -764,7 +631,7 @@ mod tests {
     #[test]
     fn test_katz() {
         let (src, dst) = triangle_graph();
-        let result = compute_katz(&src, &dst, 0.1, 100, 1e-6).unwrap();
+        let result = compute_katz(&src, &dst, 0.1, 1.0, 100, 1e-6, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.centralities.is_empty());
@@ -773,10 +640,32 @@ mod tests {
     #[test]
     fn test_harmonic() {
         let (src, dst) = triangle_graph();
-        let result = compute_harmonic(&src, &dst).unwrap();
+        let result = compute_harmonic(&src, &dst, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.centralities.is_empty());
+    }
+
+    #[test]
+    fn test_harmonic_directed_asymmetric() {
+        // Directed path 1 -> 2 -> 3: node 3 reaches nothing, but node 1 reaches both.
+        let src = vec![1, 2];
+        let dst = vec![2, 3];
+        let directed = compute_harmonic(&src, &dst, true).unwrap();
+        let undirected = compute_harmonic(&src, &dst, false).unwrap();
+
+        let score = |r: &HarmonicResult, node: i64| {
+            let idx = r
+                .node_ids
+                .iter()
+                .position(|&n| n == node)
+                .unwrap_or_else(|| panic!("node {node} missing from result"));
+            r.centralities[idx]
+        };
+        // graphina's harmonic centrality sums reciprocal distances over the nodes
+        // reachable from each node, so node 3 scores zero in the directed graph
+        // but not in the undirected one.
+        assert!(score(&directed, 3) < score(&undirected, 3));
     }
 
     #[test]
@@ -792,29 +681,29 @@ mod tests {
     #[test]
     fn test_voterank() {
         let (src, dst) = triangle_graph();
-        let result = compute_voterank(&src, &dst, 2).unwrap();
+        let result = compute_voterank(&src, &dst, 2, false).unwrap();
 
         assert!(result.node_ids.len() <= 2);
     }
 
     #[test]
-    fn test_empty_graph_returns_empty() {
-        // Empty graph returns empty results (not an error)
-        let result = compute_pagerank(&[], &[], &[], 0.85, 100, false).unwrap();
-        assert!(result.node_ids.is_empty());
-        assert!(result.ranks.is_empty());
+    fn test_empty_graph_errors() {
+        // Empty input is an error, matching the other algorithm modules
+        assert!(compute_pagerank(&[], &[], &[], 0.85, 100, 1e-6, false).is_err());
+        assert!(compute_degree(&[], &[], false).is_err());
+        assert!(compute_voterank(&[], &[], 10, false).is_err());
     }
 
     #[test]
     fn test_mismatched_arrays_error() {
-        let result = compute_pagerank(&[1, 2], &[2], &[], 0.85, 100, false);
+        let result = compute_pagerank(&[1, 2], &[2], &[], 0.85, 100, 1e-6, false);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_local_reaching() {
         let (src, dst) = triangle_graph();
-        let result = compute_local_reaching(&src, &dst, 2).unwrap();
+        let result = compute_local_reaching(&src, &dst, 2, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.centrality.is_empty());
@@ -825,15 +714,14 @@ mod tests {
     }
 
     #[test]
-    fn test_local_reaching_empty() {
-        let result = compute_local_reaching(&[], &[], 2).unwrap();
-        assert!(result.node_ids.is_empty());
+    fn test_local_reaching_empty_errors() {
+        assert!(compute_local_reaching(&[], &[], 2, false).is_err());
     }
 
     #[test]
     fn test_laplacian() {
         let (src, dst) = triangle_graph();
-        let result = compute_laplacian(&src, &dst).unwrap();
+        let result = compute_laplacian(&src, &dst, false).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert!(!result.centrality.is_empty());
@@ -844,8 +732,19 @@ mod tests {
     }
 
     #[test]
-    fn test_laplacian_empty() {
-        let result = compute_laplacian(&[], &[]).unwrap();
-        assert!(result.node_ids.is_empty());
+    fn test_laplacian_empty_errors() {
+        assert!(compute_laplacian(&[], &[], false).is_err());
+    }
+
+    #[test]
+    fn test_pagerank_rejects_nan_weight() {
+        let result = compute_pagerank(&[1, 2], &[2, 3], &[f64::NAN, 1.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_pagerank_rejects_negative_weight() {
+        let result = compute_pagerank(&[1, 2], &[2, 3], &[-5.0, 1.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
     }
 }

@@ -6,7 +6,7 @@ description: Identify the most important nodes in your graph.
 # Centrality Algorithms
 
 Centrality measures identify the most important nodes (or vertices) in a graph.
-The importance of a node depends on the context and measured differently by each algorithm.
+The importance of a node depends on the context and is measured differently by each algorithm.
 
 ## Setup
 
@@ -48,7 +48,8 @@ Optional parameters:
 
 - `damping` (default 0.85): Probability of following a link vs jumping randomly
 - `iterations` (default 100): Maximum iterations
-- `directed` (default true): Treat graph as directed
+- `tolerance` (default 1e-6): Convergence threshold for early termination
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ```sql
 -- Custom damping factor
@@ -56,6 +57,16 @@ select * from onager_ctr_pagerank(
   (select src, dst from edges),
   damping := 0.9,
   iterations := 50
+);
+```
+
+The input relation may include a third `double` column with edge weights.
+When present, rank flows along edges in proportion to their weights; otherwise every edge has weight 1.0.
+
+```sql
+-- Weighted PageRank
+select * from onager_ctr_pagerank(
+  (select src, dst, weight::double as weight from weighted_edges)
 );
 ```
 
@@ -81,7 +92,7 @@ order by score desc;
 | node_id | bigint | Node identifier                                   |
 | score   | double | Personalized PageRank score relative to targets   |
 
-The input query relation must have exactly 4 columns:
+The input query relation must have at least 4 columns, in this order:
 
 - `src` (bigint): Source node of edge
 - `dst` (bigint): Destination node of edge
@@ -93,6 +104,7 @@ Optional parameters:
 - `damping` (default 0.85): Surfer damping factor
 - `max_iter` (default 100): Maximum iterations
 - `tolerance` (default 1e-6): Convergence threshold
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -119,7 +131,9 @@ order by total desc;
 
 Optional parameters:
 
-- `directed` (default true): Treat graph as directed
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+With the default undirected behavior, `in_degree` and `out_degree` are equal and both report the node degree.
 
 ---
 
@@ -152,6 +166,7 @@ order by betweenness desc;
 Optional parameters:
 
 - `normalized` (default true): Normalize betweenness scores
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -177,6 +192,10 @@ order by closeness desc;
 | node_id   | bigint | Node identifier                       |
 | closeness | double | Inverse of average distance to others |
 
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
 ---
 
 ## Harmonic Centrality
@@ -193,6 +212,12 @@ select node_id, round(harmonic, 4) as harmonic
 from onager_ctr_harmonic((select src, dst from edges))
 order by harmonic desc;
 ```
+
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+On a directed graph, the score sums reciprocal distances over the nodes reachable from each node, so a node with no outgoing paths scores zero.
 
 ---
 
@@ -214,6 +239,7 @@ Optional parameters:
 
 - `max_iter` (default 100): Maximum iterations
 - `tolerance` (default 1e-6): Convergence threshold
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -231,8 +257,10 @@ order by katz desc;
 Optional parameters:
 
 - `alpha` (default 0.1): Attenuation factor for longer paths
+- `beta` (default 1.0): Constant base weight added to every node's score
 - `max_iter` (default 100): Maximum iterations
 - `tolerance` (default 1e-6): Convergence threshold
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -254,6 +282,7 @@ order by node_id;
 Optional parameters:
 
 - `num_seeds` (default 10): Number of influential nodes to return
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -276,6 +305,7 @@ order by centrality desc;
 Optional parameters:
 
 - `distance` (default 2): Maximum distance to consider
+- `directed` (default false): Treat each edge as one-way instead of undirected
 
 ---
 
@@ -295,6 +325,10 @@ order by centrality desc;
 | node_id    | bigint | Node identifier         |
 | centrality | double | Laplacian centrality    |
 
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
 ---
 
 ## Complete Example: Influencer Analysis
@@ -312,12 +346,14 @@ create table follows as select * from (values
 -- Combine multiple centrality measures
 with pr as (
   select node_id, rank from onager_ctr_pagerank(
-    (select follower as src, followed as dst from follows)
+    (select follower as src, followed as dst from follows),
+    directed := true
   )
 ),
 deg as (
   select node_id, in_degree from onager_ctr_degree(
-    (select follower as src, followed as dst from follows)
+    (select follower as src, followed as dst from follows),
+    directed := true
   )
 ),
 bet as (

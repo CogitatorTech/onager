@@ -263,7 +263,9 @@ pub fn compute_common_neighbors(src: &[i64], dst: &[i64]) -> Result<CommonNeighb
     }
 
     let reverse_map: HashMap<NodeId, i64> = node_set.iter().map(|(&k, &v)| (v, k)).collect();
-    let nodes: Vec<NodeId> = node_set.values().cloned().collect();
+    // Enumerate pairs in graph insertion order so the output is deterministic
+    // and consistent with the graphina-backed link prediction functions.
+    let nodes: Vec<NodeId> = graph.nodes().map(|(id, _)| id).collect();
 
     let mut node1 = Vec::new();
     let mut node2 = Vec::new();
@@ -401,5 +403,21 @@ mod tests {
         for &count in &result.counts {
             assert!(count >= 0);
         }
+    }
+
+    #[test]
+    fn test_common_neighbors_deterministic_order() {
+        // Pairs must be enumerated in first-appearance order of the nodes,
+        // not HashMap iteration order.
+        let (src, dst) = triangle_with_extra();
+        let result = compute_common_neighbors(&src, &dst).unwrap();
+
+        let pairs: Vec<(i64, i64)> = result
+            .node1
+            .iter()
+            .zip(result.node2.iter())
+            .map(|(&a, &b)| (a, b))
+            .collect();
+        assert_eq!(pairs, vec![(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]);
     }
 }

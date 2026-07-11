@@ -75,7 +75,7 @@ from onager_pth_dijkstra((select src, dst from edges), source := 1::bigint)
 order by distance;
 ```
 
-## Working With Real Data
+## Working with Real Data
 
 Import your edge data from any source DuckDB supports:
 
@@ -93,7 +93,7 @@ from onager_ctr_pagerank((select source_id as src, target_id as dst
 
 ## Input Format
 
-All functions expect edges as a subquery with two `bigint` columns:
+Most table functions expect edges as a subquery with two `bigint` columns. Weighted functions need a third `double` column, and the generators take size parameters instead of an edge list:
 
 ```sql
 create table your_table as select * from (values (1::bigint, 2::bigint), (2, 3)) t(source_column, target_column);

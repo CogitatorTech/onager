@@ -47,6 +47,8 @@ jobs:
           set -euo pipefail
           mkdir -p playground
           cp -R web/. playground/
+          printf '{"branch": "%s", "commit": "%s"}\n' \
+            "${GITHUB_REF_NAME}" "${GITHUB_SHA:0:5}" > playground/build-info.json
           for platform in wasm_eh wasm_mvp; do
             src=$(find "wasm-extensions/onager-${DUCKDB_VERSION}-extension-${platform}" \
               -name 'onager.duckdb_extension.wasm' | head -n1)

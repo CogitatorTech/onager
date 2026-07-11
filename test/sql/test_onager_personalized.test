@@ -32,6 +32,16 @@ select count(*) > 0 from onager_ctr_personalized_pagerank((
 ----
 1
 
+# Personalized PageRank accepts the directed parameter
+query I
+select count(*) > 0 from onager_ctr_personalized_pagerank((
+  select e.src, e.dst, p.node as pers_node, p.weight::double as pers_weight
+  from test_edges e
+  cross join (values (1::bigint, 1.0::double)) p(node, weight)
+), directed := true)
+----
+1
+
 # Cleanup
 statement ok
 drop table test_edges

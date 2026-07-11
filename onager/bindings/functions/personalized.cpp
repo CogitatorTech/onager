@@ -17,6 +17,7 @@ struct PersonalizedPageRankBindData : public TableFunctionData {
   double damping = 0.85;
   int64_t max_iter = 100;
   double tolerance = 1e-6;
+  bool directed = false;
 };
 struct PersonalizedPageRankGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
@@ -29,10 +30,13 @@ struct PersonalizedPageRankGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> PersonalizedPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<PersonalizedPageRankBindData>();
   CheckInt64Input(input, "onager_ctr_personalized_pagerank", 4);
+  CheckColumnType(input, "onager_ctr_personalized_pagerank", 2, LogicalType::BIGINT);
+  CheckColumnType(input, "onager_ctr_personalized_pagerank", 3, LogicalType::DOUBLE);
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "damping") bd->damping = kv.second.GetValue<double>();
-    if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
-    if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
+    if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_ctr_personalized_pagerank", "damping", kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_personalized_pagerank", "max_iter", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_personalized_pagerank", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_personalized_pagerank", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("score");
@@ -70,16 +74,11 @@ static OperatorResultType PersonalizedPageRankInOut(ExecutionContext &ctx, Table
     gs.src_nodes.push_back(s[s_idx]);
     gs.dst_nodes.push_back(d[d_idx]);
 
-    if (pn_data.validity.RowIsValid(pn_idx)) {
+    // A personalization entry needs both a node and a weight; rows padded
+    // with NULLs carry no entry and are skipped.
+    if (pn_data.validity.RowIsValid(pn_idx) && pw_data.validity.RowIsValid(pw_idx)) {
       gs.pers_nodes.push_back(pn[pn_idx]);
-    } else {
-      gs.pers_nodes.push_back(0);
-    }
-
-    if (pw_data.validity.RowIsValid(pw_idx)) {
       gs.pers_weights.push_back(pw[pw_idx]);
-    } else {
-      gs.pers_weights.push_back(0.0);
     }
   }
   ONAGER_SET_CARDINALITY(output, 0);
@@ -95,13 +94,14 @@ static OperatorFinalizeResultType PersonalizedPageRankFinal(ExecutionContext &ct
     int64_t nc = ::onager::onager_compute_personalized_pagerank(
       gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(),
       gs.pers_nodes.data(), gs.pers_weights.data(), gs.pers_nodes.size(),
-      bd.damping, bd.max_iter, bd.tolerance, nullptr, nullptr);
+      bd.damping, bd.max_iter, bd.tolerance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Personalized PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_scores.resize(nc);
-    ::onager::onager_compute_personalized_pagerank(
+    int64_t rc = ::onager::onager_compute_personalized_pagerank(
       gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(),
       gs.pers_nodes.data(), gs.pers_weights.data(), gs.pers_nodes.size(),
-      bd.damping, bd.max_iter, bd.tolerance, gs.result_nodes.data(), gs.result_scores.data());
+      bd.damping, bd.max_iter, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_scores.data());
+    if (rc != nc) throw InvalidInputException("Personalized PageRank failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -130,6 +130,7 @@ void RegisterPersonalizedFunctions(ExtensionLoader &loader) {
   pers_pr.named_parameters["damping"] = LogicalType::DOUBLE;
   pers_pr.named_parameters["max_iter"] = LogicalType::BIGINT;
   pers_pr.named_parameters["tolerance"] = LogicalType::DOUBLE;
+  pers_pr.named_parameters["directed"] = LogicalType::BOOLEAN;
   ONAGER_SET_NO_ORDER(pers_pr);
   loader.RegisterFunction(pers_pr);
 }

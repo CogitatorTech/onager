@@ -26,7 +26,7 @@ struct LouvainGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> LouvainBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<LouvainBindData>();
   CheckInt64Input(input, "onager_cmm_louvain");
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_louvain", "seed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
   return std::move(bd);
@@ -46,7 +46,8 @@ static OperatorFinalizeResultType LouvainFinal(ExecutionContext &ctx, TableFunct
     int64_t nc = ::onager::onager_compute_louvain(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.seed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Louvain failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_communities.resize(nc);
-    ::onager::onager_compute_louvain(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.seed, gs.result_nodes.data(), gs.result_communities.data());
+    int64_t rc = ::onager::onager_compute_louvain(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.seed, gs.result_nodes.data(), gs.result_communities.data());
+    if (rc != nc) throw InvalidInputException("Louvain failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -90,7 +91,8 @@ static OperatorFinalizeResultType ComponentsFinal(ExecutionContext &ctx, TableFu
     int64_t nc = ::onager::onager_compute_connected_components(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Components failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_components.resize(nc);
-    ::onager::onager_compute_connected_components(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_components.data());
+    int64_t rc = ::onager::onager_compute_connected_components(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_components.data());
+    if (rc != nc) throw InvalidInputException("Components failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -113,11 +115,18 @@ struct LabelPropGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
+struct LabelPropBindData : public TableFunctionData { int64_t max_iter = 100; int64_t seed = -1; };
+
 static unique_ptr<FunctionData> LabelPropBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+  auto bd = make_uniq<LabelPropBindData>();
   CheckInt64Input(input, "onager_cmm_label_prop");
+  for (auto &kv : input.named_parameters) {
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_cmm_label_prop", "max_iter", kv.second);
+    else if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_label_prop", "seed", kv.second);
+  }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("label");
-  return make_uniq<TableFunctionData>();
+  return std::move(bd);
 }
 static unique_ptr<GlobalTableFunctionState> LabelPropInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<LabelPropGlobalState>(); }
 static OperatorResultType LabelPropInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
@@ -127,14 +136,16 @@ static OperatorResultType LabelPropInOut(ExecutionContext &ctx, TableFunctionInp
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType LabelPropFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<LabelPropBindData>();
   auto &gs = data.global_state->Cast<LabelPropGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_label_propagation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
+    int64_t nc = ::onager::onager_compute_label_propagation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), static_cast<size_t>(bd.max_iter), bd.seed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Label propagation failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_labels.resize(nc);
-    ::onager::onager_compute_label_propagation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_labels.data());
+    int64_t rc = ::onager::onager_compute_label_propagation(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), static_cast<size_t>(bd.max_iter), bd.seed, gs.result_nodes.data(), gs.result_labels.data());
+    if (rc != nc) throw InvalidInputException("Label propagation failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -161,7 +172,7 @@ struct GirvanNewmanGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> GirvanNewmanBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<GirvanNewmanBindData>();
   CheckInt64Input(input, "onager_cmm_girvan_newman");
-  for (auto &kv : input.named_parameters) if (kv.first == "communities") bd->target_communities = kv.second.GetValue<int64_t>();
+  for (auto &kv : input.named_parameters) if (kv.first == "communities") bd->target_communities = GetNonNegativeParam("onager_cmm_girvan_newman", "communities", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
   return std::move(bd);
@@ -181,7 +192,8 @@ static OperatorFinalizeResultType GirvanNewmanFinal(ExecutionContext &ctx, Table
     int64_t nc = ::onager::onager_compute_girvan_newman(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.target_communities, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Girvan-Newman failed: " + GetOnagerError());
     gs.result_ids.resize(nc); gs.result_communities.resize(nc);
-    ::onager::onager_compute_girvan_newman(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.target_communities, gs.result_ids.data(), gs.result_communities.data());
+    int64_t rc = ::onager::onager_compute_girvan_newman(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.target_communities, gs.result_ids.data(), gs.result_communities.data());
+    if (rc != nc) throw InvalidInputException("Girvan-Newman failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_ids.size() - gs.output_idx;
@@ -209,8 +221,8 @@ static unique_ptr<FunctionData> SpectralBind(ClientContext &ctx, TableFunctionBi
   auto bd = make_uniq<SpectralBindData>();
   CheckInt64Input(input, "onager_cmm_spectral");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "k") bd->k = kv.second.GetValue<int64_t>();
-    if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
+    if (kv.first == "k") bd->k = GetNonNegativeParam("onager_cmm_spectral", "k", kv.second);
+    if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_spectral", "seed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
@@ -231,7 +243,8 @@ static OperatorFinalizeResultType SpectralFinal(ExecutionContext &ctx, TableFunc
     int64_t nc = ::onager::onager_compute_spectral_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.k, bd.seed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Spectral clustering failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_communities.resize(nc);
-    ::onager::onager_compute_spectral_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.k, bd.seed, gs.result_nodes.data(), gs.result_communities.data());
+    int64_t rc = ::onager::onager_compute_spectral_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.k, bd.seed, gs.result_nodes.data(), gs.result_communities.data());
+    if (rc != nc) throw InvalidInputException("Spectral clustering failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -259,8 +272,8 @@ static unique_ptr<FunctionData> InfomapBind(ClientContext &ctx, TableFunctionBin
   auto bd = make_uniq<InfomapBindData>();
   CheckInt64Input(input, "onager_cmm_infomap");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "max_iter") bd->max_iter = kv.second.GetValue<int64_t>();
-    if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_cmm_infomap", "max_iter", kv.second);
+    if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_infomap", "seed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
@@ -281,7 +294,8 @@ static OperatorFinalizeResultType InfomapFinal(ExecutionContext &ctx, TableFunct
     int64_t nc = ::onager::onager_compute_infomap(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.seed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Infomap failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_communities.resize(nc);
-    ::onager::onager_compute_infomap(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.seed, gs.result_nodes.data(), gs.result_communities.data());
+    int64_t rc = ::onager::onager_compute_infomap(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.max_iter, bd.seed, gs.result_nodes.data(), gs.result_communities.data());
+    if (rc != nc) throw InvalidInputException("Infomap failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -316,6 +330,8 @@ void RegisterCommunityFunctions(ExtensionLoader &loader) {
   TableFunction label_prop("onager_cmm_label_prop", {LogicalType::TABLE}, nullptr, LabelPropBind, LabelPropInitGlobal);
   label_prop.in_out_function = LabelPropInOut;
   label_prop.in_out_function_final = LabelPropFinal;
+  label_prop.named_parameters["max_iter"] = LogicalType::BIGINT;
+  label_prop.named_parameters["seed"] = LogicalType::BIGINT;
   ONAGER_SET_NO_ORDER(label_prop);
   loader.RegisterFunction(label_prop);
 

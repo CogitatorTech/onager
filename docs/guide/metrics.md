@@ -40,6 +40,12 @@ from onager_mtr_diameter((select src, dst from edges));
 |----------|--------|------------------------------------|
 | diameter | bigint | Maximum shortest path in the graph |
 
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+The diameter is undefined when the graph is disconnected, or not strongly connected in directed mode; the function then returns `NULL`.
+
 ---
 
 ## Radius
@@ -55,6 +61,12 @@ from onager_mtr_radius((select src, dst from edges));
 | Column | Type   | Description                       |
 |--------|--------|-----------------------------------|
 | radius | bigint | Minimum eccentricity in the graph |
+
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+Like the diameter, the radius is undefined for disconnected graphs and the function returns `NULL`.
 
 ---
 
@@ -134,6 +146,12 @@ from onager_mtr_assortativity((select src, dst from edges));
 |---------------|--------|--------------------------------|
 | assortativity | double | Degree correlation coefficient |
 
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+Assortativity is undefined when every node has the same degree (for example, a cycle); the function then returns `NULL`.
+
 ---
 
 ## Average Path Length
@@ -149,6 +167,12 @@ from onager_mtr_avg_path_length((select src, dst from edges));
 | Column          | Type   | Description                         |
 |-----------------|--------|-------------------------------------|
 | avg_path_length | double | Mean shortest path across all pairs |
+
+Optional parameters:
+
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+The average path length is undefined for disconnected graphs; the function then returns `NULL`.
 
 ---
 
@@ -172,7 +196,9 @@ from onager_mtr_density((select src, dst from edges), directed := true);
 
 Optional parameters:
 
-- `directed` (default false): Treat graph as directed
+- `directed` (default false): Treat each edge as one-way instead of undirected
+
+Density treats the input as a simple graph: duplicate edge rows count once, a pair listed in both directions counts once in undirected mode, and self-loops are ignored.
 
 ---
 

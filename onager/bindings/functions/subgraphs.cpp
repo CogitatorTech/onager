@@ -27,8 +27,8 @@ static unique_ptr<FunctionData> EgoGraphBind(ClientContext &ctx, TableFunctionBi
   auto bd = make_uniq<EgoGraphBindData>();
   CheckInt64Input(input, "onager_sub_ego_graph");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "center") bd->center = kv.second.GetValue<int64_t>();
-    if (kv.first == "radius") bd->radius = kv.second.GetValue<int64_t>();
+    if (kv.first == "center") bd->center = GetRequiredParam<int64_t>("onager_sub_ego_graph", "center", kv.second);
+    if (kv.first == "radius") bd->radius = GetNonNegativeParam("onager_sub_ego_graph", "radius", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
@@ -49,7 +49,8 @@ static OperatorFinalizeResultType EgoGraphFinal(ExecutionContext &ctx, TableFunc
     int64_t nc = ::onager::onager_compute_ego_graph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.center, bd.radius, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Ego graph failed: " + GetOnagerError());
     gs.result_src.resize(nc); gs.result_dst.resize(nc);
-    ::onager::onager_compute_ego_graph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.center, bd.radius, gs.result_src.data(), gs.result_dst.data());
+    int64_t rc = ::onager::onager_compute_ego_graph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.center, bd.radius, gs.result_src.data(), gs.result_dst.data());
+    if (rc != nc) throw InvalidInputException("Ego graph failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
@@ -77,8 +78,8 @@ static unique_ptr<FunctionData> KHopBind(ClientContext &ctx, TableFunctionBindIn
   auto bd = make_uniq<KHopBindData>();
   CheckInt64Input(input, "onager_sub_k_hop");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "start") bd->start = kv.second.GetValue<int64_t>();
-    if (kv.first == "k") bd->k = kv.second.GetValue<int64_t>();
+    if (kv.first == "start") bd->start = GetRequiredParam<int64_t>("onager_sub_k_hop", "start", kv.second);
+    if (kv.first == "k") bd->k = GetNonNegativeParam("onager_sub_k_hop", "k", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -98,7 +99,8 @@ static OperatorFinalizeResultType KHopFinal(ExecutionContext &ctx, TableFunction
     int64_t nc = ::onager::onager_compute_k_hop_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.start, bd.k, nullptr);
     if (nc < 0) throw InvalidInputException("K-hop neighbors failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
-    ::onager::onager_compute_k_hop_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.start, bd.k, gs.result_nodes.data());
+    int64_t rc = ::onager::onager_compute_k_hop_neighbors(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.start, bd.k, gs.result_nodes.data());
+    if (rc != nc) throw InvalidInputException("K-hop neighbors failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -123,6 +125,7 @@ struct InducedSubgraphGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> InducedSubgraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   CheckInt64Input(input, "onager_sub_induced", 3);
+  CheckColumnType(input, "onager_sub_induced", 2, LogicalType::BIGINT);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return make_uniq<TableFunctionData>();
@@ -157,11 +160,12 @@ static OperatorFinalizeResultType InducedSubgraphFinal(ExecutionContext &ctx, Ta
   auto &gs = data.global_state->Cast<InducedSubgraphGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
-    if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
+    if (gs.src_nodes.empty() || gs.filter_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     int64_t nc = ::onager::onager_compute_induced_subgraph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.filter_nodes.data(), gs.filter_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Induced subgraph failed: " + GetOnagerError());
     gs.result_src.resize(nc); gs.result_dst.resize(nc);
-    ::onager::onager_compute_induced_subgraph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.filter_nodes.data(), gs.filter_nodes.size(), gs.result_src.data(), gs.result_dst.data());
+    int64_t rc = ::onager::onager_compute_induced_subgraph(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.filter_nodes.data(), gs.filter_nodes.size(), gs.result_src.data(), gs.result_dst.data());
+    if (rc != nc) throw InvalidInputException("Induced subgraph failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;

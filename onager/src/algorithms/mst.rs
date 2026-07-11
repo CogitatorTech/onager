@@ -6,6 +6,7 @@ use graphina::core::types::{Graph, NodeId};
 use graphina::mst::algorithms::{kruskal_mst, prim_mst};
 use ordered_float::OrderedFloat;
 
+use crate::algorithms::builder::check_weights_no_nan;
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
@@ -29,6 +30,7 @@ pub fn compute_prim_mst(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<Mst
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    check_weights_no_nan(weights, src.len())?;
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
     let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
@@ -86,6 +88,7 @@ pub fn compute_kruskal_mst(src: &[i64], dst: &[i64], weights: &[f64]) -> Result<
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    check_weights_no_nan(weights, src.len())?;
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
     let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
@@ -180,5 +183,15 @@ mod tests {
 
         let result = compute_prim_mst(&src, &dst, &weights);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_mst_nan_weight_rejected() {
+        let src = vec![1, 2];
+        let dst = vec![2, 3];
+        let weights = vec![f64::NAN, 1.0];
+
+        assert!(compute_prim_mst(&src, &dst, &weights).is_err());
+        assert!(compute_kruskal_mst(&src, &dst, &weights).is_err());
     }
 }

@@ -19,6 +19,24 @@ select count(*) > 0 from onager_pth_dijkstra((select src, dst from test_edges), 
 ----
 1
 
+# Test weighted Dijkstra accepts a third DOUBLE column and honors weights.
+# Routes from 1 to 3: direct with weight 10, or through 2 with total weight 3.
+query I
+select distance from onager_pth_dijkstra((select * from (values
+    (1::bigint, 3::bigint, 10.0::double), (1, 2, 1.0), (2, 3, 2.0)
+  ) t(src, dst, weight)), source := 1)
+where node_id = 3
+----
+3.0
+
+# Test weighted Dijkstra rejects negative weights
+statement error
+select * from onager_pth_dijkstra((select * from (values
+    (1::bigint, 2::bigint, -1.0::double)
+  ) t(src, dst, weight)), source := 1)
+----
+Invalid Input Error: Dijkstra failed: Invalid argument: Dijkstra requires nonnegative edge weights
+
 # Test BFS
 query I
 select count(*) > 0 from onager_trv_bfs((select src, dst from test_edges), source := 1)
@@ -84,6 +102,64 @@ query I
 select count(*) from onager_pth_floyd_warshall((select src, dst, weight from weighted_edges where false))
 ----
 0
+
+# =============================================================================
+# Directed Parameter
+# =============================================================================
+
+# Directed BFS from the end of the path 1 -> 2 -> 3 -> 4 reaches only itself
+query I
+select count(*) from onager_trv_bfs((select src, dst from test_edges), source := 4, directed := true)
+----
+1
+
+# Undirected BFS from the same node reaches the whole path
+query I
+select count(*) from onager_trv_bfs((select src, dst from test_edges), source := 4)
+----
+4
+
+# Directed DFS from the end of the path reaches only itself
+query I
+select count(*) from onager_trv_dfs((select src, dst from test_edges), source := 4, directed := true)
+----
+1
+
+# Directed Dijkstra on the cycle 1 -> 2 -> 3 -> 1 must go the long way around
+query I
+select distance from onager_pth_dijkstra((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)), source := 1, directed := true)
+where node_id = 3
+----
+2.0
+
+# Undirected Dijkstra on the same cycle takes the direct edge
+query I
+select distance from onager_pth_dijkstra((select * from (values
+    (1::bigint, 2::bigint), (2, 3), (3, 1)
+  ) t(src, dst)), source := 1)
+where node_id = 3
+----
+1.0
+
+# Directed Bellman-Ford on a weighted cycle also goes the long way around
+query I
+select distance from onager_pth_bellman_ford((select * from (values
+    (1::bigint, 2::bigint, 1.0::double), (2, 3, 1.0), (3, 1, 1.0)
+  ) t(src, dst, weight)), source := 1, directed := true)
+where node_id = 3
+----
+2.0
+
+# Directed Floyd-Warshall reports the asymmetric distance
+query I
+select distance from onager_pth_floyd_warshall((select * from (values
+    (1::bigint, 2::bigint, 1.0::double), (2, 3, 1.0), (3, 1, 1.0)
+  ) t(src, dst, weight)), directed := true)
+where src = 1 and dst = 3
+----
+2.0
 
 # Cleanup
 statement ok

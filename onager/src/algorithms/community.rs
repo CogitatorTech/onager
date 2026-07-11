@@ -134,7 +134,16 @@ pub struct LabelPropagationResult {
 }
 
 /// Compute label propagation community detection.
-pub fn compute_label_propagation(src: &[i64], dst: &[i64]) -> Result<LabelPropagationResult> {
+///
+/// The `seed` controls the node visit order, but graphina's `label_propagation`
+/// currently breaks label-frequency ties through `HashMap` iteration order, so
+/// seeded runs are not fully deterministic across processes.
+pub fn compute_label_propagation(
+    src: &[i64],
+    dst: &[i64],
+    max_iter: usize,
+    seed: Option<u64>,
+) -> Result<LabelPropagationResult> {
     if src.len() != dst.len() {
         return Err(OnagerError::InvalidArgument(
             "src and dst arrays must have same length".to_string(),
@@ -143,6 +152,11 @@ pub fn compute_label_propagation(src: &[i64], dst: &[i64]) -> Result<LabelPropag
     if src.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
+        ));
+    }
+    if max_iter == 0 {
+        return Err(OnagerError::InvalidArgument(
+            "max_iter must be positive".to_string(),
         ));
     }
 
@@ -165,8 +179,8 @@ pub fn compute_label_propagation(src: &[i64], dst: &[i64]) -> Result<LabelPropag
         graph.add_edge(src_id, dst_id, 1.0);
     }
 
-    let labels_vec =
-        label_propagation(&graph, 100, None).map_err(|e| OnagerError::GraphError(e.to_string()))?;
+    let labels_vec = label_propagation(&graph, max_iter, seed)
+        .map_err(|e| OnagerError::GraphError(e.to_string()))?;
     let reverse_map: HashMap<NodeId, i64> = node_set.iter().map(|(&k, &v)| (v, k)).collect();
     let node_list: Vec<NodeId> = graph.nodes().map(|(id, _)| id).collect();
 
@@ -328,6 +342,10 @@ pub struct InfomapResult {
 
 /// Compute Infomap community detection.
 /// Uses information-theoretic approach based on the map equation.
+///
+/// The `seed` controls the node visit order, but graphina's `infomap` currently
+/// breaks flow ties through `HashMap` iteration order, so seeded runs are not
+/// fully deterministic across processes.
 pub fn compute_infomap(
     src: &[i64],
     dst: &[i64],
@@ -441,7 +459,7 @@ mod tests {
         let src = vec![1, 2, 3];
         let dst = vec![2, 3, 1];
 
-        let result = compute_label_propagation(&src, &dst).unwrap();
+        let result = compute_label_propagation(&src, &dst, 100, None).unwrap();
 
         assert_eq!(result.node_ids.len(), 3);
         assert_eq!(result.labels.len(), 3);
@@ -495,7 +513,7 @@ mod tests {
     fn test_empty_graph_errors() {
         assert!(compute_louvain(&[], &[], None).is_err());
         assert!(compute_connected_components(&[], &[]).is_err());
-        assert!(compute_label_propagation(&[], &[]).is_err());
+        assert!(compute_label_propagation(&[], &[], 100, None).is_err());
         assert!(compute_girvan_newman(&[], &[], 2).is_err());
         assert!(compute_spectral_clustering(&[], &[], 2, None).is_err());
         assert!(compute_infomap(&[], &[], 10, None).is_err());

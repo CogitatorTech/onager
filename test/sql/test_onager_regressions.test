@@ -9,15 +9,15 @@ pragma enable_verification
 
 # Test with multiple threads to catch batch index issues
 statement ok
-SET threads TO 4
+set threads to 4
 
 # =============================================================================
 # Test 1: Small graph materialization with multiple threads
 # =============================================================================
 
 statement ok
-CREATE TABLE small_edges AS
-SELECT * FROM (VALUES
+create table small_edges as
+select * from (values
   (1::bigint, 2::bigint), (2, 3), (3, 4), (4, 5),
   (5, 6), (6, 7), (7, 8), (8, 9), (9, 10), (10, 1),
   (1, 5), (2, 6), (3, 7), (4, 8), (5, 9)
@@ -25,32 +25,32 @@ SELECT * FROM (VALUES
 
 # Materialize connected components results into a table
 statement ok
-CREATE TABLE cc_results AS
-SELECT * FROM onager_cmm_components((SELECT src, dst FROM small_edges))
+create table cc_results as
+select * from onager_cmm_components((select src, dst from small_edges))
 
 query I
-SELECT count(*) FROM cc_results
+select count(*) from cc_results
 ----
 10
 
 statement ok
-DROP TABLE cc_results
+drop table cc_results
 
 # Materialize pagerank results into a table
 statement ok
-CREATE TABLE pr_results AS
-SELECT * FROM onager_ctr_pagerank((SELECT src, dst FROM small_edges))
+create table pr_results as
+select * from onager_ctr_pagerank((select src, dst from small_edges))
 
 query I
-SELECT count(*) FROM pr_results
+select count(*) from pr_results
 ----
 10
 
 statement ok
-DROP TABLE pr_results
+drop table pr_results
 
 statement ok
-DROP TABLE small_edges
+drop table small_edges
 
 # =============================================================================
 # Test 2: Medium graph (1000 nodes) - tests chunked output with threads
@@ -58,175 +58,175 @@ DROP TABLE small_edges
 
 # Generate a graph with ~1000 nodes using Erdos-Renyi
 statement ok
-CREATE TABLE medium_edges AS
-SELECT src, dst FROM onager_gen_erdos_renyi(1000, 0.01, seed := 42)
+create table medium_edges as
+select src, dst from onager_gen_erdos_renyi(1000, 0.01, seed := 42)
 
 # Materialize community detection results
 statement ok
-CREATE TABLE louvain_results AS
-SELECT * FROM onager_cmm_louvain((SELECT src, dst FROM medium_edges))
+create table louvain_results as
+select * from onager_cmm_louvain((select src, dst from medium_edges))
 
 query I
-SELECT count(*) >= 900 FROM louvain_results
+select count(*) >= 900 from louvain_results
 ----
 1
 
 statement ok
-DROP TABLE louvain_results
+drop table louvain_results
 
 # Materialize centrality results
 statement ok
-CREATE TABLE degree_results AS
-SELECT * FROM onager_ctr_degree((SELECT src, dst FROM medium_edges))
+create table degree_results as
+select * from onager_ctr_degree((select src, dst from medium_edges))
 
 query I
-SELECT count(*) >= 900 FROM degree_results
+select count(*) >= 900 from degree_results
 ----
 1
 
 statement ok
-DROP TABLE degree_results
+drop table degree_results
 
 statement ok
-DROP TABLE medium_edges
+drop table medium_edges
 
 # =============================================================================
-# Test 3: Verify SELECT * works (not just aggregations like count(*))
+# Test 3: Verify select * works (not just aggregations like count(*))
 # =============================================================================
 
 statement ok
-CREATE TABLE test_graph AS
-SELECT * FROM (VALUES
+create table test_graph as
+select * from (values
   (1::bigint, 2::bigint), (2, 3), (3, 1)
 ) t(src, dst)
 
 # This specifically tests materializing all columns, which triggered the bug
 statement ok
-CREATE TABLE full_results AS
-SELECT node_id, component FROM onager_cmm_components((SELECT src, dst FROM test_graph))
+create table full_results as
+select node_id, component from onager_cmm_components((select src, dst from test_graph))
 
 query II rowsort
-SELECT * FROM full_results
+select * from full_results
 ----
 1	0
 2	0
 3	0
 
 statement ok
-DROP TABLE full_results
+drop table full_results
 
 statement ok
-DROP TABLE test_graph
+drop table test_graph
 
 # =============================================================================
-# Test 4: Test various algorithms with CREATE TABLE AS
+# Test 4: Test various algorithms with create table as
 # =============================================================================
 
 statement ok
-CREATE TABLE algo_test_edges AS
-SELECT src, dst FROM onager_gen_barabasi_albert(500, 3, seed := 123)
+create table algo_test_edges as
+select src, dst from onager_gen_barabasi_albert(500, 3, seed := 123)
 
 # Test approximation algorithms
 statement ok
-CREATE TABLE clique_results AS
-SELECT * FROM onager_apx_max_clique((SELECT src, dst FROM algo_test_edges))
+create table clique_results as
+select * from onager_apx_max_clique((select src, dst from algo_test_edges))
 
 query I
-SELECT count(*) > 0 FROM clique_results
+select count(*) > 0 from clique_results
 ----
 1
 
 statement ok
-DROP TABLE clique_results
+drop table clique_results
 
 # Test link prediction
 statement ok
-CREATE TABLE jaccard_results AS
-SELECT * FROM onager_lnk_jaccard((SELECT src, dst FROM algo_test_edges))
+create table jaccard_results as
+select * from onager_lnk_jaccard((select src, dst from algo_test_edges))
 
 query I
-SELECT count(*) > 0 FROM jaccard_results
+select count(*) > 0 from jaccard_results
 ----
 1
 
 statement ok
-DROP TABLE jaccard_results
+drop table jaccard_results
 
 # Test traversal
 statement ok
-CREATE TABLE bfs_results AS
-SELECT * FROM onager_trv_bfs((SELECT src, dst FROM algo_test_edges), source := 1)
+create table bfs_results as
+select * from onager_trv_bfs((select src, dst from algo_test_edges), source := 1)
 
 query I
-SELECT count(*) > 0 FROM bfs_results
+select count(*) > 0 from bfs_results
 ----
 1
 
 statement ok
-DROP TABLE bfs_results
+drop table bfs_results
 
 # Test metrics (scalar results)
 statement ok
-CREATE TABLE density_results AS
-SELECT * FROM onager_mtr_density((SELECT src, dst FROM algo_test_edges))
+create table density_results as
+select * from onager_mtr_density((select src, dst from algo_test_edges))
 
 query I
-SELECT count(*) FROM density_results
+select count(*) from density_results
 ----
 1
 
 statement ok
-DROP TABLE density_results
+drop table density_results
 
 # Test MST
 statement ok
-CREATE TABLE mst_edges AS
-SELECT src::bigint as src, dst::bigint as dst, 1.0::double as weight FROM algo_test_edges
+create table mst_edges as
+select src::bigint as src, dst::bigint as dst, 1.0::double as weight from algo_test_edges
 
 statement ok
-CREATE TABLE mst_results AS
-SELECT * FROM onager_mst_kruskal((SELECT src, dst, weight FROM mst_edges))
+create table mst_results as
+select * from onager_mst_kruskal((select src, dst, weight from mst_edges))
 
 query I
-SELECT count(*) > 0 FROM mst_results
+select count(*) > 0 from mst_results
 ----
 1
 
 statement ok
-DROP TABLE mst_results
+drop table mst_results
 
 statement ok
-DROP TABLE mst_edges
+drop table mst_edges
 
 statement ok
-DROP TABLE algo_test_edges
+drop table algo_test_edges
 
 # =============================================================================
 # Test 5: Test with single thread (baseline - should always work)
 # =============================================================================
 
 statement ok
-SET threads TO 1
+set threads to 1
 
 statement ok
-CREATE TABLE single_thread_edges AS
-SELECT src, dst FROM onager_gen_erdos_renyi(200, 0.05, seed := 99)
+create table single_thread_edges as
+select src, dst from onager_gen_erdos_renyi(200, 0.05, seed := 99)
 
 statement ok
-CREATE TABLE single_thread_results AS
-SELECT * FROM onager_cmm_components((SELECT src, dst FROM single_thread_edges))
+create table single_thread_results as
+select * from onager_cmm_components((select src, dst from single_thread_edges))
 
 query I
-SELECT count(*) > 0 FROM single_thread_results
+select count(*) > 0 from single_thread_results
 ----
 1
 
 statement ok
-DROP TABLE single_thread_results
+drop table single_thread_results
 
 statement ok
-DROP TABLE single_thread_edges
+drop table single_thread_edges
 
 # Reset to default
 statement ok
-RESET threads
+reset threads

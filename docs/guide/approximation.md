@@ -84,3 +84,14 @@ order by "order";
 |---------|--------|--------------------------|
 | order   | bigint | Position in the tour     |
 | node_id | bigint | Node at this position    |
+
+Optional parameters:
+
+- `start`: Node where the tour begins (default: the first source node in the input)
+
+```sql
+-- Tour starting from node 3
+select "order", node_id
+from onager_apx_tsp((select src, dst, weight from weighted_edges), start := 3)
+order by "order";
+```
