@@ -108,24 +108,6 @@ int64_t onager_compute_degree(const int64_t *src_ptr,
                               double *out_out_degree);
 
 /**
- * Compute in-degree of a single node (scalar).
- */
-
-int64_t onager_compute_node_in_degree(const int64_t *src_ptr,
-                                      const int64_t *dst_ptr,
-                                      uintptr_t edge_count,
-                                      int64_t node);
-
-/**
- * Compute out-degree of a single node (scalar).
- */
-
-int64_t onager_compute_node_out_degree(const int64_t *src_ptr,
-                                       const int64_t *dst_ptr,
-                                       uintptr_t edge_count,
-                                       int64_t node);
-
-/**
  * Compute betweenness centrality on edge arrays.
  */
 
@@ -751,19 +733,6 @@ int64_t onager_compute_floyd_warshall(const int64_t *src_ptr,
                                       int64_t *out_src,
                                       int64_t *out_dst,
                                       double *out_distances);
-
-/**
- * Compute shortest distance between two nodes (scalar).
- */
-
-double onager_compute_shortest_distance(const int64_t *src_ptr,
-                                        const int64_t *dst_ptr,
-                                        uintptr_t edge_count,
-                                        const double *weights_ptr,
-                                        uintptr_t weights_count,
-                                        int64_t source_node,
-                                        int64_t target_node,
-                                        bool directed);
 
 #ifdef __cplusplus
 } // extern "C"

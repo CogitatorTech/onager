@@ -24,11 +24,10 @@ pub fn compute_max_clique(src: &[i64], dst: &[i64]) -> Result<CliqueResult> {
             "src and dst arrays must have same length".to_string(),
         ));
     }
-    // Handle empty graph gracefully - return empty clique
     if src.is_empty() {
-        return Ok(CliqueResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -82,9 +81,9 @@ pub fn compute_independent_set(src: &[i64], dst: &[i64]) -> Result<IndependentSe
         ));
     }
     if src.is_empty() {
-        return Ok(IndependentSetResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -135,9 +134,9 @@ pub fn compute_vertex_cover(src: &[i64], dst: &[i64]) -> Result<VertexCoverResul
         ));
     }
     if src.is_empty() {
-        return Ok(VertexCoverResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
@@ -297,14 +296,9 @@ mod tests {
 
     #[test]
     fn test_approximation_empty_graphs() {
-        let max_clique = compute_max_clique(&[], &[]).unwrap();
-        assert!(max_clique.node_ids.is_empty());
-
-        let independent_set = compute_independent_set(&[], &[]).unwrap();
-        assert!(independent_set.node_ids.is_empty());
-
-        let vertex_cover = compute_vertex_cover(&[], &[]).unwrap();
-        assert!(vertex_cover.node_ids.is_empty());
+        assert!(compute_max_clique(&[], &[]).is_err());
+        assert!(compute_independent_set(&[], &[]).is_err());
+        assert!(compute_vertex_cover(&[], &[]).is_err());
     }
 
     #[test]

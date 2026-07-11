@@ -47,6 +47,11 @@ pub fn compute_pagerank(
     tolerance: f64,
     directed: bool,
 ) -> Result<PageRankResult> {
+    if src.is_empty() && dst.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
     check_nonnegative_weights(weights, src.len())?;
     if directed {
         pagerank_impl::<Directed>(src, dst, weights, damping, iterations, tolerance)
@@ -89,6 +94,11 @@ pub struct DegreeResult {
 
 /// Compute degree centrality.
 pub fn compute_degree(src: &[i64], dst: &[i64], directed: bool) -> Result<DegreeResult> {
+    if src.is_empty() && dst.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
+    }
     if directed {
         let g = build_graph::<f64, Directed, _>(src, dst, |_| 1.0)?;
         let in_deg =
@@ -384,9 +394,9 @@ pub fn compute_voterank(
     directed: bool,
 ) -> Result<VoteRankResult> {
     if src.is_empty() && dst.is_empty() {
-        return Ok(VoteRankResult {
-            node_ids: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
     if directed {
         voterank_impl::<Directed>(src, dst, num_seeds)
@@ -428,10 +438,9 @@ pub fn compute_local_reaching(
     directed: bool,
 ) -> Result<LocalReachingResult> {
     if src.is_empty() && dst.is_empty() {
-        return Ok(LocalReachingResult {
-            node_ids: Vec::new(),
-            centrality: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
     if directed {
         local_reaching_impl::<Directed>(src, dst, distance)
@@ -465,10 +474,9 @@ pub struct LaplacianResult {
 /// Based on the Laplacian matrix of the graph.
 pub fn compute_laplacian(src: &[i64], dst: &[i64], directed: bool) -> Result<LaplacianResult> {
     if src.is_empty() && dst.is_empty() {
-        return Ok(LaplacianResult {
-            node_ids: Vec::new(),
-            centrality: Vec::new(),
-        });
+        return Err(OnagerError::InvalidArgument(
+            "Cannot compute on empty graph".to_string(),
+        ));
     }
     if directed {
         laplacian_impl::<Directed>(src, dst)
@@ -679,11 +687,11 @@ mod tests {
     }
 
     #[test]
-    fn test_empty_graph_returns_empty() {
-        // Empty graph returns empty results (not an error)
-        let result = compute_pagerank(&[], &[], &[], 0.85, 100, 1e-6, false).unwrap();
-        assert!(result.node_ids.is_empty());
-        assert!(result.ranks.is_empty());
+    fn test_empty_graph_errors() {
+        // Empty input is an error, matching the other algorithm modules
+        assert!(compute_pagerank(&[], &[], &[], 0.85, 100, 1e-6, false).is_err());
+        assert!(compute_degree(&[], &[], false).is_err());
+        assert!(compute_voterank(&[], &[], 10, false).is_err());
     }
 
     #[test]
@@ -706,9 +714,8 @@ mod tests {
     }
 
     #[test]
-    fn test_local_reaching_empty() {
-        let result = compute_local_reaching(&[], &[], 2, false).unwrap();
-        assert!(result.node_ids.is_empty());
+    fn test_local_reaching_empty_errors() {
+        assert!(compute_local_reaching(&[], &[], 2, false).is_err());
     }
 
     #[test]
@@ -725,9 +732,8 @@ mod tests {
     }
 
     #[test]
-    fn test_laplacian_empty() {
-        let result = compute_laplacian(&[], &[], false).unwrap();
-        assert!(result.node_ids.is_empty());
+    fn test_laplacian_empty_errors() {
+        assert!(compute_laplacian(&[], &[], false).is_err());
     }
 
     #[test]

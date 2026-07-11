@@ -144,58 +144,6 @@ pub extern "C" fn onager_compute_degree(
     })
 }
 
-/// Compute in-degree of a single node (scalar).
-#[no_mangle]
-pub extern "C" fn onager_compute_node_in_degree(
-    src_ptr: *const i64,
-    dst_ptr: *const i64,
-    edge_count: usize,
-    node: i64,
-) -> i64 {
-    clear_last_error();
-    crate::ffi_catch_unwind!(-1, {
-        if src_ptr.is_null() || dst_ptr.is_null() {
-            set_last_error("Null pointer");
-            return -1;
-        }
-        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_node_degree(src, dst, node) {
-            Ok(r) => r.in_degree,
-            Err(e) => {
-                set_last_error(&e.to_string());
-                -1
-            }
-        }
-    })
-}
-
-/// Compute out-degree of a single node (scalar).
-#[no_mangle]
-pub extern "C" fn onager_compute_node_out_degree(
-    src_ptr: *const i64,
-    dst_ptr: *const i64,
-    edge_count: usize,
-    node: i64,
-) -> i64 {
-    clear_last_error();
-    crate::ffi_catch_unwind!(-1, {
-        if src_ptr.is_null() || dst_ptr.is_null() {
-            set_last_error("Null pointer");
-            return -1;
-        }
-        let src = unsafe { std::slice::from_raw_parts(src_ptr, edge_count) };
-        let dst = unsafe { std::slice::from_raw_parts(dst_ptr, edge_count) };
-        match algorithms::compute_node_degree(src, dst, node) {
-            Ok(r) => r.out_degree,
-            Err(e) => {
-                set_last_error(&e.to_string());
-                -1
-            }
-        }
-    })
-}
-
 /// Compute betweenness centrality on edge arrays.
 #[no_mangle]
 pub extern "C" fn onager_compute_betweenness(
