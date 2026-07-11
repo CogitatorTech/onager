@@ -356,7 +356,7 @@ order by 3 desc
 limit 15;`,
       },
       {
-        label: "Preferential Attachment",
+        label: "Preferential Attach.",
         desc: "Score candidate links by the product of node degrees, favoring hubs.",
         sql: `select *
 from onager_lnk_pref_attach((select src, dst from edges))
@@ -524,13 +524,28 @@ async function getExtensionRepository() {
   return localRepo;
 }
 
-function updateFooterVersions(duckdbVersion, onagerVersion) {
+// Fetch the build stamp written by the playground workflow. Local checkouts
+// have no build-info.json, so a missing or invalid file hides the build label.
+async function getBuildLabel() {
+  try {
+    const res = await fetch(new URL("build-info.json", document.baseURI).href);
+    if (!res.ok) return null;
+    const info = await res.json();
+    if (!info || !info.branch || !info.commit) return null;
+    return `${info.branch}@${info.commit}`;
+  } catch (e) {
+    return null;
+  }
+}
+
+function updateFooterVersions(duckdbVersion, onagerVersion, buildLabel) {
   const footerNote = document.getElementById("footer-note");
   if (!footerNote) return;
   const duckdbLabel = duckdbVersion
     ? `DuckDB-Wasm (${duckdbVersion.replace(/^v/, "")})`
     : "DuckDB-Wasm";
-  const onagerLabel = onagerVersion ? `Onager (${onagerVersion})` : "Onager";
+  const onagerParts = [onagerVersion, buildLabel].filter(Boolean);
+  const onagerLabel = onagerParts.length ? `Onager (${onagerParts.join(", ")})` : "Onager";
   footerNote.textContent =
     `This playground app is powered by ${duckdbLabel} and ${onagerLabel}, ` +
     "and everything (including the queries) runs safely in your browser.";
@@ -599,7 +614,7 @@ async function init() {
 
     const version = await scalar("select onager_version() as v;", "v");
     const duckdbVersion = await scalar("select version() as v;", "v");
-    updateFooterVersions(duckdbVersion, version);
+    updateFooterVersions(duckdbVersion, version, await getBuildLabel());
     await conn.query(SAMPLE_EDGES);
 
     // Populate initial textareas
