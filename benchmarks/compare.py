@@ -41,7 +41,7 @@ DB_FILE = "benchmark_temp.db"
 
 def run_query(sql):
     cmd = [DUCKDB_PATH, "-json", DB_FILE]
-    sql_with_load = f"LOAD '{EXTENSION_PATH}';\n{sql}"
+    sql_with_load = f"load '{EXTENSION_PATH}';\n{sql}"
     res = subprocess.run(cmd, input=sql_with_load, capture_output=True, text=True)
     if res.returncode != 0:
         raise Exception(f"DuckDB Error: {res.stderr}\nOutput: {res.stdout}")
@@ -72,13 +72,13 @@ def run_benchmark():
         nx_graph.add_node(n)
 
     # Initialize DuckDB tables
-    setup_sql = "CREATE TABLE edges(src BIGINT, dst BIGINT);\n"
-    setup_sql += "INSERT INTO edges VALUES " + ", ".join(f"({u}, {v})" for u, v in edges) + ";\n"
+    setup_sql = "create table edges(src BIGINT, dst BIGINT);\n"
+    setup_sql += "insert into edges values " + ", ".join(f"({u}, {v})" for u, v in edges) + ";\n"
 
     # Define weighted edges for Dijkstra/MST
     weighted_edges = [(u, v, 1.0) for u, v in edges]
-    setup_sql += "CREATE TABLE weighted_edges(src BIGINT, dst BIGINT, weight DOUBLE);\n"
-    setup_sql += "INSERT INTO weighted_edges VALUES " + ", ".join(f"({u}, {v}, {w})" for u, v, w in weighted_edges) + ";\n"
+    setup_sql += "create table weighted_edges(src BIGINT, dst BIGINT, weight DOUBLE);\n"
+    setup_sql += "insert into weighted_edges values " + ", ".join(f"({u}, {v}, {w})" for u, v, w in weighted_edges) + ";\n"
     
     nx_weighted_graph = nx.Graph()
     for u, v, w in weighted_edges:
@@ -107,7 +107,7 @@ def run_benchmark():
         return [sorted(list(c)) for c in nx.connected_components(nx_graph)]
 
     def run_onager_cc():
-        return run_query("SELECT node_id, component FROM onager_cmm_components((SELECT src, dst FROM edges)) ORDER BY node_id;")
+        return run_query("select node_id, component from onager_cmm_components((select src, dst from edges)) order by node_id;")
 
     nx_cc_res = run_nx_cc()
     onager_cc_res = run_onager_cc()
@@ -145,7 +145,7 @@ def run_benchmark():
         return nx.pagerank(nx_graph, alpha=0.85, tol=1e-6)
 
     def run_onager_pr():
-        return run_query("SELECT node_id, rank FROM onager_ctr_pagerank((SELECT src, dst FROM edges), damping := 0.85, directed := false) ORDER BY node_id;")
+        return run_query("select node_id, rank from onager_ctr_pagerank((select src, dst from edges), damping := 0.85, directed := false) order by node_id;")
 
     nx_pr_res = run_nx_pr()
     onager_pr_res = run_onager_pr()
@@ -168,7 +168,7 @@ def run_benchmark():
         return nx.degree_centrality(nx_graph)
 
     def run_onager_deg():
-        return run_query("SELECT node_id, out_degree FROM onager_ctr_degree((SELECT src, dst FROM edges), directed := false) ORDER BY node_id;")
+        return run_query("select node_id, out_degree from onager_ctr_degree((select src, dst from edges), directed := false) order by node_id;")
 
     nx_deg_res = run_nx_deg()
     onager_deg_res = run_onager_deg()
@@ -193,7 +193,7 @@ def run_benchmark():
         return nx.betweenness_centrality(nx_graph, normalized=True)
 
     def run_onager_bet():
-        return run_query("SELECT node_id, betweenness FROM onager_ctr_betweenness((SELECT src, dst FROM edges), normalized := true) ORDER BY node_id;")
+        return run_query("select node_id, betweenness from onager_ctr_betweenness((select src, dst from edges), normalized := true) order by node_id;")
 
     nx_bet_res = run_nx_bet()
     onager_bet_res = run_onager_bet()
@@ -216,7 +216,7 @@ def run_benchmark():
         return nx.closeness_centrality(nx_graph)
 
     def run_onager_close():
-        return run_query("SELECT node_id, closeness FROM onager_ctr_closeness((SELECT src, dst FROM edges)) ORDER BY node_id;")
+        return run_query("select node_id, closeness from onager_ctr_closeness((select src, dst from edges)) order by node_id;")
 
     nx_close_res = run_nx_close()
     onager_close_res = run_onager_close()
@@ -240,7 +240,7 @@ def run_benchmark():
         return list(nx.bfs_edges(nx_graph, source=start_node))
 
     def run_onager_bfs():
-        return run_query(f"SELECT node_id FROM onager_trv_bfs((SELECT src, dst FROM edges), source := {start_node}) ORDER BY node_id;")
+        return run_query(f"select node_id from onager_trv_bfs((select src, dst from edges), source := {start_node}) order by node_id;")
 
     nx_bfs_res = run_nx_bfs()
     onager_bfs_res = run_onager_bfs()
@@ -261,7 +261,7 @@ def run_benchmark():
         return list(nx.minimum_spanning_edges(nx_weighted_graph, algorithm='kruskal', data=True))
 
     def run_onager_mst():
-        return run_query("SELECT src, dst, weight FROM onager_mst_kruskal((SELECT src, dst, weight FROM weighted_edges));")
+        return run_query("select src, dst, weight from onager_mst_kruskal((select src, dst, weight from weighted_edges));")
 
     nx_mst_res = run_nx_mst()
     onager_mst_res = run_onager_mst()
@@ -280,7 +280,7 @@ def run_benchmark():
         return list(nx.jaccard_coefficient(nx_graph))
 
     def run_onager_jaccard():
-        return run_query("SELECT node1, node2, coefficient FROM onager_lnk_jaccard((SELECT src, dst FROM edges)) ORDER BY node1, node2;")
+        return run_query("select node1, node2, coefficient from onager_lnk_jaccard((select src, dst from edges)) order by node1, node2;")
 
     nx_jac_res = sorted(run_nx_jaccard(), key=lambda x: (x[0], x[1]))
     onager_jac_res = run_onager_jaccard()
