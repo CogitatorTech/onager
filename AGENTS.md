@@ -118,6 +118,12 @@ in `external/duckdb`.
 - Keep shared helpers in `functions.hpp` so every binding file picks them up consistently.
 - Keep user-facing SQL function names, signatures, and error messages stable unless the task explicitly changes them.
 
+## SQL Conventions
+
+- Write SQL keywords in lowercase everywhere: SQL tests, differential tests, benchmarks, docs, and examples. Write `select * from t`, not
+  `SELECT * FROM t`.
+- Keep `NULL` uppercase in sqllogictest expected-result blocks; the test runner prints NULL values that way. Inside queries, write `null`.
+
 ## Required Validation
 
 Run the narrowest relevant checks, then expand if the change crosses layers.
