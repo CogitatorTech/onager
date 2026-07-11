@@ -149,6 +149,11 @@ from onager_cmm_spectral((select src, dst from edges), k := 2)
 order by community, node_id;
 ```
 
+Optional parameters:
+
+- `k` (default 2): Number of clusters
+- `seed`: Random seed for the k-means initialization
+
 ---
 
 ## Infomap

@@ -8,6 +8,7 @@ use graphina::approximation::tsp::greedy_tsp;
 use graphina::approximation::vertex_cover::min_weighted_vertex_cover;
 use graphina::core::types::{Graph, NodeId};
 
+use crate::algorithms::builder::check_weights_no_nan;
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
@@ -199,6 +200,7 @@ pub fn compute_tsp(
             "Cannot compute TSP on empty graph".to_string(),
         ));
     }
+    check_weights_no_nan(weights, src.len())?;
 
     let mut node_set: HashMap<i64, NodeId> = HashMap::new();
     let mut reverse_map: HashMap<NodeId, i64> = HashMap::new();
@@ -312,5 +314,10 @@ mod tests {
         assert!(compute_vertex_cover(&[1, 2], &[2]).is_err());
         assert!(compute_tsp(&[1, 2], &[2], &[1.0, 2.0], None).is_err());
         assert!(compute_tsp(&[1, 2], &[2, 3], &[1.0], None).is_err());
+    }
+
+    #[test]
+    fn test_tsp_nan_weight_rejected() {
+        assert!(compute_tsp(&[1, 2], &[2, 3], &[f64::NAN, 1.0], None).is_err());
     }
 }

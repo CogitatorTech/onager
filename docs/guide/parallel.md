@@ -160,7 +160,7 @@ order by coefficient desc;
 
 ## Parallel Triangle Count
 
-Counts triangles participating at each node using parallel processing.
+Counts the triangles each node participates in, in parallel.
 
 ```sql
 select node_id, triangles

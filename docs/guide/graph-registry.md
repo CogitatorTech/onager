@@ -55,13 +55,13 @@ select onager_node_out_degree('social', 1); -- 2 (to nodes 2 and 3)
 ```sql
 -- List all graphs
 select onager_list_graphs();
--- '["social", "network"]'
+-- '["network","social"]' (compact JSON; the order is not guaranteed)
 
 -- Delete a graph
 select onager_drop_graph('social');
 ```
 
-## Graph Registry Vs Table Functions
+## Graph Registry Versus Table Functions
 
 | Feature      | Graph Registry                  | Table Functions              |
 |--------------|---------------------------------|------------------------------|

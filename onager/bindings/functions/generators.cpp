@@ -25,9 +25,9 @@ struct ErdosRenyiGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> ErdosRenyiBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<ErdosRenyiBindData>();
-  if (input.inputs.size() >= 1) bd->n = input.inputs[0].GetValue<int64_t>();
-  if (input.inputs.size() >= 2) bd->p = input.inputs[1].GetValue<double>();
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
+  if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_erdos_renyi", "n", input.inputs[0]);
+  if (input.inputs.size() >= 2) bd->p = GetRequiredParam<double>("onager_gen_erdos_renyi", "p", input.inputs[1]);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_erdos_renyi", kv.first, kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return std::move(bd);
@@ -39,7 +39,8 @@ static void ErdosRenyiFunction(ClientContext &ctx, TableFunctionInput &data, Dat
     int64_t ec = ::onager::onager_generate_erdos_renyi(static_cast<size_t>(bd.n), bd.p, static_cast<uint64_t>(bd.seed), nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Erdos-Renyi failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec);
-    ::onager::onager_generate_erdos_renyi(static_cast<size_t>(bd.n), bd.p, static_cast<uint64_t>(bd.seed), gs.result_src.data(), gs.result_dst.data());
+    int64_t rc = ::onager::onager_generate_erdos_renyi(static_cast<size_t>(bd.n), bd.p, static_cast<uint64_t>(bd.seed), gs.result_src.data(), gs.result_dst.data());
+    if (rc != ec) throw InvalidInputException("Erdos-Renyi failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
@@ -65,9 +66,9 @@ struct BarabasiAlbertGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> BarabasiAlbertBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<BarabasiAlbertBindData>();
-  if (input.inputs.size() >= 1) bd->n = input.inputs[0].GetValue<int64_t>();
-  if (input.inputs.size() >= 2) bd->m = input.inputs[1].GetValue<int64_t>();
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
+  if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_barabasi_albert", "n", input.inputs[0]);
+  if (input.inputs.size() >= 2) bd->m = GetNonNegativeParam("onager_gen_barabasi_albert", "m", input.inputs[1]);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_barabasi_albert", kv.first, kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return std::move(bd);
@@ -79,7 +80,8 @@ static void BarabasiAlbertFunction(ClientContext &ctx, TableFunctionInput &data,
     int64_t ec = ::onager::onager_generate_barabasi_albert(static_cast<size_t>(bd.n), static_cast<size_t>(bd.m), static_cast<uint64_t>(bd.seed), nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Barabasi-Albert failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec);
-    ::onager::onager_generate_barabasi_albert(static_cast<size_t>(bd.n), static_cast<size_t>(bd.m), static_cast<uint64_t>(bd.seed), gs.result_src.data(), gs.result_dst.data());
+    int64_t rc = ::onager::onager_generate_barabasi_albert(static_cast<size_t>(bd.n), static_cast<size_t>(bd.m), static_cast<uint64_t>(bd.seed), gs.result_src.data(), gs.result_dst.data());
+    if (rc != ec) throw InvalidInputException("Barabasi-Albert failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;
@@ -105,10 +107,10 @@ struct WattsStrogatzGlobalState : public GlobalTableFunctionState {
 
 static unique_ptr<FunctionData> WattsStrogatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<WattsStrogatzBindData>();
-  if (input.inputs.size() >= 1) bd->n = input.inputs[0].GetValue<int64_t>();
-  if (input.inputs.size() >= 2) bd->k = input.inputs[1].GetValue<int64_t>();
-  if (input.inputs.size() >= 3) bd->beta = input.inputs[2].GetValue<double>();
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = kv.second.GetValue<int64_t>();
+  if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_watts_strogatz", "n", input.inputs[0]);
+  if (input.inputs.size() >= 2) bd->k = GetNonNegativeParam("onager_gen_watts_strogatz", "k", input.inputs[1]);
+  if (input.inputs.size() >= 3) bd->beta = GetRequiredParam<double>("onager_gen_watts_strogatz", "beta", input.inputs[2]);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_watts_strogatz", kv.first, kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return std::move(bd);
@@ -120,7 +122,8 @@ static void WattsStrogatzFunction(ClientContext &ctx, TableFunctionInput &data, 
     int64_t ec = ::onager::onager_generate_watts_strogatz(static_cast<size_t>(bd.n), static_cast<size_t>(bd.k), bd.beta, static_cast<uint64_t>(bd.seed), nullptr, nullptr);
     if (ec < 0) throw InvalidInputException("Watts-Strogatz failed: " + GetOnagerError());
     gs.result_src.resize(ec); gs.result_dst.resize(ec);
-    ::onager::onager_generate_watts_strogatz(static_cast<size_t>(bd.n), static_cast<size_t>(bd.k), bd.beta, static_cast<uint64_t>(bd.seed), gs.result_src.data(), gs.result_dst.data());
+    int64_t rc = ::onager::onager_generate_watts_strogatz(static_cast<size_t>(bd.n), static_cast<size_t>(bd.k), bd.beta, static_cast<uint64_t>(bd.seed), gs.result_src.data(), gs.result_dst.data());
+    if (rc != ec) throw InvalidInputException("Watts-Strogatz failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_src.size() - gs.output_idx;

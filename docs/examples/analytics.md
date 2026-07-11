@@ -62,7 +62,7 @@ order by size desc;
 
 ## Fraud Detection
 
-### Ring Detection With Clustering
+### Ring Detection with Clustering
 
 ```sql
 create or replace table transactions as select * from (values
@@ -98,10 +98,11 @@ create or replace table edges as
   select user_id as src, item_id + 1000 as dst from interactions;
 
 -- Recommend items for user 1 based on their interactions
--- Using ego graph to explore local neighborhood
-select *
-from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 2)
-where node_id > 1000;  -- Filter to items only
+-- A 3-hop walk reaches items liked by users with overlapping taste
+select node_id - 1000 as item_id
+from onager_sub_k_hop((select src, dst from edges), start := 1::bigint, k := 3)
+where node_id > 1000  -- Filter to items only
+  and node_id - 1000 not in (select item_id from interactions where user_id = 1);
 ```
 
 ### Personalized PageRank for Recommendations

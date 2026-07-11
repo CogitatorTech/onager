@@ -43,7 +43,7 @@ pub fn compute_personalized_pagerank(
             "Cannot compute on empty graph".to_string(),
         ));
     }
-    if !(0.0..1.0).contains(&damping) {
+    if damping <= 0.0 || damping >= 1.0 || damping.is_nan() {
         return Err(OnagerError::InvalidArgument(
             "damping must be in (0, 1)".to_string(),
         ));
@@ -52,6 +52,13 @@ pub fn compute_personalized_pagerank(
         return Err(OnagerError::InvalidArgument(
             "max_iter must be positive".to_string(),
         ));
+    }
+    for &(_, weight) in personalization {
+        if weight <= 0.0 || weight.is_nan() {
+            return Err(OnagerError::InvalidArgument(
+                "personalization weights must be positive".to_string(),
+            ));
+        }
     }
     if directed {
         personalized_pagerank_impl::<Directed>(
@@ -94,11 +101,15 @@ fn personalized_pagerank_impl<Ty: GraphConstructor<i64, f64>>(
         // Create a personalization vector aligned with node order
         let mut p_vec = vec![0.0; n];
         for &(ext_id, weight) in personalization {
-            if let Some(&node_idx) = g.node_ids.get(&ext_id) {
-                // Find position of node_idx in node_list
-                if let Some(pos) = node_list.iter().position(|&id| id == node_idx) {
-                    p_vec[pos] = weight;
-                }
+            let node_idx = *g.node_ids.get(&ext_id).ok_or_else(|| {
+                OnagerError::InvalidArgument(format!(
+                    "Personalization node {} not found in graph",
+                    ext_id
+                ))
+            })?;
+            // Find position of node_idx in node_list
+            if let Some(pos) = node_list.iter().position(|&id| id == node_idx) {
+                p_vec[pos] = weight;
             }
         }
         Some(p_vec)
@@ -221,5 +232,25 @@ mod tests {
     fn test_personalized_pagerank_mismatched_arrays() {
         let result = compute_personalized_pagerank(&[1, 2], &[2], &[], 0.85, 100, 1e-6, false);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_personalized_pagerank_unknown_node_errors() {
+        let (src, dst) = triangle_graph();
+        let personalization = vec![(999, 1.0)];
+        let result =
+            compute_personalized_pagerank(&src, &dst, &personalization, 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_personalized_pagerank_nonpositive_weight_errors() {
+        let (src, dst) = triangle_graph();
+        for weight in [0.0, -1.0, f64::NAN] {
+            let personalization = vec![(1, weight)];
+            let result =
+                compute_personalized_pagerank(&src, &dst, &personalization, 0.85, 100, 1e-6, false);
+            assert!(result.is_err());
+        }
     }
 }

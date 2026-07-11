@@ -8,7 +8,7 @@ use graphina::parallel::{
     pagerank_parallel, shortest_paths_parallel, triangles_parallel,
 };
 
-use crate::algorithms::builder::{build_graph, check_edge_arrays, check_weights};
+use crate::algorithms::builder::{build_graph, check_edge_arrays};
 use crate::algorithms::centrality::PageRankResult;
 use crate::algorithms::community::ConnectedComponentsResult;
 use crate::algorithms::metrics::TriangleResult;
@@ -18,9 +18,10 @@ use std::collections::HashMap;
 
 /// Compute PageRank using parallel algorithm.
 ///
-/// The `weights` slice is stored on the graph edges, but graphina's
-/// `pagerank_parallel` currently ignores edge weights, so results are always
-/// unweighted. Use [`super::centrality::compute_pagerank`] for weighted PageRank.
+/// Graphina's `pagerank_parallel` ignores edge weights, so this function
+/// rejects a non-empty `weights` slice instead of silently returning
+/// unweighted ranks. Use [`super::centrality::compute_pagerank`] for
+/// weighted PageRank.
 pub fn compute_pagerank_parallel(
     src: &[i64],
     dst: &[i64],
@@ -31,38 +32,32 @@ pub fn compute_pagerank_parallel(
     directed: bool,
 ) -> Result<PageRankResult> {
     check_edge_arrays(src, dst)?;
-    check_weights(weights, src.len())?;
+    if !weights.is_empty() {
+        return Err(OnagerError::InvalidArgument(
+            "Parallel PageRank does not support edge weights; use onager_ctr_pagerank instead"
+                .to_string(),
+        ));
+    }
     if src.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
         ));
     }
     if directed {
-        pagerank_parallel_impl::<Directed>(src, dst, weights, damping, iterations, tolerance)
+        pagerank_parallel_impl::<Directed>(src, dst, damping, iterations, tolerance)
     } else {
-        pagerank_parallel_impl::<Undirected>(src, dst, weights, damping, iterations, tolerance)
+        pagerank_parallel_impl::<Undirected>(src, dst, damping, iterations, tolerance)
     }
 }
 
 fn pagerank_parallel_impl<Ty: GraphConstructor<i64, f64> + Sync>(
     src: &[i64],
     dst: &[i64],
-    weights: &[f64],
     damping: f64,
     iterations: usize,
     tolerance: f64,
 ) -> Result<PageRankResult> {
-    let g = build_graph::<f64, Ty, _>(
-        src,
-        dst,
-        |i| {
-            if weights.is_empty() {
-                1.0
-            } else {
-                weights[i]
-            }
-        },
-    )?;
+    let g = build_graph::<f64, Ty, _>(src, dst, |_| 1.0)?;
     let ranks = pagerank_parallel(&g.graph, damping, iterations, tolerance, None);
     let mut node_ids = Vec::with_capacity(ranks.len());
     let mut rank_values = Vec::with_capacity(ranks.len());
@@ -441,13 +436,12 @@ mod tests {
     }
 
     #[test]
-    fn test_pagerank_parallel_with_weights() {
+    fn test_pagerank_parallel_with_weights_errors() {
         let (src, dst) = triangle_graph();
         let weights = vec![1.0, 2.0, 1.5];
-        let result =
-            compute_pagerank_parallel(&src, &dst, &weights, 0.85, 100, 1e-6, false).unwrap();
+        let result = compute_pagerank_parallel(&src, &dst, &weights, 0.85, 100, 1e-6, false);
 
-        assert_eq!(result.node_ids.len(), 3);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -612,5 +606,13 @@ mod tests {
         assert!(
             compute_pagerank_parallel(&[1, 2], &[2, 3], &[1.0], 0.85, 100, 1e-6, false).is_err()
         );
+    }
+
+    #[test]
+    fn test_weights_rejected() {
+        // Graphina's parallel PageRank ignores weights, so passing them is an error.
+        let result =
+            compute_pagerank_parallel(&[1, 2], &[2, 3], &[1.0, 2.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
     }
 }

@@ -6,7 +6,7 @@ description: Identify the most important nodes in your graph.
 # Centrality Algorithms
 
 Centrality measures identify the most important nodes (or vertices) in a graph.
-The importance of a node depends on the context and measured differently by each algorithm.
+The importance of a node depends on the context and is measured differently by each algorithm.
 
 ## Setup
 
@@ -92,7 +92,7 @@ order by score desc;
 | node_id | bigint | Node identifier                                   |
 | score   | double | Personalized PageRank score relative to targets   |
 
-The input query relation must have exactly 4 columns:
+The input query relation must have at least 4 columns, in this order:
 
 - `src` (bigint): Source node of edge
 - `dst` (bigint): Destination node of edge

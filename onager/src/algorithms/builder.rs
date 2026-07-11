@@ -36,6 +36,28 @@ pub(crate) fn check_weights(weights: &[f64], edge_count: usize) -> Result<()> {
     Ok(())
 }
 
+/// Validate the weight shape and reject NaN weights.
+pub(crate) fn check_weights_no_nan(weights: &[f64], edge_count: usize) -> Result<()> {
+    check_weights(weights, edge_count)?;
+    if weights.iter().any(|w| w.is_nan()) {
+        return Err(OnagerError::InvalidArgument(
+            "Edge weights must not be NaN".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// Validate the weight shape and reject NaN and negative weights.
+pub(crate) fn check_nonnegative_weights(weights: &[f64], edge_count: usize) -> Result<()> {
+    check_weights_no_nan(weights, edge_count)?;
+    if weights.iter().any(|w| *w < 0.0) {
+        return Err(OnagerError::InvalidArgument(
+            "Edge weights must be nonnegative".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Build a directed or undirected graph from edge arrays.
 ///
 /// `weight_at` supplies the edge weight for each input row, letting callers

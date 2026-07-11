@@ -14,7 +14,7 @@ use graphina::core::types::{
     BaseGraph, Directed, GraphConstructor, GraphinaGraph, NodeId, NodeMap, Undirected,
 };
 
-use crate::algorithms::builder::{build_graph, check_weights};
+use crate::algorithms::builder::{build_graph, check_nonnegative_weights};
 use crate::error::{OnagerError, Result};
 use std::collections::HashMap;
 
@@ -47,7 +47,7 @@ pub fn compute_pagerank(
     tolerance: f64,
     directed: bool,
 ) -> Result<PageRankResult> {
-    check_weights(weights, src.len())?;
+    check_nonnegative_weights(weights, src.len())?;
     if directed {
         pagerank_impl::<Directed>(src, dst, weights, damping, iterations, tolerance)
     } else {
@@ -728,5 +728,17 @@ mod tests {
     fn test_laplacian_empty() {
         let result = compute_laplacian(&[], &[], false).unwrap();
         assert!(result.node_ids.is_empty());
+    }
+
+    #[test]
+    fn test_pagerank_rejects_nan_weight() {
+        let result = compute_pagerank(&[1, 2], &[2, 3], &[f64::NAN, 1.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_pagerank_rejects_negative_weight() {
+        let result = compute_pagerank(&[1, 2], &[2, 3], &[-5.0, 1.0], 0.85, 100, 1e-6, false);
+        assert!(result.is_err());
     }
 }

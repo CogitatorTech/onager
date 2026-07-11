@@ -227,6 +227,10 @@ fn assortativity_impl<Ty: GraphConstructor<i64, f64>>(src: &[i64], dst: &[i64]) 
 /// For undirected graphs: density = 2 * edges / (nodes * (nodes - 1))
 /// For directed graphs: density = edges / (nodes * (nodes - 1))
 ///
+/// Density treats the input as a simple graph: duplicate edge rows count
+/// once, an undirected pair counts once regardless of row order, and
+/// self-loops are ignored.
+///
 /// Returns a value between 0.0 (sparse) and 1.0 (complete graph).
 pub fn compute_graph_density(src: &[i64], dst: &[i64], directed: bool) -> Result<f64> {
     if src.len() != dst.len() {
@@ -251,13 +255,26 @@ pub fn compute_graph_density(src: &[i64], dst: &[i64], directed: bool) -> Result
         return Ok(0.0); // Single node graph has no edges possible
     }
 
-    let edge_count = src.len() as f64;
+    // Count unique edges, ignoring self-loops; an undirected pair counts
+    // once no matter which endpoint comes first.
+    let mut edge_set: std::collections::HashSet<(i64, i64)> = std::collections::HashSet::new();
+    for i in 0..src.len() {
+        if src[i] == dst[i] {
+            continue;
+        }
+        if directed {
+            edge_set.insert((src[i], dst[i]));
+        } else {
+            edge_set.insert((src[i].min(dst[i]), src[i].max(dst[i])));
+        }
+    }
+    let edge_count = edge_set.len() as f64;
     let max_edges = n * (n - 1.0);
 
     if directed {
         Ok(edge_count / max_edges)
     } else {
-        // For undirected, each edge is counted once in src/dst
+        // For undirected, each unique pair is counted once in edge_set
         Ok((2.0 * edge_count) / max_edges)
     }
 }
@@ -402,5 +419,27 @@ mod tests {
     #[test]
     fn test_density_empty_error() {
         assert!(compute_graph_density(&[], &[], false).is_err());
+    }
+
+    #[test]
+    fn test_density_ignores_duplicate_edges() {
+        // Duplicate rows for the same undirected pair count once: 1 edge,
+        // 2 nodes, density 1.0 (previously this returned 2.0).
+        let result = compute_graph_density(&[1, 1], &[2, 2], false).unwrap();
+        assert!((result - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_density_symmetric_edge_list_counts_once() {
+        // Both (1,2) and (2,1) rows describe the same undirected edge.
+        let result = compute_graph_density(&[1, 2], &[2, 1], false).unwrap();
+        assert!((result - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_density_ignores_self_loops() {
+        // Self-loop on node 1 plus edge 1-2: only the 1-2 edge counts.
+        let result = compute_graph_density(&[1, 1], &[1, 2], false).unwrap();
+        assert!((result - 1.0).abs() < 0.01);
     }
 }

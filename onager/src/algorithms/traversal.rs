@@ -7,7 +7,7 @@ use graphina::core::types::{Directed, GraphConstructor, Undirected};
 use graphina::traversal::algorithms::{bfs, dfs};
 use ordered_float::OrderedFloat;
 
-use crate::algorithms::builder::{build_graph, check_edge_arrays};
+use crate::algorithms::builder::{build_graph, check_edge_arrays, check_weights_no_nan};
 use crate::error::{OnagerError, Result};
 
 /// Result of Dijkstra shortest path computation.
@@ -261,6 +261,7 @@ pub fn compute_bellman_ford(
             "Cannot compute on empty graph".to_string(),
         ));
     }
+    check_weights_no_nan(weights, src.len())?;
     if directed {
         bellman_ford_impl::<Directed>(src, dst, weights, source_node)
     } else {
@@ -315,6 +316,7 @@ pub fn compute_floyd_warshall(
             "src, dst, and weights arrays must have same length".to_string(),
         ));
     }
+    check_weights_no_nan(weights, src.len())?;
     if src.is_empty() {
         return Err(OnagerError::InvalidArgument(
             "Cannot compute on empty graph".to_string(),
@@ -557,5 +559,11 @@ mod tests {
         assert!(compute_dijkstra(&[1, 2], &[2], &[], 1, false).is_err());
         assert!(compute_bellman_ford(&[1, 2], &[2, 3], &[1.0], 1, false).is_err());
         assert!(compute_floyd_warshall(&[1, 2], &[2, 3], &[1.0], false).is_err());
+    }
+
+    #[test]
+    fn test_nan_weights_rejected() {
+        assert!(compute_bellman_ford(&[1, 2], &[2, 3], &[f64::NAN, 1.0], 1, false).is_err());
+        assert!(compute_floyd_warshall(&[1, 2], &[2, 3], &[f64::NAN, 1.0], false).is_err());
     }
 }

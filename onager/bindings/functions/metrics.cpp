@@ -5,6 +5,7 @@
  * Diameter, Radius, Average Clustering, Average Path Length, Transitivity, Triangle Count.
  */
 #include "functions.hpp"
+#include <cmath>
 #include <mutex>
 
 namespace duckdb {
@@ -29,7 +30,7 @@ struct DiameterBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DiameterBindData>();
   CheckInt64Input(input, "onager_mtr_diameter");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_diameter", kv.first, kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("diameter");
   return std::move(bd);
 }
@@ -47,11 +48,17 @@ static OperatorFinalizeResultType DiameterFinal(ExecutionContext &ctx, TableFunc
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_diameter(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
-    if (gs.result < 0) throw InvalidInputException("Diameter failed: " + GetOnagerError());
+    if (gs.result < 0 && OnagerHasPendingError()) throw InvalidInputException("Diameter failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-  GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
+  if (gs.result < 0) {
+    // No finite diameter: the graph is disconnected (or not strongly
+    // connected in directed mode).
+    GetFlatVectorValidityWritable(output.data[0]).SetInvalid(0);
+  } else {
+    GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
+  }
   ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -73,7 +80,7 @@ struct RadiusBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<RadiusBindData>();
   CheckInt64Input(input, "onager_mtr_radius");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_radius", kv.first, kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("radius");
   return std::move(bd);
 }
@@ -91,11 +98,17 @@ static OperatorFinalizeResultType RadiusFinal(ExecutionContext &ctx, TableFuncti
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_radius(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
-    if (gs.result < 0) throw InvalidInputException("Radius failed: " + GetOnagerError());
+    if (gs.result < 0 && OnagerHasPendingError()) throw InvalidInputException("Radius failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-  GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
+  if (gs.result < 0) {
+    // No finite radius: the graph is disconnected (or not strongly
+    // connected in directed mode).
+    GetFlatVectorValidityWritable(output.data[0]).SetInvalid(0);
+  } else {
+    GetFlatVectorDataWritable<int64_t>(output.data[0])[0] = gs.result;
+  }
   ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -130,10 +143,17 @@ static OperatorFinalizeResultType AvgClusteringFinal(ExecutionContext &ctx, Tabl
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_avg_clustering(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
+    if (std::isnan(gs.result) && OnagerHasPendingError()) throw InvalidInputException("Average clustering failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  if (std::isnan(gs.result)) {
+    // The metric is undefined for this graph (for example, a disconnected
+    // graph for average path length).
+    GetFlatVectorValidityWritable(output.data[0]).SetInvalid(0);
+  } else {
+    GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  }
   ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -170,7 +190,8 @@ static OperatorFinalizeResultType TriangleCountFinal(ExecutionContext &ctx, Tabl
     int64_t nc = ::onager::onager_compute_triangle_count(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Triangle count failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_counts.resize(nc);
-    ::onager::onager_compute_triangle_count(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_counts.data());
+    int64_t rc = ::onager::onager_compute_triangle_count(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_counts.data());
+    if (rc != nc) throw InvalidInputException("Triangle count failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -212,10 +233,17 @@ static OperatorFinalizeResultType TransitivityFinal(ExecutionContext &ctx, Table
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_transitivity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size());
+    if (std::isnan(gs.result) && OnagerHasPendingError()) throw InvalidInputException("Transitivity failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  if (std::isnan(gs.result)) {
+    // The metric is undefined for this graph (for example, a disconnected
+    // graph for average path length).
+    GetFlatVectorValidityWritable(output.data[0]).SetInvalid(0);
+  } else {
+    GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  }
   ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -237,7 +265,7 @@ struct AvgPathLengthBindData : public TableFunctionData { bool directed = false;
 static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<AvgPathLengthBindData>();
   CheckInt64Input(input, "onager_mtr_avg_path_length");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_avg_path_length", kv.first, kv.second);
   rt.push_back(LogicalType::DOUBLE); nm.push_back("avg_path_length");
   return std::move(bd);
 }
@@ -255,10 +283,17 @@ static OperatorFinalizeResultType AvgPathLengthFinal(ExecutionContext &ctx, Tabl
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_avg_path_length(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
+    if (std::isnan(gs.result) && OnagerHasPendingError()) throw InvalidInputException("Average path length failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  if (std::isnan(gs.result)) {
+    // The metric is undefined for this graph (for example, a disconnected
+    // graph for average path length).
+    GetFlatVectorValidityWritable(output.data[0]).SetInvalid(0);
+  } else {
+    GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  }
   ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -280,7 +315,7 @@ struct AssortativityBindData : public TableFunctionData { bool directed = false;
 static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<AssortativityBindData>();
   CheckInt64Input(input, "onager_mtr_assortativity");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_assortativity", kv.first, kv.second);
   rt.push_back(LogicalType::DOUBLE); nm.push_back("assortativity");
   return std::move(bd);
 }
@@ -298,10 +333,17 @@ static OperatorFinalizeResultType AssortativityFinal(ExecutionContext &ctx, Tabl
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_assortativity(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
+    if (std::isnan(gs.result) && OnagerHasPendingError()) throw InvalidInputException("Assortativity failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-  GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  if (std::isnan(gs.result)) {
+    // The metric is undefined for this graph (for example, a disconnected
+    // graph for average path length).
+    GetFlatVectorValidityWritable(output.data[0]).SetInvalid(0);
+  } else {
+    GetFlatVectorDataWritable<double>(output.data[0])[0] = gs.result;
+  }
   ONAGER_SET_CARDINALITY(output, 1); gs.output_done = true;
   return OperatorFinalizeResultType::FINISHED;
 }
@@ -324,7 +366,7 @@ static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBin
   rt.push_back(LogicalType::DOUBLE); nm.push_back("density");
   auto bd = make_uniq<DensityBindData>();
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_density", kv.first, kv.second);
   }
   return bd;
 }
@@ -342,7 +384,7 @@ static OperatorFinalizeResultType DensityFinal(ExecutionContext &ctx, TableFunct
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
     gs.result = ::onager::onager_compute_graph_density(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.directed);
-    if (std::isnan(gs.result)) throw InvalidInputException("Density failed: " + GetOnagerError());
+    if (std::isnan(gs.result) && OnagerHasPendingError()) throw InvalidInputException("Density failed: " + GetOnagerError());
     gs.computed = true;
   }
   if (gs.output_done) { ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }

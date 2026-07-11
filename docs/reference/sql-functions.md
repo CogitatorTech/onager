@@ -7,6 +7,7 @@ description: Complete reference for all Onager SQL functions.
 
 Complete reference for all Onager SQL functions.
 
+Parameters shown inside square brackets are optional named parameters with defaults, passed as `name := value`.
 Functions whose signature includes `[, directed]` accept a `directed` boolean named parameter.
 The default is `false` for every function, which treats the input edge list as undirected.
 
@@ -33,16 +34,16 @@ The default is `false` for every function, which treats the input edge list as u
 
 | Function                                     | Returns                          | Description                    |
 |----------------------------------------------|----------------------------------|--------------------------------|
-| `onager_ctr_pagerank(edges [+ weights] [, directed])` | `node_id, rank`                  | PageRank centrality            |
+| `onager_ctr_pagerank(edges [+ weights] [, damping, iterations, tolerance, directed])` | `node_id, rank`                  | PageRank centrality            |
 | `onager_ctr_degree(edges [, directed])`      | `node_id, in_degree, out_degree` | Degree centrality              |
-| `onager_ctr_betweenness(edges [, directed])` | `node_id, betweenness`           | Betweenness centrality         |
+| `onager_ctr_betweenness(edges [, normalized, directed])` | `node_id, betweenness`           | Betweenness centrality         |
 | `onager_ctr_closeness(edges [, directed])`   | `node_id, closeness`             | Closeness centrality           |
-| `onager_ctr_eigenvector(edges [, directed])` | `node_id, eigenvector`           | Eigenvector centrality         |
-| `onager_ctr_katz(edges, alpha [, beta, directed])` | `node_id, katz`                  | Katz centrality                |
+| `onager_ctr_eigenvector(edges [, max_iter, tolerance, directed])` | `node_id, eigenvector`           | Eigenvector centrality         |
+| `onager_ctr_katz(edges [, alpha, beta, max_iter, tolerance, directed])` | `node_id, katz`                  | Katz centrality                |
 | `onager_ctr_harmonic(edges [, directed])`    | `node_id, harmonic`              | Harmonic centrality            |
-| `onager_ctr_personalized_pagerank(... [, directed])` | `node_id, score`                 | Personalized PageRank          |
-| `onager_ctr_voterank(edges, num_seeds [, directed])` | `node_id`                        | VoteRank influential spreaders |
-| `onager_ctr_local_reaching(edges, distance [, directed])` | `node_id, centrality`            | Local reaching centrality      |
+| `onager_ctr_personalized_pagerank(edges [, damping, max_iter, tolerance, directed])` | `node_id, score`                 | Personalized PageRank          |
+| `onager_ctr_voterank(edges [, num_seeds, directed])` | `node_id`                        | VoteRank influential spreaders |
+| `onager_ctr_local_reaching(edges [, distance, directed])` | `node_id, centrality`            | Local reaching centrality      |
 | `onager_ctr_laplacian(edges [, directed])`   | `node_id, centrality`            | Laplacian centrality           |
 
 ## Community Detection Functions
@@ -52,9 +53,9 @@ The default is `false` for every function, which treats the input edge list as u
 | `onager_cmm_louvain(edges [, seed])`           | `node_id, community` | Louvain modularity optimization |
 | `onager_cmm_components(edges)`                 | `node_id, component` | Connected components            |
 | `onager_cmm_label_prop(edges [, max_iter, seed])`                 | `node_id, label`     | Label propagation               |
-| `onager_cmm_girvan_newman(edges, communities)` | `node_id, community` | Girvan-Newman edge betweenness  |
-| `onager_cmm_spectral(edges, k)`                | `node_id, community` | Spectral clustering             |
-| `onager_cmm_infomap(edges)`                    | `node_id, community` | Infomap community detection     |
+| `onager_cmm_girvan_newman(edges [, communities])` | `node_id, community` | Girvan-Newman edge betweenness  |
+| `onager_cmm_spectral(edges [, k, seed])`       | `node_id, community` | Spectral clustering             |
+| `onager_cmm_infomap(edges [, max_iter, seed])` | `node_id, community` | Infomap community detection     |
 
 ## Link Prediction Functions
 
@@ -83,11 +84,11 @@ The default is `false` for every function, which treats the input edge list as u
 
 | Function                                          | Returns              | Description                       |
 |---------------------------------------------------|----------------------|-----------------------------------|
-| `onager_pth_dijkstra(edges [+ weights], source [, directed])` | `node_id, distance`  | Shortest paths from source        |
-| `onager_pth_bellman_ford(weighted_edges, source [, directed])` | `node_id, distance`  | Shortest paths (negative weights) |
+| `onager_pth_dijkstra(edges [+ weights] [, source, directed])` | `node_id, distance`  | Shortest paths from source        |
+| `onager_pth_bellman_ford(weighted_edges [, source, directed])` | `node_id, distance`  | Shortest paths (negative weights) |
 | `onager_pth_floyd_warshall(weighted_edges [, directed])` | `src, dst, distance` | All-pairs shortest paths          |
-| `onager_trv_bfs(edges, source [, directed])`      | `node_id`            | Breadth-first traversal           |
-| `onager_trv_dfs(edges, source [, directed])`      | `node_id`            | Depth-first traversal             |
+| `onager_trv_bfs(edges [, source, directed])`      | `node_id`            | Breadth-first traversal           |
+| `onager_trv_dfs(edges [, source, directed])`      | `node_id`            | Depth-first traversal             |
 
 ## Approximation Functions
 
@@ -117,17 +118,17 @@ The default is `false` for every function, which treats the input edge list as u
 
 | Function                                      | Returns    | Description             |
 |-----------------------------------------------|------------|-------------------------|
-| `onager_sub_ego_graph(edges, center, radius)` | `src, dst` | Ego graph around a node |
-| `onager_sub_k_hop(edges, start, k)`           | `node_id`  | Nodes within k hops     |
+| `onager_sub_ego_graph(edges [, center, radius])` | `src, dst` | Ego graph around a node |
+| `onager_sub_k_hop(edges [, start, k])`        | `node_id`  | Nodes within k hops     |
 | `onager_sub_induced(edges_with_filter)`        | `src, dst` | Induced subgraph        |
 
 ## Parallel Algorithms
 
 | Function                                   | Returns                | Description                      |
 |--------------------------------------------|------------------------|----------------------------------|
-| `onager_par_pagerank(edges [, directed])`  | `node_id, rank`        | Parallel PageRank                |
-| `onager_par_bfs(edges, source or sources [, directed])` | `[source,] node_id`    | Parallel BFS traversal           |
-| `onager_par_shortest_paths(edges, source or sources [, directed])` | `[source,] node_id, distance` | Parallel shortest paths |
+| `onager_par_pagerank(edges [, damping, iterations, tolerance, directed])` | `node_id, rank`        | Parallel PageRank                |
+| `onager_par_bfs(edges [, source or sources, directed])` | `[source,] node_id`    | Parallel BFS traversal           |
+| `onager_par_shortest_paths(edges [, source or sources, directed])` | `[source,] node_id, distance` | Parallel shortest paths |
 | `onager_par_components(edges)`             | `node_id, component`   | Parallel connected components    |
 | `onager_par_clustering(edges)`             | `node_id, coefficient` | Parallel clustering coefficients |
 | `onager_par_triangles(edges)`              | `node_id, triangles`   | Parallel triangle count          |
