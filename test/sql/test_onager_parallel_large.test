@@ -12,53 +12,53 @@ pragma enable_verification
 
 # Force multiple threads to trigger parallel execution
 statement ok
-SET threads=4
+set threads=4
 
 # Generate a deterministic graph with 15000 nodes (above the 12288 crash
 # threshold) and 75000 edges, processed in parallel chunks. The multiplier
 # 7919 is prime and coprime to 15000, so targets scatter over all nodes.
 statement ok
-CREATE TABLE large_edges AS
-  SELECT r % 15000 AS source,
-         (r * 7919 + 13) % 15000 AS target
-  FROM range(75000) t(r)
+create table large_edges as
+  select r % 15000 as source,
+         (r * 7919 + 13) % 15000 as target
+  from range(75000) t(r)
 
 # Test connected components on large graph with parallel threads
 query I
-SELECT count(*) >= 1 FROM onager_cmm_components((SELECT source, target FROM large_edges))
+select count(*) >= 1 from onager_cmm_components((select source, target from large_edges))
 ----
 1
 
 # Test PageRank on large graph with parallel threads
 query I
-SELECT count(*) > 10000 FROM onager_ctr_pagerank((SELECT source, target FROM large_edges))
+select count(*) > 10000 from onager_ctr_pagerank((select source, target from large_edges))
 ----
 1
 
 # Test Louvain on large graph with parallel threads
 query I
-SELECT count(*) > 10000 FROM onager_cmm_louvain((SELECT source, target FROM large_edges))
+select count(*) > 10000 from onager_cmm_louvain((select source, target from large_edges))
 ----
 1
 
 # Test at exact 12288 boundary (6 * STANDARD_VECTOR_SIZE)
 statement ok
-CREATE TABLE boundary_edges AS
-  SELECT r % 12288 AS source,
-         (r * 7919 + 13) % 12288 AS target
-  FROM range(61440) t(r)
+create table boundary_edges as
+  select r % 12288 as source,
+         (r * 7919 + 13) % 12288 as target
+  from range(61440) t(r)
 
 query I
-SELECT count(*) >= 1 FROM onager_cmm_components((SELECT source, target FROM boundary_edges))
+select count(*) >= 1 from onager_cmm_components((select source, target from boundary_edges))
 ----
 1
 
 # Cleanup
 statement ok
-DROP TABLE large_edges
+drop table large_edges
 
 statement ok
-DROP TABLE boundary_edges
+drop table boundary_edges
 
 statement ok
-RESET threads
+reset threads
