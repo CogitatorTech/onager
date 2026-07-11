@@ -29,8 +29,8 @@ static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBi
   CheckInt64Input(input, "onager_pth_dijkstra");
   bd->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_pth_dijkstra", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_dijkstra", kv.first, kv.second);
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_pth_dijkstra", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_dijkstra", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
@@ -86,8 +86,8 @@ static unique_ptr<FunctionData> BfsBind(ClientContext &ctx, TableFunctionBindInp
   auto bd = make_uniq<BfsBindData>();
   CheckInt64Input(input, "onager_trv_bfs");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_trv_bfs", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_trv_bfs", kv.first, kv.second);
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_trv_bfs", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_trv_bfs", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -136,8 +136,8 @@ static unique_ptr<FunctionData> DfsBind(ClientContext &ctx, TableFunctionBindInp
   auto bd = make_uniq<DfsBindData>();
   CheckInt64Input(input, "onager_trv_dfs");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_trv_dfs", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_trv_dfs", kv.first, kv.second);
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_trv_dfs", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_trv_dfs", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -188,8 +188,8 @@ static unique_ptr<FunctionData> BellmanFordBind(ClientContext &ctx, TableFunctio
   CheckInt64Input(input, "onager_pth_bellman_ford", 3);
   CheckColumnType(input, "onager_pth_bellman_ford", 2, LogicalType::DOUBLE);
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_pth_bellman_ford", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_bellman_ford", kv.first, kv.second);
+    if (kv.first == "source") bd->source = GetRequiredParam<int64_t>("onager_pth_bellman_ford", "source", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_bellman_ford", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");
@@ -241,7 +241,7 @@ static unique_ptr<FunctionData> FloydWarshallBind(ClientContext &ctx, TableFunct
   auto bd = make_uniq<FloydWarshallBindData>();
   CheckInt64Input(input, "onager_pth_floyd_warshall", 3);
   CheckColumnType(input, "onager_pth_floyd_warshall", 2, LogicalType::DOUBLE);
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_floyd_warshall", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_pth_floyd_warshall", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("distance");

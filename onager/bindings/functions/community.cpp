@@ -26,7 +26,7 @@ struct LouvainGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> LouvainBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<LouvainBindData>();
   CheckInt64Input(input, "onager_cmm_louvain");
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_louvain", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_louvain", "seed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
   return std::move(bd);
@@ -121,8 +121,8 @@ static unique_ptr<FunctionData> LabelPropBind(ClientContext &ctx, TableFunctionB
   auto bd = make_uniq<LabelPropBindData>();
   CheckInt64Input(input, "onager_cmm_label_prop");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_cmm_label_prop", kv.first, kv.second);
-    else if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_label_prop", kv.first, kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_cmm_label_prop", "max_iter", kv.second);
+    else if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_label_prop", "seed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("label");
@@ -172,7 +172,7 @@ struct GirvanNewmanGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> GirvanNewmanBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<GirvanNewmanBindData>();
   CheckInt64Input(input, "onager_cmm_girvan_newman");
-  for (auto &kv : input.named_parameters) if (kv.first == "communities") bd->target_communities = GetNonNegativeParam("onager_cmm_girvan_newman", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "communities") bd->target_communities = GetNonNegativeParam("onager_cmm_girvan_newman", "communities", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
   return std::move(bd);
@@ -221,8 +221,8 @@ static unique_ptr<FunctionData> SpectralBind(ClientContext &ctx, TableFunctionBi
   auto bd = make_uniq<SpectralBindData>();
   CheckInt64Input(input, "onager_cmm_spectral");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "k") bd->k = GetNonNegativeParam("onager_cmm_spectral", kv.first, kv.second);
-    if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_spectral", kv.first, kv.second);
+    if (kv.first == "k") bd->k = GetNonNegativeParam("onager_cmm_spectral", "k", kv.second);
+    if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_spectral", "seed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");
@@ -272,8 +272,8 @@ static unique_ptr<FunctionData> InfomapBind(ClientContext &ctx, TableFunctionBin
   auto bd = make_uniq<InfomapBindData>();
   CheckInt64Input(input, "onager_cmm_infomap");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_cmm_infomap", kv.first, kv.second);
-    if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_infomap", kv.first, kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_cmm_infomap", "max_iter", kv.second);
+    if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_infomap", "seed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("community");

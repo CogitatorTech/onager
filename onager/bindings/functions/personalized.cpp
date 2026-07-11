@@ -33,10 +33,10 @@ static unique_ptr<FunctionData> PersonalizedPageRankBind(ClientContext &ctx, Tab
   CheckColumnType(input, "onager_ctr_personalized_pagerank", 2, LogicalType::BIGINT);
   CheckColumnType(input, "onager_ctr_personalized_pagerank", 3, LogicalType::DOUBLE);
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_ctr_personalized_pagerank", kv.first, kv.second);
-    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_personalized_pagerank", kv.first, kv.second);
-    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_personalized_pagerank", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_personalized_pagerank", kv.first, kv.second);
+    if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_ctr_personalized_pagerank", "damping", kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_personalized_pagerank", "max_iter", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_personalized_pagerank", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_personalized_pagerank", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("score");

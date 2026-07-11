@@ -30,7 +30,7 @@ struct DiameterBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DiameterBindData>();
   CheckInt64Input(input, "onager_mtr_diameter");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_diameter", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_diameter", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("diameter");
   return std::move(bd);
 }
@@ -80,7 +80,7 @@ struct RadiusBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<RadiusBindData>();
   CheckInt64Input(input, "onager_mtr_radius");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_radius", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_radius", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("radius");
   return std::move(bd);
 }
@@ -265,7 +265,7 @@ struct AvgPathLengthBindData : public TableFunctionData { bool directed = false;
 static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<AvgPathLengthBindData>();
   CheckInt64Input(input, "onager_mtr_avg_path_length");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_avg_path_length", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_avg_path_length", "directed", kv.second);
   rt.push_back(LogicalType::DOUBLE); nm.push_back("avg_path_length");
   return std::move(bd);
 }
@@ -315,7 +315,7 @@ struct AssortativityBindData : public TableFunctionData { bool directed = false;
 static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<AssortativityBindData>();
   CheckInt64Input(input, "onager_mtr_assortativity");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_assortativity", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_assortativity", "directed", kv.second);
   rt.push_back(LogicalType::DOUBLE); nm.push_back("assortativity");
   return std::move(bd);
 }
@@ -366,7 +366,7 @@ static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBin
   rt.push_back(LogicalType::DOUBLE); nm.push_back("density");
   auto bd = make_uniq<DensityBindData>();
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_density", kv.first, kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_density", "directed", kv.second);
   }
   return bd;
 }

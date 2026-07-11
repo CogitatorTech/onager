@@ -47,7 +47,7 @@ select onager_node_in_degree('social', 1);
     - `onager_apx_tsp`: Traveling salesman approximation
     - `onager_pth_dijkstra`: Shortest paths with nonnegative weights (the weights column is optional)
 
-    `onager_ctr_pagerank` also uses a third `double` column as edge weights when it is present, and falls back to weight 1.0 for every edge when it is absent. `onager_par_pagerank` is unweighted.
+    `onager_ctr_pagerank` also uses a third `double` column as edge weights when it is present, and falls back to weight 1.0 for every edge when it is absent. `onager_par_pagerank` is unweighted. Weight values must not be NULL or NaN, and PageRank additionally rejects negative weights.
 
     Pass weights like this:
     ```sql

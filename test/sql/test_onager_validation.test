@@ -1,0 +1,274 @@
+# group: [onager]
+
+# Input validation regression tests: column type checks, NULL handling,
+# parameter range checks, and weight value checks.
+
+require onager
+
+statement ok
+pragma enable_verification
+
+statement ok
+create table val_edges as select * from (values
+  (1::bigint, 2::bigint), (2, 3), (3, 1)
+) t(src, dst)
+
+statement ok
+create table val_weighted as select * from (values
+  (1::bigint, 2::bigint, 1.0::double), (2, 3, 2.0), (3, 1, 3.0)
+) t(src, dst, weight)
+
+# =============================================================================
+# Auxiliary Column Type Validation
+# =============================================================================
+
+# A non-DOUBLE weight column is a bind-time error for weight-required functions
+statement error
+select * from onager_pth_bellman_ford((select src, dst, weight::integer from val_weighted), source := 1)
+----
+requires column 3 to be DOUBLE
+
+statement error
+select * from onager_pth_floyd_warshall((select src, dst, weight::integer from val_weighted))
+----
+requires column 3 to be DOUBLE
+
+statement error
+select * from onager_mst_kruskal((select src, dst, weight::integer from val_weighted))
+----
+requires column 3 to be DOUBLE
+
+statement error
+select * from onager_mst_prim((select src, dst, weight::bigint from val_weighted))
+----
+requires column 3 to be DOUBLE
+
+statement error
+select * from onager_apx_tsp((select src, dst, weight::integer from val_weighted))
+----
+requires column 3 to be DOUBLE
+
+# The induced subgraph filter column must be BIGINT
+statement error
+select * from onager_sub_induced((select src, dst, src::integer from val_edges))
+----
+requires column 3 to be BIGINT
+
+# Personalized PageRank checks its personalization columns
+statement error
+select * from onager_ctr_personalized_pagerank((select src, dst, src::integer as pn, 1.0::double as pw from val_edges))
+----
+requires column 3 to be BIGINT
+
+statement error
+select * from onager_ctr_personalized_pagerank((select src, dst, src as pn, 1::integer as pw from val_edges))
+----
+requires column 4 to be DOUBLE
+
+# Non-BIGINT src and dst columns are rejected with a cast hint
+statement error
+select * from onager_ctr_pagerank((select src::integer, dst::integer from val_edges))
+----
+requires (src, dst) columns to be BIGINT
+
+# =============================================================================
+# NULL Handling
+# =============================================================================
+
+# NULL edge endpoints are rejected
+statement error
+select * from onager_ctr_pagerank((select * from (values (1::bigint, 2::bigint), (NULL, 3)) t(src, dst)))
+----
+does not accept NULL edge endpoints
+
+statement error
+select * from onager_trv_bfs((select * from (values (1::bigint, NULL::bigint)) t(src, dst)), source := 1)
+----
+does not accept NULL edge endpoints
+
+# NULL edge weights are rejected instead of silently becoming 0.0
+statement error
+select * from onager_mst_kruskal((select * from (values (1::bigint, 2::bigint, NULL::double), (2, 3, 1.0)) t(src, dst, weight)))
+----
+does not accept NULL edge weights
+
+# NULL named parameters are bind-time errors
+statement error
+select * from onager_ctr_pagerank((select src, dst from val_edges), damping := NULL)
+----
+parameter damping cannot be NULL
+
+statement error
+select * from onager_trv_bfs((select src, dst from val_edges), source := NULL)
+----
+parameter source cannot be NULL
+
+# NULL positional parameters are bind-time errors
+statement error
+select * from onager_gen_erdos_renyi(NULL, 0.5)
+----
+parameter n cannot be NULL
+
+# NULL entries in a sources list are rejected
+statement error
+select * from onager_par_bfs((select src, dst from val_edges), sources := [1, NULL])
+----
+sources must not contain NULL
+
+# Scalar functions return NULL for NULL arguments instead of failing
+query I
+select onager_node_count(g) from (values ('no_such_graph_xyz'), (NULL)) t(g)
+----
+NULL
+NULL
+
+# =============================================================================
+# Parameter Range Validation
+# =============================================================================
+
+statement error
+select * from onager_ctr_pagerank((select src, dst from val_edges), iterations := -1)
+----
+parameter iterations cannot be negative
+
+statement error
+select * from onager_ctr_katz((select src, dst from val_edges), max_iter := -5)
+----
+parameter max_iter cannot be negative
+
+statement error
+select * from onager_ctr_voterank((select src, dst from val_edges), num_seeds := -1)
+----
+parameter num_seeds cannot be negative
+
+statement error
+select * from onager_sub_k_hop((select src, dst from val_edges), start := 1, k := -2)
+----
+parameter k cannot be negative
+
+statement error
+select * from onager_cmm_spectral((select src, dst from val_edges), k := -1)
+----
+parameter k cannot be negative
+
+# =============================================================================
+# Generator Validation
+# =============================================================================
+
+statement error
+select * from onager_gen_erdos_renyi(-1, 0.5)
+----
+parameter n cannot be negative
+
+statement error
+select * from onager_gen_barabasi_albert(10, -2)
+----
+parameter m cannot be negative
+
+statement error
+select * from onager_gen_erdos_renyi(10, 1.5)
+----
+p must be in [0, 1]
+
+statement error
+select * from onager_gen_barabasi_albert(5, 10)
+----
+m must be <= n
+
+# Same seed produces the same graph
+query I
+select count(*) = 0 from (
+  select * from onager_gen_erdos_renyi(50, 0.3, seed := 7)
+  except
+  select * from onager_gen_erdos_renyi(50, 0.3, seed := 7)
+)
+----
+1
+
+# =============================================================================
+# Weight Value Validation
+# =============================================================================
+
+statement error
+select * from onager_ctr_pagerank((select src, dst, 'nan'::double as w from val_edges))
+----
+Edge weights must not be NaN
+
+statement error
+select * from onager_ctr_pagerank((select src, dst, -1.0::double as w from val_edges))
+----
+Edge weights must be nonnegative
+
+statement error
+select * from onager_mst_prim((select src, dst, 'nan'::double as w from val_edges))
+----
+Edge weights must not be NaN
+
+# Bellman-Ford accepts negative weights on directed acyclic paths
+query II
+select node_id, distance from onager_pth_bellman_ford((select * from (values
+    (1::bigint, 2::bigint, 5.0::double), (2, 3, -2.0)
+  ) t(src, dst, weight)), source := 1, directed := true)
+order by node_id
+----
+1	0.0
+2	5.0
+3	3.0
+
+# A negative weight in undirected mode is a negative cycle
+statement error
+select * from onager_pth_bellman_ford((select * from (values
+    (1::bigint, 2::bigint, -1.0::double)
+  ) t(src, dst, weight)), source := 1)
+----
+Negative cycle detected
+
+# =============================================================================
+# Personalized PageRank Validation
+# =============================================================================
+
+statement error
+select * from onager_ctr_personalized_pagerank((
+  select src, dst, 999::bigint as pn, 1.0::double as pw from val_edges
+))
+----
+Personalization node 999 not found in graph
+
+statement error
+select * from onager_ctr_personalized_pagerank((
+  select src, dst, 1::bigint as pn, -1.0::double as pw from val_edges
+))
+----
+personalization weights must be positive
+
+# NULL personalization rows are padding and do not affect the result
+query I
+select count(*) = 0 from (
+  select node_id, round(score, 6) from onager_ctr_personalized_pagerank((
+    select src, dst,
+           case when src = 1 then 1::bigint else NULL end as pn,
+           case when src = 1 then 1.0::double else NULL end as pw
+    from val_edges
+  ))
+  except
+  select node_id, round(score, 6) from onager_ctr_personalized_pagerank((
+    select src, dst, 1::bigint as pn, 1.0::double as pw from val_edges
+  ))
+)
+----
+1
+
+# =============================================================================
+# Induced Subgraph Edge Cases
+# =============================================================================
+
+# An all-NULL filter selects no nodes and yields an empty subgraph
+query II
+select * from onager_sub_induced((select src, dst, NULL::bigint from val_edges))
+----
+
+statement ok
+drop table val_edges
+
+statement ok
+drop table val_weighted

@@ -10,16 +10,37 @@ namespace duckdb {
 
 using namespace onager;
 
+namespace {
+
+/**
+ * @brief Frees a Rust-allocated string when leaving scope, even on exception.
+ */
+struct OnagerStringGuard {
+  char *ptr;
+  explicit OnagerStringGuard(char *p) : ptr(p) {}
+  ~OnagerStringGuard() {
+    if (ptr) ::onager::onager_free(ptr);
+  }
+  OnagerStringGuard(const OnagerStringGuard &) = delete;
+  OnagerStringGuard &operator=(const OnagerStringGuard &) = delete;
+};
+
+} // namespace
+
 // =============================================================================
 // Utility Scalar Functions
 // =============================================================================
 
 static void GetVersion(DataChunk &args, ExpressionState &state, Vector &result) {
   char *version_c = ::onager::onager_get_version();
+  OnagerStringGuard guard(version_c);
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
+  if (!version_c) {
+    ConstantVector::SetNull(result, true);
+    return;
+  }
   GetConstantVectorDataWritable<string_t>(result)[0] = StringVector::AddString(result, version_c);
   ConstantVector::SetNull(result, false);
-  ::onager::onager_free(version_c);
 }
 
 static void GetLastError(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -43,8 +64,14 @@ static void GetNodeInDegree(DataChunk &args, ExpressionState &state, Vector &res
   auto &result_validity = GetFlatVectorValidityWritable(result);
 
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
-    auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    auto node_idx = node_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx) || !node_data.validity.RowIsValid(node_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
+    auto node = ((int64_t*)node_data.data)[node_idx];
     int64_t degree = ::onager::onager_graph_node_in_degree(name.GetString().c_str(), node);
     if (degree < 0) {
       result_validity.SetInvalid(i);
@@ -64,8 +91,14 @@ static void GetNodeOutDegree(DataChunk &args, ExpressionState &state, Vector &re
   auto &result_validity = GetFlatVectorValidityWritable(result);
 
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
-    auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    auto node_idx = node_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx) || !node_data.validity.RowIsValid(node_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
+    auto node = ((int64_t*)node_data.data)[node_idx];
     int64_t degree = ::onager::onager_graph_node_out_degree(name.GetString().c_str(), node);
     if (degree < 0) {
       result_validity.SetInvalid(i);
@@ -86,9 +119,16 @@ static void CreateGraph(DataChunk &args, ExpressionState &state, Vector &result)
   ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, dir_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
-    auto dir = ((bool*)dir_data.data)[dir_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    auto dir_idx = dir_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx) || !dir_data.validity.RowIsValid(dir_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
+    auto dir = ((bool*)dir_data.data)[dir_idx];
     result_data[i] = ::onager::onager_create_graph(name.GetString().c_str(), dir);
   }
 }
@@ -99,8 +139,14 @@ static void DropGraph(DataChunk &args, ExpressionState &state, Vector &result) {
   ONAGER_TO_UNIFIED_FORMAT(args.data[0], count, name_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
     result_data[i] = ::onager::onager_drop_graph(name.GetString().c_str());
   }
 }
@@ -112,9 +158,16 @@ static void AddNode(DataChunk &args, ExpressionState &state, Vector &result) {
   ONAGER_TO_UNIFIED_FORMAT(args.data[1], count, node_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
-    auto node = ((int64_t*)node_data.data)[node_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    auto node_idx = node_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx) || !node_data.validity.RowIsValid(node_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
+    auto node = ((int64_t*)node_data.data)[node_idx];
     result_data[i] = ::onager::onager_add_node(name.GetString().c_str(), node);
   }
 }
@@ -128,11 +181,21 @@ static void AddEdge(DataChunk &args, ExpressionState &state, Vector &result) {
   ONAGER_TO_UNIFIED_FORMAT(args.data[3], count, w_data);
 
   auto result_data = GetFlatVectorDataWritable<int32_t>(result);
+  auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
-    auto src = ((int64_t*)src_data.data)[src_data.sel->get_index(i)];
-    auto dst = ((int64_t*)dst_data.data)[dst_data.sel->get_index(i)];
-    auto w = ((double*)w_data.data)[w_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    auto src_idx = src_data.sel->get_index(i);
+    auto dst_idx = dst_data.sel->get_index(i);
+    auto w_idx = w_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx) || !src_data.validity.RowIsValid(src_idx) ||
+        !dst_data.validity.RowIsValid(dst_idx) || !w_data.validity.RowIsValid(w_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
+    auto src = ((int64_t*)src_data.data)[src_idx];
+    auto dst = ((int64_t*)dst_data.data)[dst_idx];
+    auto w = ((double*)w_data.data)[w_idx];
     result_data[i] = ::onager::onager_add_edge(name.GetString().c_str(), src, dst, w);
   }
 }
@@ -140,13 +203,13 @@ static void AddEdge(DataChunk &args, ExpressionState &state, Vector &result) {
 static void ListGraphs(DataChunk &args, ExpressionState &state, Vector &result) {
   result.SetVectorType(VectorType::CONSTANT_VECTOR);
   char *json = ::onager::onager_list_graphs();
+  OnagerStringGuard guard(json);
   if (!json) {
     ConstantVector::SetNull(result, true);
     return;
   }
   GetConstantVectorDataWritable<string_t>(result)[0] = StringVector::AddString(result, json);
   ConstantVector::SetNull(result, false);
-  ::onager::onager_free(json);
 }
 
 static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -157,7 +220,12 @@ static void GetNodeCount(DataChunk &args, ExpressionState &state, Vector &result
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
   auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
     int64_t node_count = ::onager::onager_node_count(name.GetString().c_str());
     if (node_count < 0) {
       result_validity.SetInvalid(i);
@@ -175,7 +243,12 @@ static void GetEdgeCount(DataChunk &args, ExpressionState &state, Vector &result
   auto result_data = GetFlatVectorDataWritable<int64_t>(result);
   auto &result_validity = GetFlatVectorValidityWritable(result);
   for (idx_t i = 0; i < count; i++) {
-    auto name = ((string_t*)name_data.data)[name_data.sel->get_index(i)];
+    auto name_idx = name_data.sel->get_index(i);
+    if (!name_data.validity.RowIsValid(name_idx)) {
+      result_validity.SetInvalid(i);
+      continue;
+    }
+    auto name = ((string_t*)name_data.data)[name_idx];
     int64_t edge_count = ::onager::onager_edge_count(name.GetString().c_str());
     if (edge_count < 0) {
       result_validity.SetInvalid(i);
@@ -188,31 +261,60 @@ static void GetEdgeCount(DataChunk &args, ExpressionState &state, Vector &result
 namespace onager {
 
 void RegisterScalarFunctions(ExtensionLoader &loader) {
-  // Version and error functions
+  // Version and error functions. The last error is process state that can
+  // change between (and within) queries, so it must not be constant-folded.
   loader.RegisterFunction(ScalarFunction("onager_version", {}, LogicalType::VARCHAR, GetVersion));
-  loader.RegisterFunction(ScalarFunction("onager_last_error", {}, LogicalType::VARCHAR, GetLastError));
+  ScalarFunction last_error("onager_last_error", {}, LogicalType::VARCHAR, GetLastError);
+  last_error.SetVolatile();
+  loader.RegisterFunction(last_error);
 
-  // Graph management functions
-  loader.RegisterFunction(ScalarFunction("onager_create_graph",
-      {LogicalType::VARCHAR, LogicalType::BOOLEAN}, LogicalType::INTEGER, CreateGraph));
-  loader.RegisterFunction(ScalarFunction("onager_drop_graph",
-      {LogicalType::VARCHAR}, LogicalType::INTEGER, DropGraph));
-  loader.RegisterFunction(ScalarFunction("onager_add_node",
-      {LogicalType::VARCHAR, LogicalType::BIGINT}, LogicalType::INTEGER, AddNode));
-  loader.RegisterFunction(ScalarFunction("onager_add_edge",
+  // Graph management functions mutate or read the process-global graph
+  // registry, so the optimizer must not cache or constant-fold them.
+  ScalarFunction create_graph("onager_create_graph",
+      {LogicalType::VARCHAR, LogicalType::BOOLEAN}, LogicalType::INTEGER, CreateGraph);
+  create_graph.SetVolatile();
+  loader.RegisterFunction(create_graph);
+
+  ScalarFunction drop_graph("onager_drop_graph",
+      {LogicalType::VARCHAR}, LogicalType::INTEGER, DropGraph);
+  drop_graph.SetVolatile();
+  loader.RegisterFunction(drop_graph);
+
+  ScalarFunction add_node("onager_add_node",
+      {LogicalType::VARCHAR, LogicalType::BIGINT}, LogicalType::INTEGER, AddNode);
+  add_node.SetVolatile();
+  loader.RegisterFunction(add_node);
+
+  ScalarFunction add_edge("onager_add_edge",
       {LogicalType::VARCHAR, LogicalType::BIGINT, LogicalType::BIGINT, LogicalType::DOUBLE},
-      LogicalType::INTEGER, AddEdge));
-  loader.RegisterFunction(ScalarFunction("onager_list_graphs", {}, LogicalType::VARCHAR, ListGraphs));
-  loader.RegisterFunction(ScalarFunction("onager_node_count",
-      {LogicalType::VARCHAR}, LogicalType::BIGINT, GetNodeCount));
-  loader.RegisterFunction(ScalarFunction("onager_edge_count",
-      {LogicalType::VARCHAR}, LogicalType::BIGINT, GetEdgeCount));
+      LogicalType::INTEGER, AddEdge);
+  add_edge.SetVolatile();
+  loader.RegisterFunction(add_edge);
+
+  ScalarFunction list_graphs("onager_list_graphs", {}, LogicalType::VARCHAR, ListGraphs);
+  list_graphs.SetVolatile();
+  loader.RegisterFunction(list_graphs);
+
+  ScalarFunction node_count("onager_node_count",
+      {LogicalType::VARCHAR}, LogicalType::BIGINT, GetNodeCount);
+  node_count.SetVolatile();
+  loader.RegisterFunction(node_count);
+
+  ScalarFunction edge_count("onager_edge_count",
+      {LogicalType::VARCHAR}, LogicalType::BIGINT, GetEdgeCount);
+  edge_count.SetVolatile();
+  loader.RegisterFunction(edge_count);
 
   // Node degree functions
-  loader.RegisterFunction(ScalarFunction("onager_node_in_degree",
-      {LogicalType::VARCHAR, LogicalType::BIGINT}, LogicalType::BIGINT, GetNodeInDegree));
-  loader.RegisterFunction(ScalarFunction("onager_node_out_degree",
-      {LogicalType::VARCHAR, LogicalType::BIGINT}, LogicalType::BIGINT, GetNodeOutDegree));
+  ScalarFunction node_in_degree("onager_node_in_degree",
+      {LogicalType::VARCHAR, LogicalType::BIGINT}, LogicalType::BIGINT, GetNodeInDegree);
+  node_in_degree.SetVolatile();
+  loader.RegisterFunction(node_in_degree);
+
+  ScalarFunction node_out_degree("onager_node_out_degree",
+      {LogicalType::VARCHAR, LogicalType::BIGINT}, LogicalType::BIGINT, GetNodeOutDegree);
+  node_out_degree.SetVolatile();
+  loader.RegisterFunction(node_out_degree);
 }
 
 } // namespace onager

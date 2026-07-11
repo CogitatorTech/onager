@@ -42,11 +42,13 @@ select onager_create_graph('sqltest_graph_1', true)
 ----
 0
 
-# Test that list_graphs returns the registered graph
+# Test that list_graphs returns the registered graph. The registry is
+# process-global and other test files may have registered graphs, so this
+# checks containment instead of the full listing.
 query I
-select onager_list_graphs()
+select onager_list_graphs() like '%"sqltest_graph_1"%'
 ----
-["sqltest_graph_1"]
+1
 
 # Test that node_count returns 0 for empty graph
 query I

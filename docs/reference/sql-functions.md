@@ -140,4 +140,6 @@ The default is `false` for every function, which treats the input edge list as u
 | `onager_version()`    | `varchar` | Extension version  |
 | `onager_last_error()` | `varchar` | Last error message |
 
+`onager_last_error()` is best-effort: the error state is thread-local, and DuckDB may run the failing call and the `onager_last_error()` call on different worker threads, so the result can be `NULL` or stale. A failed query surfaces its message directly through the SQL error, which is the reliable channel.
+
 See [Input Formats](input-formats.md) for details on how to pass graph data to functions.

@@ -33,10 +33,10 @@ static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFu
   auto bd = make_uniq<ParallelPageRankBindData>();
   CheckInt64Input(input, "onager_par_pagerank");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_par_pagerank", kv.first, kv.second);
-    if (kv.first == "iterations") bd->iterations = GetNonNegativeParam("onager_par_pagerank", kv.first, kv.second);
-    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_par_pagerank", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_pagerank", kv.first, kv.second);
+    if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_par_pagerank", "damping", kv.second);
+    if (kv.first == "iterations") bd->iterations = GetNonNegativeParam("onager_par_pagerank", "iterations", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_par_pagerank", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_pagerank", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("rank");
@@ -89,7 +89,7 @@ static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctio
   CheckInt64Input(input, "onager_par_bfs");
   bool has_source = false;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") { bd->source = GetRequiredParam<int64_t>("onager_par_bfs", kv.first, kv.second); has_source = true; }
+    if (kv.first == "source") { bd->source = GetRequiredParam<int64_t>("onager_par_bfs", "source", kv.second); has_source = true; }
     else if (kv.first == "sources") {
       if (kv.second.IsNull()) throw BinderException("onager_par_bfs parameter sources cannot be NULL");
       bd->multi = true;
@@ -99,7 +99,7 @@ static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctio
       }
       if (bd->sources.empty()) throw BinderException("onager_par_bfs: sources must contain at least one node");
     }
-    else if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_bfs", kv.first, kv.second);
+    else if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_bfs", "directed", kv.second);
   }
   if (bd->multi && has_source) throw BinderException("onager_par_bfs: pass either source or sources, not both");
   if (bd->multi) { rt.push_back(LogicalType::BIGINT); nm.push_back("source"); }
@@ -165,7 +165,7 @@ static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunct
   CheckInt64Input(input, "onager_par_shortest_paths");
   bool has_source = false;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") { bd->source = GetRequiredParam<int64_t>("onager_par_shortest_paths", kv.first, kv.second); has_source = true; }
+    if (kv.first == "source") { bd->source = GetRequiredParam<int64_t>("onager_par_shortest_paths", "source", kv.second); has_source = true; }
     else if (kv.first == "sources") {
       if (kv.second.IsNull()) throw BinderException("onager_par_shortest_paths parameter sources cannot be NULL");
       bd->multi = true;
@@ -175,7 +175,7 @@ static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunct
       }
       if (bd->sources.empty()) throw BinderException("onager_par_shortest_paths: sources must contain at least one node");
     }
-    else if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_shortest_paths", kv.first, kv.second);
+    else if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_shortest_paths", "directed", kv.second);
   }
   if (bd->multi && has_source) throw BinderException("onager_par_shortest_paths: pass either source or sources, not both");
   if (bd->multi) { rt.push_back(LogicalType::BIGINT); nm.push_back("source"); }

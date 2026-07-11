@@ -27,7 +27,7 @@ static unique_ptr<FunctionData> ErdosRenyiBind(ClientContext &ctx, TableFunction
   auto bd = make_uniq<ErdosRenyiBindData>();
   if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_erdos_renyi", "n", input.inputs[0]);
   if (input.inputs.size() >= 2) bd->p = GetRequiredParam<double>("onager_gen_erdos_renyi", "p", input.inputs[1]);
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_erdos_renyi", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_erdos_renyi", "seed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return std::move(bd);
@@ -68,7 +68,7 @@ static unique_ptr<FunctionData> BarabasiAlbertBind(ClientContext &ctx, TableFunc
   auto bd = make_uniq<BarabasiAlbertBindData>();
   if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_barabasi_albert", "n", input.inputs[0]);
   if (input.inputs.size() >= 2) bd->m = GetNonNegativeParam("onager_gen_barabasi_albert", "m", input.inputs[1]);
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_barabasi_albert", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_barabasi_albert", "seed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return std::move(bd);
@@ -110,7 +110,7 @@ static unique_ptr<FunctionData> WattsStrogatzBind(ClientContext &ctx, TableFunct
   if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_watts_strogatz", "n", input.inputs[0]);
   if (input.inputs.size() >= 2) bd->k = GetNonNegativeParam("onager_gen_watts_strogatz", "k", input.inputs[1]);
   if (input.inputs.size() >= 3) bd->beta = GetRequiredParam<double>("onager_gen_watts_strogatz", "beta", input.inputs[2]);
-  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_watts_strogatz", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_gen_watts_strogatz", "seed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
   return std::move(bd);

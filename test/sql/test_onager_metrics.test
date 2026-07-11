@@ -107,6 +107,50 @@ select count(assortativity) from onager_mtr_assortativity((select src, dst from 
 ----
 1
 
+# =============================================================================
+# Undefined Metric Values
+# =============================================================================
+
+# Diameter and radius are NULL for a disconnected graph
+query I
+select * from onager_mtr_diameter((select * from (values
+    (1::bigint, 2::bigint), (3, 4)
+  ) t(src, dst)))
+----
+NULL
+
+query I
+select * from onager_mtr_radius((select * from (values
+    (1::bigint, 2::bigint), (3, 4)
+  ) t(src, dst)))
+----
+NULL
+
+# A directed edge is not strongly connected, so the directed diameter is NULL
+query I
+select * from onager_mtr_diameter((select * from (values
+    (1::bigint, 2::bigint)
+  ) t(src, dst)), directed := true)
+----
+NULL
+
+# Average path length is NULL for a disconnected graph
+query I
+select * from onager_mtr_avg_path_length((select * from (values
+    (1::bigint, 2::bigint), (3, 4)
+  ) t(src, dst)))
+----
+NULL
+
+# Density treats the input as a simple graph: duplicate rows and reversed
+# duplicates count once, and self-loops are ignored
+query R
+select round(density, 2) from onager_mtr_density((select * from (values
+    (1::bigint, 2::bigint), (1, 2), (2, 1), (1, 1)
+  ) t(src, dst)))
+----
+1.00
+
 # Cleanup
 statement ok
 drop table test_edges

@@ -123,6 +123,9 @@ Optional parameters:
 
 - `directed` (default false): Treat each edge as one-way instead of undirected
 
+!!! note "Negative weights"
+    In the default undirected mode, any negative edge weight forms a negative cycle (the edge can be traversed back and forth), so the query fails with a negative cycle error. Pass `directed := true` to use negative weights.
+
 ---
 
 ## Floyd-Warshall Algorithm

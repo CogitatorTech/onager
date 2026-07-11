@@ -27,8 +27,8 @@ static unique_ptr<FunctionData> EgoGraphBind(ClientContext &ctx, TableFunctionBi
   auto bd = make_uniq<EgoGraphBindData>();
   CheckInt64Input(input, "onager_sub_ego_graph");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "center") bd->center = GetRequiredParam<int64_t>("onager_sub_ego_graph", kv.first, kv.second);
-    if (kv.first == "radius") bd->radius = GetNonNegativeParam("onager_sub_ego_graph", kv.first, kv.second);
+    if (kv.first == "center") bd->center = GetRequiredParam<int64_t>("onager_sub_ego_graph", "center", kv.second);
+    if (kv.first == "radius") bd->radius = GetNonNegativeParam("onager_sub_ego_graph", "radius", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
   rt.push_back(LogicalType::BIGINT); nm.push_back("dst");
@@ -78,8 +78,8 @@ static unique_ptr<FunctionData> KHopBind(ClientContext &ctx, TableFunctionBindIn
   auto bd = make_uniq<KHopBindData>();
   CheckInt64Input(input, "onager_sub_k_hop");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "start") bd->start = GetRequiredParam<int64_t>("onager_sub_k_hop", kv.first, kv.second);
-    if (kv.first == "k") bd->k = GetNonNegativeParam("onager_sub_k_hop", kv.first, kv.second);
+    if (kv.first == "start") bd->start = GetRequiredParam<int64_t>("onager_sub_k_hop", "start", kv.second);
+    if (kv.first == "k") bd->k = GetNonNegativeParam("onager_sub_k_hop", "k", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);

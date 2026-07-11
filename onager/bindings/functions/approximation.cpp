@@ -176,7 +176,7 @@ static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInp
   CheckInt64Input(input, "onager_apx_tsp", 3);
   CheckColumnType(input, "onager_apx_tsp", 2, LogicalType::DOUBLE);
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "start") { bd->start = GetRequiredParam<int64_t>("onager_apx_tsp", kv.first, kv.second); bd->has_start = true; }
+    if (kv.first == "start") { bd->start = GetRequiredParam<int64_t>("onager_apx_tsp", "start", kv.second); bd->has_start = true; }
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("order");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");

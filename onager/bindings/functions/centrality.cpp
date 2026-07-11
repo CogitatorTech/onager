@@ -44,10 +44,10 @@ static unique_ptr<FunctionData> PageRankBind(ClientContext &context,
   CheckInt64Input(input, "onager_ctr_pagerank");
   bind_data->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "damping") bind_data->damping = GetRequiredParam<double>("onager_ctr_pagerank", kv.first, kv.second);
-    else if (kv.first == "iterations") bind_data->iterations = GetNonNegativeParam("onager_ctr_pagerank", kv.first, kv.second);
-    else if (kv.first == "tolerance") bind_data->tolerance = GetRequiredParam<double>("onager_ctr_pagerank", kv.first, kv.second);
-    else if (kv.first == "directed") bind_data->directed = GetRequiredParam<bool>("onager_ctr_pagerank", kv.first, kv.second);
+    if (kv.first == "damping") bind_data->damping = GetRequiredParam<double>("onager_ctr_pagerank", "damping", kv.second);
+    else if (kv.first == "iterations") bind_data->iterations = GetNonNegativeParam("onager_ctr_pagerank", "iterations", kv.second);
+    else if (kv.first == "tolerance") bind_data->tolerance = GetRequiredParam<double>("onager_ctr_pagerank", "tolerance", kv.second);
+    else if (kv.first == "directed") bind_data->directed = GetRequiredParam<bool>("onager_ctr_pagerank", "directed", kv.second);
   }
   return_types.push_back(LogicalType::BIGINT); names.push_back("node_id");
   return_types.push_back(LogicalType::DOUBLE); names.push_back("rank");
@@ -115,7 +115,7 @@ struct DegreeGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> DegreeBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<DegreeBindData>();
   CheckInt64Input(input, "onager_ctr_degree");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_degree", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_degree", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("in_degree");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("out_degree");
@@ -166,8 +166,8 @@ static unique_ptr<FunctionData> BetweennessBind(ClientContext &ctx, TableFunctio
   auto bd = make_uniq<BetweennessBindData>();
   CheckInt64Input(input, "onager_ctr_betweenness");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "normalized") bd->normalized = GetRequiredParam<bool>("onager_ctr_betweenness", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_betweenness", kv.first, kv.second);
+    if (kv.first == "normalized") bd->normalized = GetRequiredParam<bool>("onager_ctr_betweenness", "normalized", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_betweenness", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("betweenness");
@@ -218,7 +218,7 @@ struct ClosenessBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> ClosenessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<ClosenessBindData>();
   CheckInt64Input(input, "onager_ctr_closeness");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_closeness", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_closeness", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("closeness");
   return std::move(bd);
@@ -269,7 +269,7 @@ struct HarmonicBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> HarmonicBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<HarmonicBindData>();
   CheckInt64Input(input, "onager_ctr_harmonic");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_harmonic", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_harmonic", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("harmonic");
   return std::move(bd);
@@ -320,11 +320,11 @@ static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindIn
   auto bd = make_uniq<KatzBindData>();
   CheckInt64Input(input, "onager_ctr_katz");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "alpha") bd->alpha = GetRequiredParam<double>("onager_ctr_katz", kv.first, kv.second);
-    if (kv.first == "beta") bd->beta = GetRequiredParam<double>("onager_ctr_katz", kv.first, kv.second);
-    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_katz", kv.first, kv.second);
-    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_katz", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_katz", kv.first, kv.second);
+    if (kv.first == "alpha") bd->alpha = GetRequiredParam<double>("onager_ctr_katz", "alpha", kv.second);
+    if (kv.first == "beta") bd->beta = GetRequiredParam<double>("onager_ctr_katz", "beta", kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_katz", "max_iter", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_katz", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_katz", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("katz");
@@ -375,9 +375,9 @@ static unique_ptr<FunctionData> EigenvectorBind(ClientContext &ctx, TableFunctio
   auto bd = make_uniq<EigenvectorBindData>();
   CheckInt64Input(input, "onager_ctr_eigenvector");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_eigenvector", kv.first, kv.second);
-    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_eigenvector", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_eigenvector", kv.first, kv.second);
+    if (kv.first == "max_iter") bd->max_iter = GetNonNegativeParam("onager_ctr_eigenvector", "max_iter", kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_ctr_eigenvector", "tolerance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_eigenvector", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("eigenvector");
@@ -509,8 +509,8 @@ static unique_ptr<FunctionData> VoteRankBind(ClientContext &ctx, TableFunctionBi
   auto bd = make_uniq<VoteRankBindData>();
   CheckInt64Input(input, "onager_ctr_voterank");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "num_seeds") bd->num_seeds = GetNonNegativeParam("onager_ctr_voterank", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_voterank", kv.first, kv.second);
+    if (kv.first == "num_seeds") bd->num_seeds = GetNonNegativeParam("onager_ctr_voterank", "num_seeds", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_voterank", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return std::move(bd);
@@ -577,8 +577,8 @@ static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunct
   auto bd = make_uniq<LocalReachingBindData>();
   CheckInt64Input(input, "onager_ctr_local_reaching");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "distance") bd->distance = GetNonNegativeParam("onager_ctr_local_reaching", kv.first, kv.second);
-    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_local_reaching", kv.first, kv.second);
+    if (kv.first == "distance") bd->distance = GetNonNegativeParam("onager_ctr_local_reaching", "distance", kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_local_reaching", "directed", kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
@@ -629,7 +629,7 @@ struct LaplacianBindData : public TableFunctionData { bool directed = false; };
 static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<LaplacianBindData>();
   CheckInt64Input(input, "onager_ctr_laplacian");
-  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_laplacian", kv.first, kv.second);
+  for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_laplacian", "directed", kv.second);
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("centrality");
   return std::move(bd);
