@@ -101,3 +101,7 @@ bug*.md
 .codex
 .antigravitycli/
 .agents/
+
+# Playground vendor build (web/vendor-src)
+web/vendor-src/node_modules/
+web/vendor-src/out/

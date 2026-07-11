@@ -51,8 +51,14 @@ Optional parameters:
 - `tolerance` (default 1e-6): Convergence threshold for early termination
 - `directed` (default false): Treat each edge as one-way instead of undirected
 
-The parallel implementation treats every edge as having weight 1.0.
-For weighted PageRank, use `onager_ctr_pagerank` with a third `double` column.
+Like `onager_ctr_pagerank`, the parallel version accepts an optional third `double` column with edge weights.
+When the column is absent, every edge gets weight 1.0.
+
+```sql
+select node_id, round(rank, 4) as rank
+from onager_par_pagerank((select src, dst, (src + dst)::double as weight from edges))
+order by rank desc;
+```
 
 ---
 

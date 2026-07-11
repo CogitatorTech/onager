@@ -42,11 +42,24 @@ jobs:
           pattern: onager-${{ env.DUCKDB_VERSION }}-extension-wasm_*
           path: wasm-extensions
 
+      - name: Vendor DuckDB-Wasm
+        working-directory: web/vendor-src
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run bundle
+
       - name: Assemble playground tree
         run: |
           set -euo pipefail
           mkdir -p playground
           cp -R web/. playground/
+          rm -rf playground/vendor-src
+          mkdir -p playground/vendor/duckdb-wasm
+          cp web/vendor-src/out/duckdb-browser.mjs \
+            web/vendor-src/node_modules/@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js \
+            web/vendor-src/node_modules/@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm \
+            playground/vendor/duckdb-wasm/
           printf '{"branch": "%s", "commit": "%s"}\n' \
             "${GITHUB_REF_NAME}" "${GITHUB_SHA:0:5}" > playground/build-info.json
           for platform in wasm_eh wasm_mvp; do
