@@ -6,6 +6,7 @@
  */
 #include "functions.hpp"
 #include <mutex>
+#include <unordered_set>
 
 namespace duckdb {
 
@@ -39,10 +40,15 @@ static OperatorFinalizeResultType MaxCliqueFinal(ExecutionContext &ctx, TableFun
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_max_clique(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
+    // One FFI call with a buffer sized to the unique node count. The result
+    // set can never exceed it, and a separate sizing call could return a
+    // different count when the algorithm breaks ties nondeterministically.
+    std::unordered_set<int64_t> unique_nodes(gs.src_nodes.begin(), gs.src_nodes.end());
+    unique_nodes.insert(gs.dst_nodes.begin(), gs.dst_nodes.end());
+    gs.result_nodes.resize(unique_nodes.size());
+    int64_t nc = ::onager::onager_compute_max_clique(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data());
     if (nc < 0) throw InvalidInputException("Max clique failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
-    ::onager::onager_compute_max_clique(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -82,10 +88,15 @@ static OperatorFinalizeResultType IndependentSetFinal(ExecutionContext &ctx, Tab
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_independent_set(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
+    // One FFI call with a buffer sized to the unique node count. The result
+    // set can never exceed it, and a separate sizing call could return a
+    // different count when the algorithm breaks ties nondeterministically.
+    std::unordered_set<int64_t> unique_nodes(gs.src_nodes.begin(), gs.src_nodes.end());
+    unique_nodes.insert(gs.dst_nodes.begin(), gs.dst_nodes.end());
+    gs.result_nodes.resize(unique_nodes.size());
+    int64_t nc = ::onager::onager_compute_independent_set(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data());
     if (nc < 0) throw InvalidInputException("Independent set failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
-    ::onager::onager_compute_independent_set(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -125,10 +136,15 @@ static OperatorFinalizeResultType VertexCoverFinal(ExecutionContext &ctx, TableF
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_vertex_cover(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr);
+    // One FFI call with a buffer sized to the unique node count. The result
+    // set can never exceed it, and a separate sizing call could return a
+    // different count when the algorithm breaks ties nondeterministically.
+    std::unordered_set<int64_t> unique_nodes(gs.src_nodes.begin(), gs.src_nodes.end());
+    unique_nodes.insert(gs.dst_nodes.begin(), gs.dst_nodes.end());
+    gs.result_nodes.resize(unique_nodes.size());
+    int64_t nc = ::onager::onager_compute_vertex_cover(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data());
     if (nc < 0) throw InvalidInputException("Vertex cover failed: " + GetOnagerError());
     gs.result_nodes.resize(nc);
-    ::onager::onager_compute_vertex_cover(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -158,8 +174,9 @@ struct TspBindData : public TableFunctionData { int64_t start = 0; bool has_star
 static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<TspBindData>();
   CheckInt64Input(input, "onager_apx_tsp", 3);
+  CheckColumnType(input, "onager_apx_tsp", 2, LogicalType::DOUBLE);
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "start") { bd->start = kv.second.GetValue<int64_t>(); bd->has_start = true; }
+    if (kv.first == "start") { bd->start = GetRequiredParam<int64_t>("onager_apx_tsp", kv.first, kv.second); bd->has_start = true; }
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("order");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
@@ -178,10 +195,14 @@ static OperatorFinalizeResultType TspFinal(ExecutionContext &ctx, TableFunctionI
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.start, bd.has_start, nullptr, nullptr);
+    // One FFI call with a buffer sized to the unique node count plus one:
+    // a tour visits each node at most once and may close back to the start.
+    std::unordered_set<int64_t> unique_nodes(gs.src_nodes.begin(), gs.src_nodes.end());
+    unique_nodes.insert(gs.dst_nodes.begin(), gs.dst_nodes.end());
+    gs.result_tour.resize(unique_nodes.size() + 1);
+    int64_t nc = ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.start, bd.has_start, gs.result_tour.data(), &gs.result_cost);
     if (nc < 0) throw InvalidInputException("TSP failed: " + GetOnagerError());
     gs.result_tour.resize(nc);
-    ::onager::onager_compute_tsp(gs.src_nodes.data(), gs.dst_nodes.data(), gs.weights.data(), gs.src_nodes.size(), bd.start, bd.has_start, gs.result_tour.data(), &gs.result_cost);
     gs.computed = true;
   }
   idx_t rem = gs.result_tour.size() - gs.output_idx;

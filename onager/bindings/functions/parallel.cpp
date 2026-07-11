@@ -33,10 +33,10 @@ static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFu
   auto bd = make_uniq<ParallelPageRankBindData>();
   CheckInt64Input(input, "onager_par_pagerank");
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "damping") bd->damping = kv.second.GetValue<double>();
-    if (kv.first == "iterations") bd->iterations = kv.second.GetValue<int64_t>();
-    if (kv.first == "tolerance") bd->tolerance = kv.second.GetValue<double>();
-    if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+    if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_par_pagerank", kv.first, kv.second);
+    if (kv.first == "iterations") bd->iterations = GetNonNegativeParam("onager_par_pagerank", kv.first, kv.second);
+    if (kv.first == "tolerance") bd->tolerance = GetRequiredParam<double>("onager_par_pagerank", kv.first, kv.second);
+    if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_pagerank", kv.first, kv.second);
   }
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("rank");
@@ -59,7 +59,8 @@ static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, T
     int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.tolerance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_ranks.resize(nc);
-    ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    int64_t rc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    if (rc != nc) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -88,13 +89,17 @@ static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctio
   CheckInt64Input(input, "onager_par_bfs");
   bool has_source = false;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") { bd->source = kv.second.GetValue<int64_t>(); has_source = true; }
+    if (kv.first == "source") { bd->source = GetRequiredParam<int64_t>("onager_par_bfs", kv.first, kv.second); has_source = true; }
     else if (kv.first == "sources") {
+      if (kv.second.IsNull()) throw BinderException("onager_par_bfs parameter sources cannot be NULL");
       bd->multi = true;
-      for (auto &v : ListValue::GetChildren(kv.second)) bd->sources.push_back(v.GetValue<int64_t>());
+      for (auto &v : ListValue::GetChildren(kv.second)) {
+        if (v.IsNull()) throw BinderException("onager_par_bfs: sources must not contain NULL");
+        bd->sources.push_back(v.GetValue<int64_t>());
+      }
       if (bd->sources.empty()) throw BinderException("onager_par_bfs: sources must contain at least one node");
     }
-    else if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+    else if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_bfs", kv.first, kv.second);
   }
   if (bd->multi && has_source) throw BinderException("onager_par_bfs: pass either source or sources, not both");
   if (bd->multi) { rt.push_back(LogicalType::BIGINT); nm.push_back("source"); }
@@ -117,12 +122,14 @@ static OperatorFinalizeResultType ParallelBfsFinal(ExecutionContext &ctx, TableF
       int64_t nc = ::onager::onager_compute_bfs_parallel_multi(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.sources.data(), bd.sources.size(), bd.directed, nullptr, nullptr);
       if (nc < 0) throw InvalidInputException("Parallel BFS failed: " + GetOnagerError());
       gs.result_sources.resize(nc); gs.result_order.resize(nc);
-      ::onager::onager_compute_bfs_parallel_multi(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.sources.data(), bd.sources.size(), bd.directed, gs.result_sources.data(), gs.result_order.data());
+      int64_t rc = ::onager::onager_compute_bfs_parallel_multi(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.sources.data(), bd.sources.size(), bd.directed, gs.result_sources.data(), gs.result_order.data());
+      if (rc != nc) throw InvalidInputException("Parallel BFS failed: " + GetOnagerError());
     } else {
       int64_t nc = ::onager::onager_compute_bfs_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, nullptr);
       if (nc < 0) throw InvalidInputException("Parallel BFS failed: " + GetOnagerError());
       gs.result_order.resize(nc);
-      ::onager::onager_compute_bfs_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_order.data());
+      int64_t rc = ::onager::onager_compute_bfs_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_order.data());
+      if (rc != nc) throw InvalidInputException("Parallel BFS failed: " + GetOnagerError());
     }
     gs.computed = true;
   }
@@ -158,13 +165,17 @@ static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunct
   CheckInt64Input(input, "onager_par_shortest_paths");
   bool has_source = false;
   for (auto &kv : input.named_parameters) {
-    if (kv.first == "source") { bd->source = kv.second.GetValue<int64_t>(); has_source = true; }
+    if (kv.first == "source") { bd->source = GetRequiredParam<int64_t>("onager_par_shortest_paths", kv.first, kv.second); has_source = true; }
     else if (kv.first == "sources") {
+      if (kv.second.IsNull()) throw BinderException("onager_par_shortest_paths parameter sources cannot be NULL");
       bd->multi = true;
-      for (auto &v : ListValue::GetChildren(kv.second)) bd->sources.push_back(v.GetValue<int64_t>());
+      for (auto &v : ListValue::GetChildren(kv.second)) {
+        if (v.IsNull()) throw BinderException("onager_par_shortest_paths: sources must not contain NULL");
+        bd->sources.push_back(v.GetValue<int64_t>());
+      }
       if (bd->sources.empty()) throw BinderException("onager_par_shortest_paths: sources must contain at least one node");
     }
-    else if (kv.first == "directed") bd->directed = kv.second.GetValue<bool>();
+    else if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_par_shortest_paths", kv.first, kv.second);
   }
   if (bd->multi && has_source) throw BinderException("onager_par_shortest_paths: pass either source or sources, not both");
   if (bd->multi) { rt.push_back(LogicalType::BIGINT); nm.push_back("source"); }
@@ -188,12 +199,14 @@ static OperatorFinalizeResultType ParallelPathsFinal(ExecutionContext &ctx, Tabl
       int64_t nc = ::onager::onager_compute_shortest_paths_parallel_multi(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.sources.data(), bd.sources.size(), bd.directed, nullptr, nullptr, nullptr);
       if (nc < 0) throw InvalidInputException("Parallel shortest paths failed: " + GetOnagerError());
       gs.result_sources.resize(nc); gs.result_nodes.resize(nc); gs.result_distances.resize(nc);
-      ::onager::onager_compute_shortest_paths_parallel_multi(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.sources.data(), bd.sources.size(), bd.directed, gs.result_sources.data(), gs.result_nodes.data(), gs.result_distances.data());
+      int64_t rc = ::onager::onager_compute_shortest_paths_parallel_multi(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.sources.data(), bd.sources.size(), bd.directed, gs.result_sources.data(), gs.result_nodes.data(), gs.result_distances.data());
+      if (rc != nc) throw InvalidInputException("Parallel shortest paths failed: " + GetOnagerError());
     } else {
       int64_t nc = ::onager::onager_compute_shortest_paths_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, nullptr, nullptr);
       if (nc < 0) throw InvalidInputException("Parallel shortest paths failed: " + GetOnagerError());
       gs.result_nodes.resize(nc); gs.result_distances.resize(nc);
-      ::onager::onager_compute_shortest_paths_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_nodes.data(), gs.result_distances.data());
+      int64_t rc = ::onager::onager_compute_shortest_paths_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), bd.source, bd.directed, gs.result_nodes.data(), gs.result_distances.data());
+      if (rc != nc) throw InvalidInputException("Parallel shortest paths failed: " + GetOnagerError());
     }
     gs.computed = true;
   }
@@ -243,7 +256,8 @@ static OperatorFinalizeResultType ParallelComponentsFinal(ExecutionContext &ctx,
     int64_t nc = ::onager::onager_compute_components_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel components failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_components.resize(nc);
-    ::onager::onager_compute_components_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_components.data());
+    int64_t rc = ::onager::onager_compute_components_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_components.data());
+    if (rc != nc) throw InvalidInputException("Parallel components failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -288,7 +302,8 @@ static OperatorFinalizeResultType ParallelClusteringFinal(ExecutionContext &ctx,
     int64_t nc = ::onager::onager_compute_clustering_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel clustering failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_coefficients.resize(nc);
-    ::onager::onager_compute_clustering_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_coefficients.data());
+    int64_t rc = ::onager::onager_compute_clustering_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_coefficients.data());
+    if (rc != nc) throw InvalidInputException("Parallel clustering failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
@@ -332,7 +347,8 @@ static OperatorFinalizeResultType ParallelTrianglesFinal(ExecutionContext &ctx, 
     int64_t nc = ::onager::onager_compute_triangles_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel triangles failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_counts.resize(nc);
-    ::onager::onager_compute_triangles_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_counts.data());
+    int64_t rc = ::onager::onager_compute_triangles_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), gs.result_nodes.data(), gs.result_counts.data());
+    if (rc != nc) throw InvalidInputException("Parallel triangles failed: " + GetOnagerError());
     gs.computed = true;
   }
   idx_t rem = gs.result_nodes.size() - gs.output_idx;
