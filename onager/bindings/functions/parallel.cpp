@@ -20,11 +20,12 @@ struct ParallelPageRankBindData : public TableFunctionData {
   int64_t iterations = 100;
   double tolerance = 1e-6;
   bool directed = false;
+  bool weighted = false;
 };
 struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
   std::mutex input_mutex;
   std::vector<int64_t> src_nodes, dst_nodes, result_nodes;
-  std::vector<double> result_ranks;
+  std::vector<double> weights, result_ranks;
   idx_t output_idx = 0; bool computed = false;
   idx_t MaxThreads() const override { return 1; }
 };
@@ -32,6 +33,7 @@ struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
   auto bd = make_uniq<ParallelPageRankBindData>();
   CheckInt64Input(input, "onager_par_pagerank");
+  bd->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
   for (auto &kv : input.named_parameters) {
     if (kv.first == "damping") bd->damping = GetRequiredParam<double>("onager_par_pagerank", "damping", kv.second);
     if (kv.first == "iterations") bd->iterations = GetNonNegativeParam("onager_par_pagerank", "iterations", kv.second);
@@ -44,9 +46,14 @@ static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFu
 }
 static unique_ptr<GlobalTableFunctionState> ParallelPageRankInitGlobal(ClientContext &ctx, TableFunctionInitInput &input) { return make_uniq<ParallelPageRankGlobalState>(); }
 static OperatorResultType ParallelPageRankInOut(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &input, DataChunk &output) {
+  auto &bd = data.bind_data->Cast<ParallelPageRankBindData>();
   auto &gs = data.global_state->Cast<ParallelPageRankGlobalState>();
   std::lock_guard<std::mutex> lock(gs.input_mutex);
-  AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_pagerank");
+  if (bd.weighted) {
+    AppendWeightedEdges(input, gs.src_nodes, gs.dst_nodes, gs.weights, "onager_par_pagerank");
+  } else {
+    AppendInt64Edges(input, gs.src_nodes, gs.dst_nodes, "onager_par_pagerank");
+  }
   ONAGER_SET_CARDINALITY(output, 0); return OperatorResultType::NEED_MORE_INPUT;
 }
 static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, TableFunctionInput &data, DataChunk &output) {
@@ -54,12 +61,11 @@ static OperatorFinalizeResultType ParallelPageRankFinal(ExecutionContext &ctx, T
   std::lock_guard<std::mutex> lock(gs.input_mutex);
   if (!gs.computed) {
     if (gs.src_nodes.empty()) { gs.computed = true; ONAGER_SET_CARDINALITY(output, 0); return OperatorFinalizeResultType::FINISHED; }
-    // graphina's pagerank_parallel ignores edge weights, so no weights are passed here.
-    // Weighted PageRank is available through onager_ctr_pagerank.
-    int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.tolerance, bd.directed, nullptr, nullptr);
+    const double *w = gs.weights.empty() ? nullptr : gs.weights.data();
+    int64_t nc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), w, gs.weights.size(), bd.damping, bd.iterations, bd.tolerance, bd.directed, nullptr, nullptr);
     if (nc < 0) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
     gs.result_nodes.resize(nc); gs.result_ranks.resize(nc);
-    int64_t rc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), nullptr, 0, bd.damping, bd.iterations, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_ranks.data());
+    int64_t rc = ::onager::onager_compute_pagerank_parallel(gs.src_nodes.data(), gs.dst_nodes.data(), gs.src_nodes.size(), w, gs.weights.size(), bd.damping, bd.iterations, bd.tolerance, bd.directed, gs.result_nodes.data(), gs.result_ranks.data());
     if (rc != nc) throw InvalidInputException("Parallel PageRank failed: " + GetOnagerError());
     gs.computed = true;
   }

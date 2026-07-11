@@ -126,7 +126,7 @@ The default is `false` for every function, which treats the input edge list as u
 
 | Function                                   | Returns                | Description                      |
 |--------------------------------------------|------------------------|----------------------------------|
-| `onager_par_pagerank(edges [, damping, iterations, tolerance, directed])` | `node_id, rank`        | Parallel PageRank                |
+| `onager_par_pagerank(edges [+ weights] [, damping, iterations, tolerance, directed])` | `node_id, rank`        | Parallel PageRank                |
 | `onager_par_bfs(edges [, source or sources, directed])` | `[source,] node_id`    | Parallel BFS traversal           |
 | `onager_par_shortest_paths(edges [, source or sources, directed])` | `[source,] node_id, distance` | Parallel shortest paths |
 | `onager_par_components(edges)`             | `node_id, component`   | Parallel connected components    |
