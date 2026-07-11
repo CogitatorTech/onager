@@ -112,9 +112,8 @@ order by label, node_id;
 ```
 
 !!! note "Determinism"
-    The seed controls the order in which nodes update their labels, but the underlying
-    implementation currently breaks label ties nondeterministically, so seeded runs can
-    still differ between sessions.
+    The seed controls the order in which nodes update their labels, and label ties break
+    deterministically, so runs with the same seed produce the same partition.
 
 ---
 
@@ -173,9 +172,8 @@ Optional parameters:
 - `seed`: Random seed for the node visit order
 
 !!! note "Determinism"
-    As with label propagation, the seed controls the node visit order, but the underlying
-    implementation currently breaks ties nondeterministically, so seeded runs can still
-    differ between sessions.
+    As with label propagation, the seed controls the node visit order, and ties break
+    deterministically, so runs with the same seed produce the same partition.
 
 ---
 
