@@ -56,7 +56,8 @@ const GRAPH_TEMPLATES = {
   clique: `1, 2\n1, 3\n1, 4\n1, 5\n2, 3\n2, 4\n2, 5\n3, 4\n3, 5\n4, 5`,
   star: `1, 2\n1, 3\n1, 4\n1, 5\n1, 6`,
   cycle: `1, 2\n2, 3\n3, 4\n4, 5\n5, 6\n6, 1`,
-  tree: `1, 2\n1, 3\n2, 4\n2, 5\n3, 6\n3, 7`
+  tree: `1, 2\n1, 3\n2, 4\n2, 5\n3, 6\n3, 7`,
+  twoClusters: `1, 2\n1, 3\n1, 4\n2, 3\n2, 4\n3, 4\n5, 6\n5, 7\n5, 8\n6, 7\n6, 8\n7, 8\n4, 5`
 };
 
 // Generator presets. Each query is seeded, so the same option always produces the
@@ -185,7 +186,7 @@ order by community, node_id;`,
       },
       {
         label: "Label Propagation",
-        desc: "Detect communities by propagating labels between neighbors. Results can vary between runs.",
+        desc: "Detect communities by propagating labels between neighbors. Dense graphs like the kite often merge into one community; try the Two Clusters preset for a clear split.",
         sql: `select node_id, label as community
 from onager_cmm_label_prop((select src, dst from edges))
 order by community, node_id;`,
@@ -213,7 +214,7 @@ order by community, node_id;`,
       },
       {
         label: "Infomap",
-        desc: "Detect communities by minimizing the description length of random walks.",
+        desc: "Detect communities by minimizing the description length of random walks. Dense graphs like the kite often merge into one community; try the Two Clusters preset for a clear split.",
         sql: `select node_id, community
 from onager_cmm_infomap((select src, dst from edges), seed := 68)
 order by community, node_id;`,
@@ -545,7 +546,7 @@ function updateFooterVersions(duckdbVersion, onagerVersion, buildLabel) {
     ? `DuckDB-Wasm (${duckdbVersion.replace(/^v/, "")})`
     : "DuckDB-Wasm";
   const onagerParts = [onagerVersion, buildLabel].filter(Boolean);
-  const onagerLabel = onagerParts.length ? `Onager (${onagerParts.join(", ")})` : "Onager";
+  const onagerLabel = onagerParts.length ? `Onager (${onagerParts.join("; ")})` : "Onager";
   footerNote.textContent =
     `This playground app is powered by ${duckdbLabel} and ${onagerLabel}, ` +
     "and everything (including the queries) runs safely in your browser.";

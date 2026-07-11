@@ -54,6 +54,12 @@ Optional parameters:
 Like `onager_ctr_pagerank`, the parallel version accepts an optional third `double` column with edge weights.
 When the column is absent, every edge gets weight 1.0.
 
+```sql
+select node_id, round(rank, 4) as rank
+from onager_par_pagerank((select src, dst, (src + dst)::double as weight from edges))
+order by rank desc;
+```
+
 ---
 
 ## Parallel BFS
