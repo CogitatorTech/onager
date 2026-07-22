@@ -33,10 +33,10 @@ jobs:
       exclude_archs: "windows_amd64_mingw;osx_amd64;wasm_threads"
 
   duckdb-stable-build:
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.4
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.5
     with:
-      duckdb_version: v1.5.4
-      ci_tools_version: v1.5.4
+      duckdb_version: v1.5.5
+      ci_tools_version: v1.5.5
       extension_name: onager
       enable_rust: true
       opt_in_archs: "windows_arm64"
