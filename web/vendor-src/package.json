@@ -6,7 +6,7 @@
     "bundle": "esbuild entry.js --bundle --minify --format=esm --outfile=out/duckdb-browser.mjs"
   },
   "dependencies": {
-    "@duckdb/duckdb-wasm": "1.33.1-dev57.0"
+    "@duckdb/duckdb-wasm": "1.33.1-dev64.0"
   },
   "devDependencies": {
     "esbuild": "0.25.5"
