@@ -61,7 +61,7 @@ Priorities, in order:
 - `.github/workflows/tests.yml`: Rust tests and SQL tests in CI.
 - `.github/workflows/lints.yml`: Rust formatting and clippy checks in CI.
 - `.github/workflows/dist_pipeline.yml`: cross-platform extension packaging against DuckDB `main` and `v1.5.4`.
-- `.github/workflows/docs.yml`: MkDocs site build.
+- `.github/workflows/docs.yml`: MkDocs site build, playground app assembly, and GitHub Pages deployment.
 
 ## Architecture Notes
 

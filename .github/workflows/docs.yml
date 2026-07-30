@@ -18,7 +18,77 @@ permissions:
   id-token: write
 
 jobs:
+  build-extension:
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5.5
+    with:
+      duckdb_version: v1.5.5
+      ci_tools_version: v1.5.5
+      extension_name: onager
+      enable_rust: true
+      upload_all_extensions: true
+      exclude_archs: "linux_amd64;linux_arm64;linux_amd64_musl;linux_arm64_musl;osx_amd64;osx_arm64;windows_amd64;windows_amd64_mingw;wasm_threads"
+
+  build-playground:
+    name: Assemble playground
+    needs: build-extension
+    runs-on: ubuntu-latest
+    env:
+      DUCKDB_VERSION: v1.5.5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Wasm extension artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: onager-${{ env.DUCKDB_VERSION }}-extension-wasm_*
+          path: wasm-extensions
+
+      - name: Vendor DuckDB-Wasm
+        working-directory: web/vendor-src
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run check-version -- "${DUCKDB_VERSION}"
+          npm run bundle
+
+      - name: Assemble playground tree
+        run: |
+          set -euo pipefail
+          mkdir -p playground
+          cp -R web/. playground/
+          rm -rf playground/vendor-src
+          mkdir -p playground/vendor/duckdb-wasm
+          cp web/vendor-src/out/duckdb-browser.mjs \
+            web/vendor-src/node_modules/@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js \
+            web/vendor-src/node_modules/@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm \
+            playground/vendor/duckdb-wasm/
+          printf '{"branch": "%s", "commit": "%s"}\n' \
+            "${GITHUB_REF_NAME}" "${GITHUB_SHA:0:5}" > playground/build-info.json
+          for platform in wasm_eh wasm_mvp; do
+            src=$(find "wasm-extensions/onager-${DUCKDB_VERSION}-extension-${platform}" \
+              -name 'onager.duckdb_extension.wasm' | head -n1)
+            if [ -z "$src" ]; then
+              echo "::error::No ${platform} onager extension found in downloaded artifacts"
+              exit 1
+            fi
+            dest="playground/extensions/${DUCKDB_VERSION}/${platform}"
+            mkdir -p "$dest"
+            cp "$src" "$dest/onager.duckdb_extension.wasm"
+          done
+          echo "Assembled playground tree:"
+          find playground -type f | sort
+
+      - name: Upload playground artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground
+          path: playground
+          retention-days: 7
+          if-no-files-found: error
+
   build-docs:
+    needs: build-playground
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -43,14 +113,10 @@ jobs:
           source .venv/bin/activate && make docs
 
       - name: Download playground artifact
-        uses: dawidd6/action-download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
-          workflow: web.yml
-          workflow_conclusion: success
           name: playground
           path: ./site/playground
-          if_no_artifact_found: warn
-          allow_forks: false
 
       - name: Upload documentation artifact
         uses: actions/upload-pages-artifact@v3

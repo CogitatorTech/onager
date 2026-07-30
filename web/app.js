@@ -5,7 +5,7 @@
 // playground workflow builds from the npm package pinned in web/vendor-src.
 // Keep this version in sync with web/vendor-src/package.json; it is only used
 // for the jsdelivr fallback on local checkouts that lack the vendor folder.
-const DUCKDB_WASM_VERSION = "1.33.1-dev57.0";
+const DUCKDB_WASM_VERSION = "1.33.1-dev64.0";
 
 let duckdb = null;
 
@@ -531,13 +531,16 @@ let ticks = 0;
 let graphData = { nodes: [], links: [] };
 let draggedNode = null;
 
-// Determine local vs remote extension repository URL
-async function getExtensionRepository() {
+// Determine local vs remote extension repository URL. The repository layout is
+// <repo>/<duckdb version>/<platform>/onager.duckdb_extension.wasm, and DuckDB
+// picks the version segment from the running runtime, so the probe below has to
+// use the runtime's own version instead of a hardcoded one.
+async function getExtensionRepository(duckdbVersion) {
   const localRepo = new URL("extensions", document.baseURI).href;
   const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   if (isLocal) {
     try {
-      const testUrl = `${localRepo}/v1.5.4/wasm_mvp/onager.duckdb_extension.wasm`;
+      const testUrl = `${localRepo}/${duckdbVersion}/wasm_mvp/onager.duckdb_extension.wasm`;
       const res = await fetch(testUrl, { method: "HEAD" });
       if (res.ok) {
         console.log("Using local extension repository:", localRepo);
@@ -642,14 +645,15 @@ async function init() {
     });
     conn = await db.connect();
 
-    // Load Onager
-    const repo = await getExtensionRepository();
+    // Load Onager. The extension repository holds one directory per DuckDB
+    // version, so the running version decides which build gets fetched.
+    const duckdbVersion = await scalar("select version() as v;", "v");
+    const repo = await getExtensionRepository(duckdbVersion);
     await conn.query(`set custom_extension_repository = '${repo}';`);
     await conn.query(`install onager;`);
     await conn.query(`load onager;`);
 
     const version = await scalar("select onager_version() as v;", "v");
-    const duckdbVersion = await scalar("select version() as v;", "v");
     updateFooterVersions(duckdbVersion, version, await getBuildLabel());
     await conn.query(SAMPLE_EDGES);
 
