@@ -9,7 +9,6 @@ theme:
   logo: assets/logo.svg
   favicon: assets/logo.svg
   palette:
-    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: deep purple
@@ -17,7 +16,6 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: deep purple
@@ -118,7 +116,6 @@ nav:
   - API Reference:
       - SQL Functions: reference/sql-functions.md
       - Input Formats: reference/input-formats.md
-  # Playground app (built by web.yml and served at /onager/playground/)
   - Playground: https://cogitatortech.github.io/onager/playground/
 
 markdown_extensions:
