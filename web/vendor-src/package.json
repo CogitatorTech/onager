@@ -3,7 +3,8 @@
   "private": true,
   "description": "Builds the self-hosted DuckDB-Wasm bundle for the playground. The version must match DUCKDB_WASM_VERSION in web/app.js.",
   "scripts": {
-    "bundle": "esbuild entry.js --bundle --minify --format=esm --outfile=out/duckdb-browser.mjs"
+    "bundle": "esbuild entry.js --bundle --minify --format=esm --outfile=out/duckdb-browser.mjs",
+    "check-version": "node check-duckdb-version.mjs"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "1.33.1-dev64.0"

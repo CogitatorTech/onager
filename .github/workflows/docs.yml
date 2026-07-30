@@ -49,6 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           npm ci
+          npm run check-version -- "${DUCKDB_VERSION}"
           npm run bundle
 
       - name: Assemble playground tree
