@@ -20,7 +20,7 @@ Priorities, in order:
 
 ## Core Rules
 
-- Use English for code, comments, docs, tests, and commit messages.
+- Write in simple, plain English. Use short sentences and everyday words.
 - Prefer focused fixes over broad refactoring.
 - Preserve the existing Rust/C ABI unless the task explicitly requires changing it.
 - Treat `onager/bindings/include/rust.h` as generated code. If Rust FFI signatures change, regenerate it with `make create-bindings`.
