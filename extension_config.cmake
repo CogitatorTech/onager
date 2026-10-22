@@ -112,7 +112,8 @@ if (EXISTS ${ONAGER_RUST_LIB})
         if(WIN32)
             # Explicitly add Windows system libraries required by Rust dependencies (mio, std I/O paths)
             # Nt* symbols come from ntdll; others from userenv/dbghelp; bcrypt often pulled by crypto backends.
-            set(_ONAGER_WIN_SYSTEM_LIBS ntdll userenv dbghelp bcrypt)
+            # WaitOnAddress/WakeByAddress* symbols come from synchronization (used by Rust std futex/sync).
+            set(_ONAGER_WIN_SYSTEM_LIBS ntdll userenv dbghelp bcrypt synchronization)
             link_libraries(${_ONAGER_WIN_SYSTEM_LIBS})
             target_link_libraries(onager_rust INTERFACE ${_ONAGER_WIN_SYSTEM_LIBS})
         endif()
