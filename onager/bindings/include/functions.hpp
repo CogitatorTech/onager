@@ -22,32 +22,101 @@
 // =============================================================================
 // DuckDB Version Compatibility
 // =============================================================================
-// order_preservation_type was added in DuckDB 1.5.0
-// Use this macro to set NO_ORDER preservation in a version-compatible way
-#if defined(DUCKDB_MAJOR_VERSION) && defined(DUCKDB_MINOR_VERSION)
-  #if DUCKDB_MAJOR_VERSION > 1 || (DUCKDB_MAJOR_VERSION == 1 && DUCKDB_MINOR_VERSION >= 5)
-    #define ONAGER_HAS_ORDER_PRESERVATION 1
-  #endif
-#endif
+namespace duckdb {
+namespace onager {
 
-#ifdef ONAGER_HAS_ORDER_PRESERVATION
-  #define ONAGER_SET_NO_ORDER(func) (func).order_preservation_type = OrderPreservationType::NO_ORDER
-#else
-  #define ONAGER_SET_NO_ORDER(func) ((void)0)
-#endif
+template <int N> struct PriorityTag : PriorityTag<N - 1> {};
+template <> struct PriorityTag<0> {};
 
-#if defined(DUCKDB_MAJOR_VERSION) && defined(DUCKDB_MINOR_VERSION)
-  #if DUCKDB_MAJOR_VERSION > 1 || (DUCKDB_MAJOR_VERSION == 1 && DUCKDB_MINOR_VERSION >= 6)
-    #define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) (vector).ToUnifiedFormat(data)
-    #define ONAGER_SET_CARDINALITY(chunk, count) (chunk).SetChildCardinality(count)
-  #else
-    #define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) (vector).ToUnifiedFormat(count, data)
-    #define ONAGER_SET_CARDINALITY(chunk, count) (chunk).SetCardinality(count)
-  #endif
-#else
-  #define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) (vector).ToUnifiedFormat(count, data)
-  #define ONAGER_SET_CARDINALITY(chunk, count) (chunk).SetCardinality(count)
-#endif
+template <typename T>
+struct BindNamesTypeHelper;
+
+template <typename Ret, typename A1, typename A2, typename A3, typename A4>
+struct BindNamesTypeHelper<Ret (*)(A1, A2, A3, A4)> {
+  using type = std::remove_reference_t<A4>;
+};
+
+using bind_names_t = typename BindNamesTypeHelper<duckdb::table_function_bind_t>::type;
+
+template <typename T>
+static auto AddNamedParamCompat(T &func, const std::string &name, const LogicalType &type, PriorityTag<2>)
+    -> decltype(func.named_parameters[name] = type, void()) {
+  func.named_parameters[name] = type;
+}
+
+template <typename T>
+static auto AddNamedParamCompat(T &func, const std::string &name, const LogicalType &type, PriorityTag<1>)
+    -> decltype(func.GetSignature().GetTypedKwargs(), void()) {
+  if (!func.GetSignature().GetTypedKwargs()) {
+    func.GetSignature().WithTypedKwargs("options", [&](auto &opts) {
+      opts.Add(name.c_str(), type);
+    });
+  } else {
+    func.GetSignature().ExtendTypedKwargs([&](auto &opts) {
+      opts.Add(name.c_str(), type);
+    });
+  }
+}
+
+template <typename T>
+static void AddNamedParamCompat(T &, const std::string &, const LogicalType &, PriorityTag<0>) {}
+
+template <typename T>
+inline void AddNamedParam(T &func, const std::string &name, const LogicalType &type) {
+  AddNamedParamCompat(func, name, type, PriorityTag<2>{});
+}
+
+template <typename T>
+static auto SetCardinalityCompat(T &chunk, idx_t count, PriorityTag<1>)
+    -> decltype(chunk.SetChildCardinality(count), void()) {
+  chunk.SetChildCardinality(count);
+}
+
+template <typename T>
+static void SetCardinalityCompat(T &chunk, idx_t count, PriorityTag<0>) {
+  chunk.SetCardinality(count);
+}
+
+template <typename T>
+inline void SetCardinalityCompat(T &chunk, idx_t count) {
+  SetCardinalityCompat(chunk, count, PriorityTag<1>{});
+}
+
+template <typename T>
+static auto ToUnifiedFormatCompat(T &vector, idx_t count, UnifiedVectorFormat &data, PriorityTag<1>)
+    -> decltype(vector.ToUnifiedFormat(data), void()) {
+  vector.ToUnifiedFormat(data);
+}
+
+template <typename T>
+static void ToUnifiedFormatCompat(T &vector, idx_t count, UnifiedVectorFormat &data, PriorityTag<0>) {
+  vector.ToUnifiedFormat(count, data);
+}
+
+inline void ToUnifiedFormatCompat(Vector &vector, idx_t count, UnifiedVectorFormat &data) {
+  ToUnifiedFormatCompat(vector, count, data, PriorityTag<1>{});
+}
+
+template <typename T>
+static auto SetNoOrderCompat(T &func, PriorityTag<1>)
+    -> decltype(func.order_preservation_type = OrderPreservationType::NO_ORDER, void()) {
+  func.order_preservation_type = OrderPreservationType::NO_ORDER;
+}
+
+template <typename T>
+static void SetNoOrderCompat(T &, PriorityTag<0>) {}
+
+template <typename T>
+inline void SetNoOrder(T &func) {
+  SetNoOrderCompat(func, PriorityTag<1>{});
+}
+
+#define ONAGER_SET_NO_ORDER(func) ::duckdb::onager::SetNoOrder(func)
+#define ONAGER_TO_UNIFIED_FORMAT(vector, count, data) ::duckdb::onager::ToUnifiedFormatCompat(vector, count, data)
+#define ONAGER_SET_CARDINALITY(chunk, count) ::duckdb::onager::SetCardinalityCompat(chunk, count)
+
+} // namespace onager
+} // namespace duckdb
 
 
 namespace duckdb {

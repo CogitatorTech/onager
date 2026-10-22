@@ -39,7 +39,7 @@ struct PageRankGlobalState : public GlobalTableFunctionState {
 static unique_ptr<FunctionData> PageRankBind(ClientContext &context,
                                               TableFunctionBindInput &input,
                                               vector<LogicalType> &return_types,
-                                              vector<string> &names) {
+                                              bind_names_t &names) {
   auto bind_data = make_uniq<PageRankBindData>();
   CheckInt64Input(input, "onager_ctr_pagerank");
   bind_data->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
@@ -112,7 +112,7 @@ struct DegreeGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> DegreeBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> DegreeBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<DegreeBindData>();
   CheckInt64Input(input, "onager_ctr_degree");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_degree", "directed", kv.second);
@@ -162,7 +162,7 @@ struct BetweennessGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> BetweennessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> BetweennessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<BetweennessBindData>();
   CheckInt64Input(input, "onager_ctr_betweenness");
   for (auto &kv : input.named_parameters) {
@@ -215,7 +215,7 @@ struct ClosenessGlobalState : public GlobalTableFunctionState {
 
 struct ClosenessBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> ClosenessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ClosenessBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<ClosenessBindData>();
   CheckInt64Input(input, "onager_ctr_closeness");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_closeness", "directed", kv.second);
@@ -266,7 +266,7 @@ struct HarmonicGlobalState : public GlobalTableFunctionState {
 
 struct HarmonicBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> HarmonicBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> HarmonicBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<HarmonicBindData>();
   CheckInt64Input(input, "onager_ctr_harmonic");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_harmonic", "directed", kv.second);
@@ -316,7 +316,7 @@ struct KatzGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> KatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<KatzBindData>();
   CheckInt64Input(input, "onager_ctr_katz");
   for (auto &kv : input.named_parameters) {
@@ -371,7 +371,7 @@ struct EigenvectorGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> EigenvectorBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> EigenvectorBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<EigenvectorBindData>();
   CheckInt64Input(input, "onager_ctr_eigenvector");
   for (auto &kv : input.named_parameters) {
@@ -421,59 +421,59 @@ void RegisterCentralityFunctions(ExtensionLoader &loader) {
   TableFunction pagerank("onager_ctr_pagerank", {LogicalType::TABLE}, nullptr, PageRankBind, PageRankInitGlobal);
   pagerank.in_out_function = PageRankInOut;
   pagerank.in_out_function_final = PageRankFinal;
-  pagerank.named_parameters["damping"] = LogicalType::DOUBLE;
-  pagerank.named_parameters["iterations"] = LogicalType::BIGINT;
-  pagerank.named_parameters["tolerance"] = LogicalType::DOUBLE;
-  pagerank.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(pagerank, "damping", LogicalType::DOUBLE);
+  AddNamedParam(pagerank, "iterations", LogicalType::BIGINT);
+  AddNamedParam(pagerank, "tolerance", LogicalType::DOUBLE);
+  AddNamedParam(pagerank, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(pagerank);
   loader.RegisterFunction(pagerank);
 
   TableFunction degree("onager_ctr_degree", {LogicalType::TABLE}, nullptr, DegreeBind, DegreeInitGlobal);
   degree.in_out_function = DegreeInOut;
   degree.in_out_function_final = DegreeFinal;
-  degree.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(degree, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(degree);
   loader.RegisterFunction(degree);
 
   TableFunction betweenness("onager_ctr_betweenness", {LogicalType::TABLE}, nullptr, BetweennessBind, BetweennessInitGlobal);
   betweenness.in_out_function = BetweennessInOut;
   betweenness.in_out_function_final = BetweennessFinal;
-  betweenness.named_parameters["normalized"] = LogicalType::BOOLEAN;
-  betweenness.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(betweenness, "normalized", LogicalType::BOOLEAN);
+  AddNamedParam(betweenness, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(betweenness);
   loader.RegisterFunction(betweenness);
 
   TableFunction closeness("onager_ctr_closeness", {LogicalType::TABLE}, nullptr, ClosenessBind, ClosenessInitGlobal);
   closeness.in_out_function = ClosenessInOut;
   closeness.in_out_function_final = ClosenessFinal;
-  closeness.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(closeness, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(closeness);
   loader.RegisterFunction(closeness);
 
   TableFunction harmonic("onager_ctr_harmonic", {LogicalType::TABLE}, nullptr, HarmonicBind, HarmonicInitGlobal);
   harmonic.in_out_function = HarmonicInOut;
   harmonic.in_out_function_final = HarmonicFinal;
-  harmonic.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(harmonic, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(harmonic);
   loader.RegisterFunction(harmonic);
 
   TableFunction katz("onager_ctr_katz", {LogicalType::TABLE}, nullptr, KatzBind, KatzInitGlobal);
   katz.in_out_function = KatzInOut;
   katz.in_out_function_final = KatzFinal;
-  katz.named_parameters["alpha"] = LogicalType::DOUBLE;
-  katz.named_parameters["beta"] = LogicalType::DOUBLE;
-  katz.named_parameters["max_iter"] = LogicalType::BIGINT;
-  katz.named_parameters["tolerance"] = LogicalType::DOUBLE;
-  katz.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(katz, "alpha", LogicalType::DOUBLE);
+  AddNamedParam(katz, "beta", LogicalType::DOUBLE);
+  AddNamedParam(katz, "max_iter", LogicalType::BIGINT);
+  AddNamedParam(katz, "tolerance", LogicalType::DOUBLE);
+  AddNamedParam(katz, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(katz);
   loader.RegisterFunction(katz);
 
   TableFunction eigenvector("onager_ctr_eigenvector", {LogicalType::TABLE}, nullptr, EigenvectorBind, EigenvectorInitGlobal);
   eigenvector.in_out_function = EigenvectorInOut;
   eigenvector.in_out_function_final = EigenvectorFinal;
-  eigenvector.named_parameters["max_iter"] = LogicalType::BIGINT;
-  eigenvector.named_parameters["tolerance"] = LogicalType::DOUBLE;
-  eigenvector.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(eigenvector, "max_iter", LogicalType::BIGINT);
+  AddNamedParam(eigenvector, "tolerance", LogicalType::DOUBLE);
+  AddNamedParam(eigenvector, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(eigenvector);
   loader.RegisterFunction(eigenvector);
 }
@@ -505,7 +505,7 @@ struct VoteRankGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> VoteRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> VoteRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<VoteRankBindData>();
   CheckInt64Input(input, "onager_ctr_voterank");
   for (auto &kv : input.named_parameters) {
@@ -549,8 +549,8 @@ void RegisterVoteRankFunction(ExtensionLoader &loader) {
   TableFunction voterank("onager_ctr_voterank", {LogicalType::TABLE}, nullptr, VoteRankBind, VoteRankInitGlobal);
   voterank.in_out_function = VoteRankInOut;
   voterank.in_out_function_final = VoteRankFinal;
-  voterank.named_parameters["num_seeds"] = LogicalType::BIGINT;
-  voterank.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(voterank, "num_seeds", LogicalType::BIGINT);
+  AddNamedParam(voterank, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(voterank);
   loader.RegisterFunction(voterank);
 }
@@ -573,7 +573,7 @@ struct LocalReachingGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> LocalReachingBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<LocalReachingBindData>();
   CheckInt64Input(input, "onager_ctr_local_reaching");
   for (auto &kv : input.named_parameters) {
@@ -626,7 +626,7 @@ struct LaplacianGlobalState : public GlobalTableFunctionState {
 
 struct LaplacianBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> LaplacianBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<LaplacianBindData>();
   CheckInt64Input(input, "onager_ctr_laplacian");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_ctr_laplacian", "directed", kv.second);
@@ -668,8 +668,8 @@ void RegisterLocalReachingFunction(ExtensionLoader &loader) {
   TableFunction lr("onager_ctr_local_reaching", {LogicalType::TABLE}, nullptr, LocalReachingBind, LocalReachingInitGlobal);
   lr.in_out_function = LocalReachingInOut;
   lr.in_out_function_final = LocalReachingFinal;
-  lr.named_parameters["distance"] = LogicalType::BIGINT;
-  lr.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(lr, "distance", LogicalType::BIGINT);
+  AddNamedParam(lr, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(lr);
   loader.RegisterFunction(lr);
 }
@@ -677,7 +677,7 @@ void RegisterLaplacianFunction(ExtensionLoader &loader) {
   TableFunction lap("onager_ctr_laplacian", {LogicalType::TABLE}, nullptr, LaplacianBind, LaplacianInitGlobal);
   lap.in_out_function = LaplacianInOut;
   lap.in_out_function_final = LaplacianFinal;
-  lap.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(lap, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(lap);
   loader.RegisterFunction(lap);
 }

@@ -23,7 +23,7 @@ struct LouvainGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> LouvainBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> LouvainBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<LouvainBindData>();
   CheckInt64Input(input, "onager_cmm_louvain");
   for (auto &kv : input.named_parameters) if (kv.first == "seed") bd->seed = GetRequiredParam<int64_t>("onager_cmm_louvain", "seed", kv.second);
@@ -70,7 +70,7 @@ struct ComponentsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ComponentsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ComponentsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_cmm_components");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("component");
@@ -117,7 +117,7 @@ struct LabelPropGlobalState : public GlobalTableFunctionState {
 
 struct LabelPropBindData : public TableFunctionData { int64_t max_iter = 100; int64_t seed = -1; };
 
-static unique_ptr<FunctionData> LabelPropBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> LabelPropBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<LabelPropBindData>();
   CheckInt64Input(input, "onager_cmm_label_prop");
   for (auto &kv : input.named_parameters) {
@@ -169,7 +169,7 @@ struct GirvanNewmanGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> GirvanNewmanBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> GirvanNewmanBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<GirvanNewmanBindData>();
   CheckInt64Input(input, "onager_cmm_girvan_newman");
   for (auto &kv : input.named_parameters) if (kv.first == "communities") bd->target_communities = GetNonNegativeParam("onager_cmm_girvan_newman", "communities", kv.second);
@@ -217,7 +217,7 @@ struct SpectralGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> SpectralBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> SpectralBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<SpectralBindData>();
   CheckInt64Input(input, "onager_cmm_spectral");
   for (auto &kv : input.named_parameters) {
@@ -268,7 +268,7 @@ struct InfomapGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> InfomapBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> InfomapBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<InfomapBindData>();
   CheckInt64Input(input, "onager_cmm_infomap");
   for (auto &kv : input.named_parameters) {
@@ -317,7 +317,7 @@ void RegisterCommunityFunctions(ExtensionLoader &loader) {
   TableFunction louvain("onager_cmm_louvain", {LogicalType::TABLE}, nullptr, LouvainBind, LouvainInitGlobal);
   louvain.in_out_function = LouvainInOut;
   louvain.in_out_function_final = LouvainFinal;
-  louvain.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(louvain, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(louvain);
   loader.RegisterFunction(louvain);
 
@@ -330,31 +330,31 @@ void RegisterCommunityFunctions(ExtensionLoader &loader) {
   TableFunction label_prop("onager_cmm_label_prop", {LogicalType::TABLE}, nullptr, LabelPropBind, LabelPropInitGlobal);
   label_prop.in_out_function = LabelPropInOut;
   label_prop.in_out_function_final = LabelPropFinal;
-  label_prop.named_parameters["max_iter"] = LogicalType::BIGINT;
-  label_prop.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(label_prop, "max_iter", LogicalType::BIGINT);
+  AddNamedParam(label_prop, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(label_prop);
   loader.RegisterFunction(label_prop);
 
   TableFunction girvan_newman("onager_cmm_girvan_newman", {LogicalType::TABLE}, nullptr, GirvanNewmanBind, GirvanNewmanInitGlobal);
   girvan_newman.in_out_function = GirvanNewmanInOut;
   girvan_newman.in_out_function_final = GirvanNewmanFinal;
-  girvan_newman.named_parameters["communities"] = LogicalType::BIGINT;
+  AddNamedParam(girvan_newman, "communities", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(girvan_newman);
   loader.RegisterFunction(girvan_newman);
 
   TableFunction spectral("onager_cmm_spectral", {LogicalType::TABLE}, nullptr, SpectralBind, SpectralInitGlobal);
   spectral.in_out_function = SpectralInOut;
   spectral.in_out_function_final = SpectralFinal;
-  spectral.named_parameters["k"] = LogicalType::BIGINT;
-  spectral.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(spectral, "k", LogicalType::BIGINT);
+  AddNamedParam(spectral, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(spectral);
   loader.RegisterFunction(spectral);
 
   TableFunction infomap("onager_cmm_infomap", {LogicalType::TABLE}, nullptr, InfomapBind, InfomapInitGlobal);
   infomap.in_out_function = InfomapInOut;
   infomap.in_out_function_final = InfomapFinal;
-  infomap.named_parameters["max_iter"] = LogicalType::BIGINT;
-  infomap.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(infomap, "max_iter", LogicalType::BIGINT);
+  AddNamedParam(infomap, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(infomap);
   loader.RegisterFunction(infomap);
 }
