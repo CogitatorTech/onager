@@ -14,6 +14,7 @@ PY_DEP_MNGR := uv
 # ==============================================================================
 # DuckDB Extension Build Configuration
 # ==============================================================================
+override DUCKDB_PREBUILT_LIBRARY :=
 include external/extension-ci-tools/makefiles/duckdb_extension.Makefile
 set_duckdb_version:
 	cd external/duckdb && git checkout $(DUCKDB_GIT_VERSION)
