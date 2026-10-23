@@ -7,7 +7,7 @@
 
 #pragma once
 
-/* Generated with cbindgen:0.26.0 */
+/* Generated with cbindgen:0.29.0 */
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -16,7 +16,7 @@
 
 #ifdef __cplusplus
 namespace onager {
-#endif // __cplusplus
+#endif  // __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
@@ -735,13 +735,13 @@ int64_t onager_compute_floyd_warshall(const int64_t *src_ptr,
                                       double *out_distances);
 
 #ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #ifdef __cplusplus
-} // namespace onager
-#endif // __cplusplus
+}  // namespace onager
+#endif  // __cplusplus
 
-#endif /* ONAGER_H */
+#endif  /* ONAGER_H */
 
 /* End of generated bindings */

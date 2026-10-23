@@ -24,7 +24,7 @@ struct KruskalMstGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> KruskalMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> KruskalMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_mst_kruskal", 3);
   CheckColumnType(input, "onager_mst_kruskal", 2, LogicalType::DOUBLE);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
@@ -73,7 +73,7 @@ struct PrimMstGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> PrimMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> PrimMstBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_mst_prim", 3);
   CheckColumnType(input, "onager_mst_prim", 2, LogicalType::DOUBLE);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");

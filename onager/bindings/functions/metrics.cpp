@@ -27,7 +27,7 @@ struct DiameterGlobalState : public GlobalTableFunctionState {
 
 struct DiameterBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> DiameterBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<DiameterBindData>();
   CheckInt64Input(input, "onager_mtr_diameter");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_diameter", "directed", kv.second);
@@ -77,7 +77,7 @@ struct RadiusGlobalState : public GlobalTableFunctionState {
 
 struct RadiusBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> RadiusBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<RadiusBindData>();
   CheckInt64Input(input, "onager_mtr_radius");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_radius", "directed", kv.second);
@@ -125,7 +125,7 @@ struct AvgClusteringGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> AvgClusteringBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> AvgClusteringBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_mtr_avg_clustering");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("avg_clustering");
   return make_uniq<TableFunctionData>();
@@ -169,7 +169,7 @@ struct TriangleCountGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> TriangleCountBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> TriangleCountBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_mtr_triangles");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("triangles");
@@ -215,7 +215,7 @@ struct TransitivityGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> TransitivityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> TransitivityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_mtr_transitivity");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("transitivity");
   return make_uniq<TableFunctionData>();
@@ -262,7 +262,7 @@ struct AvgPathLengthGlobalState : public GlobalTableFunctionState {
 
 struct AvgPathLengthBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> AvgPathLengthBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<AvgPathLengthBindData>();
   CheckInt64Input(input, "onager_mtr_avg_path_length");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_avg_path_length", "directed", kv.second);
@@ -312,7 +312,7 @@ struct AssortativityGlobalState : public GlobalTableFunctionState {
 
 struct AssortativityBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> AssortativityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<AssortativityBindData>();
   CheckInt64Input(input, "onager_mtr_assortativity");
   for (auto &kv : input.named_parameters) if (kv.first == "directed") bd->directed = GetRequiredParam<bool>("onager_mtr_assortativity", "directed", kv.second);
@@ -361,7 +361,7 @@ struct DensityGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> DensityBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_mtr_density");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("density");
   auto bd = make_uniq<DensityBindData>();
@@ -403,14 +403,14 @@ void RegisterMetricFunctions(ExtensionLoader &loader) {
   TableFunction diameter("onager_mtr_diameter", {LogicalType::TABLE}, nullptr, DiameterBind, DiameterInitGlobal);
   diameter.in_out_function = DiameterInOut;
   diameter.in_out_function_final = DiameterFinal;
-  diameter.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(diameter, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(diameter);
   loader.RegisterFunction(diameter);
 
   TableFunction radius("onager_mtr_radius", {LogicalType::TABLE}, nullptr, RadiusBind, RadiusInitGlobal);
   radius.in_out_function = RadiusInOut;
   radius.in_out_function_final = RadiusFinal;
-  radius.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(radius, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(radius);
   loader.RegisterFunction(radius);
 
@@ -435,21 +435,21 @@ void RegisterMetricFunctions(ExtensionLoader &loader) {
   TableFunction avg_path_length("onager_mtr_avg_path_length", {LogicalType::TABLE}, nullptr, AvgPathLengthBind, AvgPathLengthInitGlobal);
   avg_path_length.in_out_function = AvgPathLengthInOut;
   avg_path_length.in_out_function_final = AvgPathLengthFinal;
-  avg_path_length.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(avg_path_length, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(avg_path_length);
   loader.RegisterFunction(avg_path_length);
 
   TableFunction assortativity("onager_mtr_assortativity", {LogicalType::TABLE}, nullptr, AssortativityBind, AssortativityInitGlobal);
   assortativity.in_out_function = AssortativityInOut;
   assortativity.in_out_function_final = AssortativityFinal;
-  assortativity.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(assortativity, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(assortativity);
   loader.RegisterFunction(assortativity);
 
   TableFunction density("onager_mtr_density", {LogicalType::TABLE}, nullptr, DensityBind, DensityInitGlobal);
   density.in_out_function = DensityInOut;
   density.in_out_function_final = DensityFinal;
-  density.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(density, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(density);
   loader.RegisterFunction(density);
 }

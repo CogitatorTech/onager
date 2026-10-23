@@ -23,7 +23,7 @@ struct MaxCliqueGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> MaxCliqueBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> MaxCliqueBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_apx_max_clique");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();
@@ -71,7 +71,7 @@ struct IndependentSetGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> IndependentSetBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> IndependentSetBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_apx_independent_set");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();
@@ -119,7 +119,7 @@ struct VertexCoverGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> VertexCoverBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> VertexCoverBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_apx_vertex_cover");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   return make_uniq<TableFunctionData>();
@@ -171,7 +171,7 @@ struct TspGlobalState : public GlobalTableFunctionState {
 
 struct TspBindData : public TableFunctionData { int64_t start = 0; bool has_start = false; };
 
-static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> TspBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<TspBindData>();
   CheckInt64Input(input, "onager_apx_tsp", 3);
   CheckColumnType(input, "onager_apx_tsp", 2, LogicalType::DOUBLE);
@@ -242,7 +242,7 @@ void RegisterApproximationFunctions(ExtensionLoader &loader) {
   TableFunction tsp("onager_apx_tsp", {LogicalType::TABLE}, nullptr, TspBind, TspInitGlobal);
   tsp.in_out_function = TspInOut;
   tsp.in_out_function_final = TspFinal;
-  tsp.named_parameters["start"] = LogicalType::BIGINT;
+  AddNamedParam(tsp, "start", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(tsp);
   loader.RegisterFunction(tsp);
 }

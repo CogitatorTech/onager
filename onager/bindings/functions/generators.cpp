@@ -23,7 +23,7 @@ struct ErdosRenyiGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ErdosRenyiBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ErdosRenyiBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<ErdosRenyiBindData>();
   if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_erdos_renyi", "n", input.inputs[0]);
   if (input.inputs.size() >= 2) bd->p = GetRequiredParam<double>("onager_gen_erdos_renyi", "p", input.inputs[1]);
@@ -64,7 +64,7 @@ struct BarabasiAlbertGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> BarabasiAlbertBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> BarabasiAlbertBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<BarabasiAlbertBindData>();
   if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_barabasi_albert", "n", input.inputs[0]);
   if (input.inputs.size() >= 2) bd->m = GetNonNegativeParam("onager_gen_barabasi_albert", "m", input.inputs[1]);
@@ -105,7 +105,7 @@ struct WattsStrogatzGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> WattsStrogatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> WattsStrogatzBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<WattsStrogatzBindData>();
   if (input.inputs.size() >= 1) bd->n = GetNonNegativeParam("onager_gen_watts_strogatz", "n", input.inputs[0]);
   if (input.inputs.size() >= 2) bd->k = GetNonNegativeParam("onager_gen_watts_strogatz", "k", input.inputs[1]);
@@ -142,17 +142,17 @@ namespace onager {
 
 void RegisterGeneratorFunctions(ExtensionLoader &loader) {
   TableFunction erdos_renyi("onager_gen_erdos_renyi", {LogicalType::BIGINT, LogicalType::DOUBLE}, ErdosRenyiFunction, ErdosRenyiBind, ErdosRenyiInitGlobal);
-  erdos_renyi.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(erdos_renyi, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(erdos_renyi);
   loader.RegisterFunction(erdos_renyi);
 
   TableFunction barabasi_albert("onager_gen_barabasi_albert", {LogicalType::BIGINT, LogicalType::BIGINT}, BarabasiAlbertFunction, BarabasiAlbertBind, BarabasiAlbertInitGlobal);
-  barabasi_albert.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(barabasi_albert, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(barabasi_albert);
   loader.RegisterFunction(barabasi_albert);
 
   TableFunction watts_strogatz("onager_gen_watts_strogatz", {LogicalType::BIGINT, LogicalType::BIGINT, LogicalType::DOUBLE}, WattsStrogatzFunction, WattsStrogatzBind, WattsStrogatzInitGlobal);
-  watts_strogatz.named_parameters["seed"] = LogicalType::BIGINT;
+  AddNamedParam(watts_strogatz, "seed", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(watts_strogatz);
   loader.RegisterFunction(watts_strogatz);
 }

@@ -23,7 +23,7 @@ struct EgoGraphGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> EgoGraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> EgoGraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<EgoGraphBindData>();
   CheckInt64Input(input, "onager_sub_ego_graph");
   for (auto &kv : input.named_parameters) {
@@ -74,7 +74,7 @@ struct KHopGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> KHopBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> KHopBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<KHopBindData>();
   CheckInt64Input(input, "onager_sub_k_hop");
   for (auto &kv : input.named_parameters) {
@@ -123,7 +123,7 @@ struct InducedSubgraphGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> InducedSubgraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> InducedSubgraphBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_sub_induced", 3);
   CheckColumnType(input, "onager_sub_induced", 2, LogicalType::BIGINT);
   rt.push_back(LogicalType::BIGINT); nm.push_back("src");
@@ -187,16 +187,16 @@ void RegisterSubgraphFunctions(ExtensionLoader &loader) {
   TableFunction ego_graph("onager_sub_ego_graph", {LogicalType::TABLE}, nullptr, EgoGraphBind, EgoGraphInitGlobal);
   ego_graph.in_out_function = EgoGraphInOut;
   ego_graph.in_out_function_final = EgoGraphFinal;
-  ego_graph.named_parameters["center"] = LogicalType::BIGINT;
-  ego_graph.named_parameters["radius"] = LogicalType::BIGINT;
+  AddNamedParam(ego_graph, "center", LogicalType::BIGINT);
+  AddNamedParam(ego_graph, "radius", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(ego_graph);
   loader.RegisterFunction(ego_graph);
 
   TableFunction k_hop("onager_sub_k_hop", {LogicalType::TABLE}, nullptr, KHopBind, KHopInitGlobal);
   k_hop.in_out_function = KHopInOut;
   k_hop.in_out_function_final = KHopFinal;
-  k_hop.named_parameters["start"] = LogicalType::BIGINT;
-  k_hop.named_parameters["k"] = LogicalType::BIGINT;
+  AddNamedParam(k_hop, "start", LogicalType::BIGINT);
+  AddNamedParam(k_hop, "k", LogicalType::BIGINT);
   ONAGER_SET_NO_ORDER(k_hop);
   loader.RegisterFunction(k_hop);
 

@@ -8,7 +8,7 @@ DUCKDB_PATH = "./build/release/duckdb"
 EXTENSION_PATH = "build/release/extension/onager/onager.duckdb_extension"
 
 def run_query(sql):
-    cmd = [DUCKDB_PATH, "-light-mode", "-json", "-c", f"load '{EXTENSION_PATH}'; {sql}"]
+    cmd = [DUCKDB_PATH, "-unsigned", "-light-mode", "-json", "-c", f"load '{EXTENSION_PATH}'; {sql}"]
     res = subprocess.run(cmd, capture_output=True, text=True, check=True)
     if not res.stdout.strip():
         return []

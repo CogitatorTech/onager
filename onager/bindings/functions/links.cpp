@@ -23,7 +23,7 @@ struct JaccardGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> JaccardBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> JaccardBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_lnk_jaccard");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node1");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node2");
@@ -70,7 +70,7 @@ struct AdamicAdarGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> AdamicAdarBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> AdamicAdarBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_lnk_adamic_adar");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node1");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node2");
@@ -117,7 +117,7 @@ struct PrefAttachGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> PrefAttachBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> PrefAttachBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_lnk_pref_attach");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node1");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node2");
@@ -164,7 +164,7 @@ struct ResourceAllocGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ResourceAllocBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ResourceAllocBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_lnk_resource_alloc");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node1");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node2");
@@ -210,7 +210,7 @@ struct CommonNeighborsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> CommonNeighborsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> CommonNeighborsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_lnk_common_neighbors");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node1");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node2");

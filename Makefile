@@ -4,7 +4,7 @@
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 EXT_NAME := onager
 RUST_LIB := onager/target/release/$(EXT_NAME).a
-DUCKDB_SRCDIR := ./external/duckdb/
+DUCKDB_SRCDIR ?= $(if $(wildcard ./duckdb/CMakeLists.txt),./duckdb/,./external/duckdb/)
 EXT_CONFIG := ${PROJ_DIR}extension_config.cmake
 EXAMPLES_DIR := docs/examples
 SHELL := /bin/bash
@@ -17,7 +17,7 @@ PY_DEP_MNGR := uv
 override DUCKDB_PREBUILT_LIBRARY :=
 include external/extension-ci-tools/makefiles/duckdb_extension.Makefile
 set_duckdb_version:
-	cd external/duckdb && git checkout $(DUCKDB_GIT_VERSION)
+	cd $(DUCKDB_SRCDIR) && git checkout $(DUCKDB_GIT_VERSION)
 
 # ==============================================================================
 # Help Target

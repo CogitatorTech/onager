@@ -24,7 +24,7 @@ struct DijkstraGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> DijkstraBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<DijkstraBindData>();
   CheckInt64Input(input, "onager_pth_dijkstra");
   bd->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
@@ -82,7 +82,7 @@ struct BfsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> BfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> BfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<BfsBindData>();
   CheckInt64Input(input, "onager_trv_bfs");
   for (auto &kv : input.named_parameters) {
@@ -132,7 +132,7 @@ struct DfsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> DfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> DfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<DfsBindData>();
   CheckInt64Input(input, "onager_trv_dfs");
   for (auto &kv : input.named_parameters) {
@@ -183,7 +183,7 @@ struct BellmanFordGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> BellmanFordBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> BellmanFordBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<BellmanFordBindData>();
   CheckInt64Input(input, "onager_pth_bellman_ford", 3);
   CheckColumnType(input, "onager_pth_bellman_ford", 2, LogicalType::DOUBLE);
@@ -237,7 +237,7 @@ struct FloydWarshallGlobalState : public GlobalTableFunctionState {
 
 struct FloydWarshallBindData : public TableFunctionData { bool directed = false; };
 
-static unique_ptr<FunctionData> FloydWarshallBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> FloydWarshallBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<FloydWarshallBindData>();
   CheckInt64Input(input, "onager_pth_floyd_warshall", 3);
   CheckColumnType(input, "onager_pth_floyd_warshall", 2, LogicalType::DOUBLE);
@@ -286,39 +286,39 @@ void RegisterTraversalFunctions(ExtensionLoader &loader) {
   TableFunction dijkstra("onager_pth_dijkstra", {LogicalType::TABLE}, nullptr, DijkstraBind, DijkstraInitGlobal);
   dijkstra.in_out_function = DijkstraInOut;
   dijkstra.in_out_function_final = DijkstraFinal;
-  dijkstra.named_parameters["source"] = LogicalType::BIGINT;
-  dijkstra.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(dijkstra, "source", LogicalType::BIGINT);
+  AddNamedParam(dijkstra, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(dijkstra);
   loader.RegisterFunction(dijkstra);
 
   TableFunction bfs("onager_trv_bfs", {LogicalType::TABLE}, nullptr, BfsBind, BfsInitGlobal);
   bfs.in_out_function = BfsInOut;
   bfs.in_out_function_final = BfsFinal;
-  bfs.named_parameters["source"] = LogicalType::BIGINT;
-  bfs.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(bfs, "source", LogicalType::BIGINT);
+  AddNamedParam(bfs, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(bfs);
   loader.RegisterFunction(bfs);
 
   TableFunction dfs("onager_trv_dfs", {LogicalType::TABLE}, nullptr, DfsBind, DfsInitGlobal);
   dfs.in_out_function = DfsInOut;
   dfs.in_out_function_final = DfsFinal;
-  dfs.named_parameters["source"] = LogicalType::BIGINT;
-  dfs.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(dfs, "source", LogicalType::BIGINT);
+  AddNamedParam(dfs, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(dfs);
   loader.RegisterFunction(dfs);
 
   TableFunction bellman_ford("onager_pth_bellman_ford", {LogicalType::TABLE}, nullptr, BellmanFordBind, BellmanFordInitGlobal);
   bellman_ford.in_out_function = BellmanFordInOut;
   bellman_ford.in_out_function_final = BellmanFordFinal;
-  bellman_ford.named_parameters["source"] = LogicalType::BIGINT;
-  bellman_ford.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(bellman_ford, "source", LogicalType::BIGINT);
+  AddNamedParam(bellman_ford, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(bellman_ford);
   loader.RegisterFunction(bellman_ford);
 
   TableFunction floyd_warshall("onager_pth_floyd_warshall", {LogicalType::TABLE}, nullptr, FloydWarshallBind, FloydWarshallInitGlobal);
   floyd_warshall.in_out_function = FloydWarshallInOut;
   floyd_warshall.in_out_function_final = FloydWarshallFinal;
-  floyd_warshall.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(floyd_warshall, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(floyd_warshall);
   loader.RegisterFunction(floyd_warshall);
 }

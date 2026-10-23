@@ -30,7 +30,7 @@ struct ParallelPageRankGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ParallelPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<ParallelPageRankBindData>();
   CheckInt64Input(input, "onager_par_pagerank");
   bd->weighted = input.input_table_types.size() >= 3 && input.input_table_types[2] == LogicalType::DOUBLE;
@@ -90,7 +90,7 @@ struct ParallelBfsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ParallelBfsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<ParallelBfsBindData>();
   CheckInt64Input(input, "onager_par_bfs");
   bool has_source = false;
@@ -166,7 +166,7 @@ struct ParallelPathsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ParallelPathsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<ParallelPathsBindData>();
   CheckInt64Input(input, "onager_par_shortest_paths");
   bool has_source = false;
@@ -241,7 +241,7 @@ struct ParallelComponentsGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ParallelComponentsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ParallelComponentsBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_par_components");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("component");
@@ -287,7 +287,7 @@ struct ParallelClusteringGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ParallelClusteringBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ParallelClusteringBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_par_clustering");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::DOUBLE); nm.push_back("coefficient");
@@ -332,7 +332,7 @@ struct ParallelTrianglesGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> ParallelTrianglesBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> ParallelTrianglesBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   CheckInt64Input(input, "onager_par_triangles");
   rt.push_back(LogicalType::BIGINT); nm.push_back("node_id");
   rt.push_back(LogicalType::BIGINT); nm.push_back("triangles");
@@ -376,28 +376,28 @@ void RegisterParallelFunctions(ExtensionLoader &loader) {
   TableFunction par_pr("onager_par_pagerank", {LogicalType::TABLE}, nullptr, ParallelPageRankBind, ParallelPageRankInitGlobal);
   par_pr.in_out_function = ParallelPageRankInOut;
   par_pr.in_out_function_final = ParallelPageRankFinal;
-  par_pr.named_parameters["damping"] = LogicalType::DOUBLE;
-  par_pr.named_parameters["iterations"] = LogicalType::BIGINT;
-  par_pr.named_parameters["tolerance"] = LogicalType::DOUBLE;
-  par_pr.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(par_pr, "damping", LogicalType::DOUBLE);
+  AddNamedParam(par_pr, "iterations", LogicalType::BIGINT);
+  AddNamedParam(par_pr, "tolerance", LogicalType::DOUBLE);
+  AddNamedParam(par_pr, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(par_pr);
   loader.RegisterFunction(par_pr);
 
   TableFunction par_bfs("onager_par_bfs", {LogicalType::TABLE}, nullptr, ParallelBfsBind, ParallelBfsInitGlobal);
   par_bfs.in_out_function = ParallelBfsInOut;
   par_bfs.in_out_function_final = ParallelBfsFinal;
-  par_bfs.named_parameters["source"] = LogicalType::BIGINT;
-  par_bfs.named_parameters["sources"] = LogicalType::LIST(LogicalType::BIGINT);
-  par_bfs.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(par_bfs, "source", LogicalType::BIGINT);
+  AddNamedParam(par_bfs, "sources", LogicalType::LIST(LogicalType::BIGINT));
+  AddNamedParam(par_bfs, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(par_bfs);
   loader.RegisterFunction(par_bfs);
 
   TableFunction par_paths("onager_par_shortest_paths", {LogicalType::TABLE}, nullptr, ParallelPathsBind, ParallelPathsInitGlobal);
   par_paths.in_out_function = ParallelPathsInOut;
   par_paths.in_out_function_final = ParallelPathsFinal;
-  par_paths.named_parameters["source"] = LogicalType::BIGINT;
-  par_paths.named_parameters["sources"] = LogicalType::LIST(LogicalType::BIGINT);
-  par_paths.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(par_paths, "source", LogicalType::BIGINT);
+  AddNamedParam(par_paths, "sources", LogicalType::LIST(LogicalType::BIGINT));
+  AddNamedParam(par_paths, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(par_paths);
   loader.RegisterFunction(par_paths);
 

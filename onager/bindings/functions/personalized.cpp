@@ -27,7 +27,7 @@ struct PersonalizedPageRankGlobalState : public GlobalTableFunctionState {
   idx_t MaxThreads() const override { return 1; }
 };
 
-static unique_ptr<FunctionData> PersonalizedPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, vector<string> &nm) {
+static unique_ptr<FunctionData> PersonalizedPageRankBind(ClientContext &ctx, TableFunctionBindInput &input, vector<LogicalType> &rt, bind_names_t &nm) {
   auto bd = make_uniq<PersonalizedPageRankBindData>();
   CheckInt64Input(input, "onager_ctr_personalized_pagerank", 4);
   CheckColumnType(input, "onager_ctr_personalized_pagerank", 2, LogicalType::BIGINT);
@@ -127,10 +127,10 @@ void RegisterPersonalizedFunctions(ExtensionLoader &loader) {
   TableFunction pers_pr("onager_ctr_personalized_pagerank", {LogicalType::TABLE}, nullptr, PersonalizedPageRankBind, PersonalizedPageRankInitGlobal);
   pers_pr.in_out_function = PersonalizedPageRankInOut;
   pers_pr.in_out_function_final = PersonalizedPageRankFinal;
-  pers_pr.named_parameters["damping"] = LogicalType::DOUBLE;
-  pers_pr.named_parameters["max_iter"] = LogicalType::BIGINT;
-  pers_pr.named_parameters["tolerance"] = LogicalType::DOUBLE;
-  pers_pr.named_parameters["directed"] = LogicalType::BOOLEAN;
+  AddNamedParam(pers_pr, "damping", LogicalType::DOUBLE);
+  AddNamedParam(pers_pr, "max_iter", LogicalType::BIGINT);
+  AddNamedParam(pers_pr, "tolerance", LogicalType::DOUBLE);
+  AddNamedParam(pers_pr, "directed", LogicalType::BOOLEAN);
   ONAGER_SET_NO_ORDER(pers_pr);
   loader.RegisterFunction(pers_pr);
 }
