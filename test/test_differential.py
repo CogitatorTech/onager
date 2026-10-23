@@ -42,10 +42,10 @@ def test_pagerank_directed(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.DiGraph(edges)
     nx_pagerank = nx.pagerank(G, alpha=0.85, tol=1e-6)
-    
+
     query = f"{sql_edges_setup} select node_id, rank from onager_ctr_pagerank((select src, dst from edges), directed := true) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_pagerank)
     for row in db_results:
         node = row["node_id"]
@@ -55,10 +55,10 @@ def test_pagerank_undirected(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_pagerank = nx.pagerank(G, alpha=0.85, tol=1e-6)
-    
+
     query = f"{sql_edges_setup} select node_id, rank from onager_ctr_pagerank((select src, dst from edges), directed := false) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_pagerank)
     for row in db_results:
         node = row["node_id"]
@@ -70,10 +70,10 @@ def test_degree_centrality(setup_graphs):
     n = len(G.nodes)
     nx_in = dict(G.in_degree())
     nx_out = dict(G.out_degree())
-    
+
     query = f"{sql_edges_setup} select node_id, in_degree, out_degree from onager_ctr_degree((select src, dst from edges), directed := true) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == n
     for row in db_results:
         node = row["node_id"]
@@ -84,10 +84,10 @@ def test_betweenness_centrality(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_bet = nx.betweenness_centrality(G, normalized=True)
-    
+
     query = f"{sql_edges_setup} select node_id, betweenness from onager_ctr_betweenness((select src, dst from edges), normalized := true) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_bet)
     for row in db_results:
         node = row["node_id"]
@@ -97,10 +97,10 @@ def test_closeness_centrality(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_close = nx.closeness_centrality(G)
-    
+
     query = f"{sql_edges_setup} select node_id, closeness from onager_ctr_closeness((select src, dst from edges)) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_close)
     for row in db_results:
         node = row["node_id"]
@@ -110,17 +110,17 @@ def test_eigenvector_centrality(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_eig = nx_eigenvector = nx.eigenvector_centrality(G, max_iter=1000, tol=1e-6)
-    
+
     query = f"{sql_edges_setup} select node_id, eigenvector from onager_ctr_eigenvector((select src, dst from edges)) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_eig)
-    
+
     # L2 normalize both vectors for robust comparison
     db_eig_dict = {row["node_id"]: row["eigenvector"] for row in db_results}
     norm_db = l2_normalize(db_eig_dict)
     norm_nx = l2_normalize(nx_eig)
-    
+
     for node in norm_nx:
         assert abs(norm_db[node] - norm_nx[node]) < 1e-4
 
@@ -128,16 +128,16 @@ def test_katz_centrality(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_katz = nx.katz_centrality(G, alpha=0.1, max_iter=1000, tol=1e-6)
-    
+
     query = f"{sql_edges_setup} select node_id, katz from onager_ctr_katz((select src, dst from edges), alpha := 0.1) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_katz)
-    
+
     db_katz_dict = {row["node_id"]: row["katz"] for row in db_results}
     norm_db = l2_normalize(db_katz_dict)
     norm_nx = l2_normalize(nx_katz)
-    
+
     for node in norm_nx:
         assert abs(norm_db[node] - norm_nx[node]) < 1e-4
 
@@ -145,10 +145,10 @@ def test_harmonic_centrality(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_harm = nx.harmonic_centrality(G)
-    
+
     query = f"{sql_edges_setup} select node_id, harmonic from onager_ctr_harmonic((select src, dst from edges)) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_harm)
     for row in db_results:
         node = row["node_id"]
@@ -159,10 +159,10 @@ def test_voterank(setup_graphs):
     G = nx.Graph(edges)
     # voterank in nx returns a list of nodes
     nx_vote = nx.voterank(G, number_of_nodes=2)
-    
+
     query = f"{sql_edges_setup} select node_id from onager_ctr_voterank((select src, dst from edges), num_seeds := 2);"
     db_results = run_query(query)
-    
+
     db_vote = [row["node_id"] for row in db_results]
     assert db_vote == nx_vote
 
@@ -174,18 +174,18 @@ def test_connected_components(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_components = [set(c) for c in nx.connected_components(G)]
-    
+
     query = f"{sql_edges_setup} select node_id, component from onager_cmm_components((select src, dst from edges)) order by node_id;"
     db_results = run_query(query)
-    
+
     db_groups = {}
     for row in db_results:
         node = row["node_id"]
         comp = row["component"]
         db_groups.setdefault(comp, set()).add(node)
-    
+
     db_components = list(db_groups.values())
-    
+
     assert len(db_components) == len(nx_components)
     for db_c in db_components:
         assert any(db_c == nx_c for nx_c in nx_components)
@@ -196,12 +196,12 @@ def test_louvain(setup_graphs):
     # Louvain partitions the nodes
     query = f"{sql_edges_setup} select node_id, community from onager_cmm_louvain((select src, dst from edges), seed := 42) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(G.nodes)
     db_comm = {}
     for row in db_results:
         db_comm.setdefault(row["community"], set()).add(row["node_id"])
-    
+
     # Check partition validity
     all_nodes = set().union(*db_comm.values())
     assert all_nodes == set(G.nodes)
@@ -211,12 +211,12 @@ def test_label_prop(setup_graphs):
     G = nx.Graph(edges)
     query = f"{sql_edges_setup} select node_id, label from onager_cmm_label_prop((select src, dst from edges)) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(G.nodes)
     db_labels = {}
     for row in db_results:
         db_labels.setdefault(row["label"], set()).add(row["node_id"])
-    
+
     all_nodes = set().union(*db_labels.values())
     assert all_nodes == set(G.nodes)
 
@@ -230,10 +230,10 @@ def test_jaccard_link(setup_graphs):
     # compute all node pairs where u < v
     pairs = [(u, v) for u in G.nodes for v in G.nodes if u < v]
     nx_jaccard = {(u, v): val for u, v, val in nx.jaccard_coefficient(G, pairs)}
-    
+
     query = f"{sql_edges_setup} select node1, node2, coefficient from onager_lnk_jaccard((select src, dst from edges)) order by node1, node2;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_jaccard)
     for row in db_results:
         u, v = row["node1"], row["node2"]
@@ -246,10 +246,10 @@ def test_adamic_adar_link(setup_graphs):
     G = nx.Graph(edges)
     pairs = [(u, v) for u in G.nodes for v in G.nodes if u < v]
     nx_adamic = {(u, v): val for u, v, val in nx.adamic_adar_index(G, pairs)}
-    
+
     query = f"{sql_edges_setup} select node1, node2, score from onager_lnk_adamic_adar((select src, dst from edges)) order by node1, node2;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_adamic)
     for row in db_results:
         u, v = row["node1"], row["node2"]
@@ -261,10 +261,10 @@ def test_pref_attach_link(setup_graphs):
     G = nx.Graph(edges)
     pairs = [(u, v) for u in G.nodes for v in G.nodes if u < v]
     nx_pref = {(u, v): val for u, v, val in nx.preferential_attachment(G, pairs)}
-    
+
     query = f"{sql_edges_setup} select node1, node2, score from onager_lnk_pref_attach((select src, dst from edges)) order by node1, node2;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_pref)
     for row in db_results:
         u, v = row["node1"], row["node2"]
@@ -276,10 +276,10 @@ def test_resource_alloc_link(setup_graphs):
     G = nx.Graph(edges)
     pairs = [(u, v) for u in G.nodes for v in G.nodes if u < v]
     nx_res = {(u, v): val for u, v, val in nx.resource_allocation_index(G, pairs)}
-    
+
     query = f"{sql_edges_setup} select node1, node2, score from onager_lnk_resource_alloc((select src, dst from edges)) order by node1, node2;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_res)
     for row in db_results:
         u, v = row["node1"], row["node2"]
@@ -291,10 +291,10 @@ def test_common_neighbors_link(setup_graphs):
     G = nx.Graph(edges)
     pairs = [(u, v) for u in G.nodes for v in G.nodes if u < v]
     nx_cn = {(u, v): len(list(nx.common_neighbors(G, u, v))) for u, v in pairs}
-    
+
     query = f"{sql_edges_setup} select node1, node2, count from onager_lnk_common_neighbors((select src, dst from edges)) order by node1, node2;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_cn)
     for row in db_results:
         u, v = row["node1"], row["node2"]
@@ -308,17 +308,17 @@ def test_common_neighbors_link(setup_graphs):
 def test_graph_metrics(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
-    
+
     nx_density = nx.density(G)
     nx_diameter = nx.diameter(G)
     nx_radius = nx.radius(G)
     nx_avg_clustering = nx.average_clustering(G)
     nx_avg_path = nx.average_shortest_path_length(G)
     nx_transitivity = nx.transitivity(G)
-    
+
     query = f"""
     {sql_edges_setup}
-    select 
+    select
         (select density from onager_mtr_density((select src, dst from edges))) as density,
         (select diameter from onager_mtr_diameter((select src, dst from edges))) as diameter,
         (select radius from onager_mtr_radius((select src, dst from edges))) as radius,
@@ -327,7 +327,7 @@ def test_graph_metrics(setup_graphs):
         (select transitivity from onager_mtr_transitivity((select src, dst from edges))) as transitivity;
     """
     db_results = run_query(query)[0]
-    
+
     assert abs(db_results["density"] - nx_density) < 1e-5
     assert db_results["diameter"] == nx_diameter
     assert db_results["radius"] == nx_radius
@@ -343,10 +343,10 @@ def test_dijkstra(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
     nx_dist = nx.single_source_dijkstra_path_length(G, 1)
-    
+
     query = f"{sql_edges_setup} select node_id, distance from onager_pth_dijkstra((select src, dst from edges), source := 1) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_dist)
     for row in db_results:
         node = row["node_id"]
@@ -358,12 +358,12 @@ def test_bellman_ford(setup_graphs):
     G = nx.Graph()
     for u, v, w in weighted_edges:
         G.add_edge(u, v, weight=w)
-    
+
     nx_dist = nx.single_source_bellman_ford_path_length(G, 1)
-    
+
     query = f"{sql_weighted_setup} select node_id, distance from onager_pth_bellman_ford((select src, dst, weight from weighted_edges), source := 1) order by node_id;"
     db_results = run_query(query)
-    
+
     assert len(db_results) == len(nx_dist)
     for row in db_results:
         node = row["node_id"]
@@ -374,12 +374,12 @@ def test_floyd_warshall(setup_graphs):
     G = nx.Graph()
     for u, v, w in weighted_edges:
         G.add_edge(u, v, weight=w)
-        
+
     nx_apsp = nx.floyd_warshall(G)
-    
+
     query = f"{sql_weighted_setup} select src, dst, distance from onager_pth_floyd_warshall((select src, dst, weight from weighted_edges)) order by src, dst;"
     db_results = run_query(query)
-    
+
     # We should have all-pairs distance excluding self loops (12 combinations for 4 nodes)
     assert len(db_results) == 12
     for row in db_results:
@@ -396,13 +396,13 @@ def test_kruskal_mst(setup_graphs):
     G = nx.Graph()
     for u, v, w in weighted_edges:
         G.add_edge(u, v, weight=w)
-        
+
     nx_mst = nx.minimum_spanning_tree(G, algorithm="kruskal")
     nx_weight = nx_mst.size(weight="weight")
-    
+
     query = f"{sql_weighted_setup} select src, dst, weight from onager_mst_kruskal((select src, dst, weight from weighted_edges));"
     db_results = run_query(query)
-    
+
     db_weight = sum(row["weight"] for row in db_results)
     assert abs(db_weight - nx_weight) < 1e-4
     assert len(db_results) == len(G.nodes) - 1
@@ -412,13 +412,13 @@ def test_prim_mst(setup_graphs):
     G = nx.Graph()
     for u, v, w in weighted_edges:
         G.add_edge(u, v, weight=w)
-        
+
     nx_mst = nx.minimum_spanning_tree(G, algorithm="prim")
     nx_weight = nx_mst.size(weight="weight")
-    
+
     query = f"{sql_weighted_setup} select src, dst, weight from onager_mst_prim((select src, dst, weight from weighted_edges));"
     db_results = run_query(query)
-    
+
     db_weight = sum(row["weight"] for row in db_results)
     assert abs(db_weight - nx_weight) < 1e-4
     assert len(db_results) == len(G.nodes) - 1
@@ -426,41 +426,41 @@ def test_prim_mst(setup_graphs):
 def test_ego_graph(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
-    
+
     # nx.ego_graph(G, 1, radius=1)
     nx_ego = nx.ego_graph(G, 1, radius=1)
-    
+
     query = f"{sql_edges_setup} select src, dst from onager_sub_ego_graph((select src, dst from edges), center := 1, radius := 1) order by src, dst;"
     db_results = run_query(query)
-    
+
     # Compare edge sets (unordered, canonicalized)
     nx_edges = { (min(u, v), max(u, v)) for u, v in nx_ego.edges() }
     db_edges = { (min(row["src"], row["dst"]), max(row["src"], row["dst"])) for row in db_results }
-    
+
     assert db_edges == nx_edges
 
 def test_induced_subgraph(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
     G = nx.Graph(edges)
-    
+
     selected = [1, 2, 3]
     nx_sub = nx.induced_subgraph(G, selected)
-    
+
     # In onager_sub_induced, we pass a subquery that has 3 columns: e.src, e.dst, f.node
     query = f"""
     {sql_edges_setup}
     create temporary table filter_nodes (node bigint);
     insert into filter_nodes values (1), (2), (3);
     select src, dst from onager_sub_induced((
-        select e.src, e.dst, f.node 
+        select e.src, e.dst, f.node
         from edges e cross join filter_nodes f
     )) order by src, dst;
     """
     db_results = run_query(query)
-    
+
     nx_edges = { (min(u, v), max(u, v)) for u, v in nx_sub.edges() }
     db_edges = { (min(row["src"], row["dst"]), max(row["src"], row["dst"])) for row in db_results }
-    
+
     assert db_edges == nx_edges
 
 # =============================================================================
@@ -469,14 +469,14 @@ def test_induced_subgraph(setup_graphs):
 
 def test_parallel_pagerank(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
-    
+
     # Verify parallel PageRank returns same results as scalar/sequential counterpart
     query = f"""
     {sql_edges_setup}
-    select 
-        s.node_id, 
-        s.rank as seq_rank, 
-        p.rank as par_rank 
+    select
+        s.node_id,
+        s.rank as seq_rank,
+        p.rank as par_rank
     from onager_ctr_pagerank((select src, dst from edges)) s
     join onager_par_pagerank((select src, dst from edges)) p
       on s.node_id = p.node_id
@@ -504,10 +504,10 @@ def test_parallel_pagerank_weighted(setup_graphs):
 
 def test_parallel_bfs(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
-    
+
     query = f"""
     {sql_edges_setup}
-    select count(*) as cnt 
+    select count(*) as cnt
     from onager_par_bfs((select src, dst from edges), source := 1);
     """
     db_results = run_query(query)[0]
@@ -515,13 +515,13 @@ def test_parallel_bfs(setup_graphs):
 
 def test_parallel_components(setup_graphs):
     edges, sql_edges_setup, _, _ = setup_graphs
-    
+
     query = f"""
     {sql_edges_setup}
-    select 
-        s.node_id, 
-        s.component as seq_comp, 
-        p.component as par_comp 
+    select
+        s.node_id,
+        s.component as seq_comp,
+        p.component as par_comp
     from onager_cmm_components((select src, dst from edges)) s
     join onager_par_components((select src, dst from edges)) p
       on s.node_id = p.node_id
