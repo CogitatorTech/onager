@@ -182,4 +182,3 @@ docs-serve: ## Serve Onager MkDocs documentation locally
 playground-serve: ## Serve the playground app locally
 	@echo "Starting local server for Onager Playground..."
 	@python3 -m http.server --directory web 8000
-
