@@ -79,7 +79,7 @@ def run_benchmark():
     weighted_edges = [(u, v, 1.0) for u, v in edges]
     setup_sql += "create table weighted_edges(src BIGINT, dst BIGINT, weight DOUBLE);\n"
     setup_sql += "insert into weighted_edges values " + ", ".join(f"({u}, {v}, {w})" for u, v, w in weighted_edges) + ";\n"
-    
+
     nx_weighted_graph = nx.Graph()
     for u, v, w in weighted_edges:
         nx_weighted_graph.add_edge(u, v, weight=w)
@@ -111,13 +111,13 @@ def run_benchmark():
 
     nx_cc_res = run_nx_cc()
     onager_cc_res = run_onager_cc()
-    
+
     nx_components = {}
     for comp_id, comp in enumerate(nx_cc_res):
         for node in comp:
             nx_components[node] = comp_id
     onager_components = {int(row["node_id"]): int(row["component"]) for row in onager_cc_res}
-    
+
     cc_valid = True
     for node, comp_id in nx_components.items():
         if node not in onager_components:
@@ -132,7 +132,7 @@ def run_benchmark():
             if not all(onager_components[n] == onager_comp for n in nodes):
                 cc_valid = False
                 break
-                
+
     status = "OK" if cc_valid else "VALIDATION_FAILED"
     t_nx = time_it(run_nx_cc)
     t_onager = time_it(run_onager_cc)
