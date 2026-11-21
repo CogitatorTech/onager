@@ -1,3 +1,8 @@
+if(MSVC)
+    # Keep DuckDB's SkipList headers from redefining nullptr in unity builds.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>)
+endif()
+
 include_directories(${CMAKE_CURRENT_LIST_DIR}/onager/bindings/include)
 
 # On Emscripten the loadable extension target is a static archive, and the final
