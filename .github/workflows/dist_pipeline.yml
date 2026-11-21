@@ -36,7 +36,7 @@ jobs:
   duckdb-stable-build:
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v2.0-cyanoptera
     with:
-      duckdb_version: v2.0.0
+      duckdb_version: v2.0.1
       ci_tools_version: v2.0-cyanoptera
       runners: '{"windows_amd64":"windows-2022"}'
       extension_name: onager
